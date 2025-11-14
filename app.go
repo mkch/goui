@@ -37,15 +37,11 @@ func (app *App) Run() int {
 	for _, window := range app.windows {
 		if window.Window.Root != nil {
 			ctx := &Context{window: window}
-			elem, err := buildElementTree(ctx, window.Window.Root)
+			elem, layouter, err := buildElementTree(ctx, window.Window.Root, nil)
 			if err != nil {
 				panic(err)
 			}
 			window.Root = elem
-			layouter, err := buildLayouterTree(ctx, elem)
-			if err != nil {
-				panic(err)
-			}
 			window.Layouter = layouter
 			if err := layoutWindow(window); err != nil {
 				panic(err)

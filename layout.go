@@ -43,8 +43,10 @@ type Layouter interface {
 
 	numChildren() int
 	child(n int) Layouter
+	indexChildFunc(f func(Layouter) bool) int
 	removeChild(child Layouter)
 	removeChildIndex(n int)
+	removeChildrenRange(start, end int)
 	parent() Layouter
 	setParent(parent Layouter)
 	element() Element
@@ -90,13 +92,20 @@ func (l *LayouterBase) child(n int) Layouter {
 	return l.children[n]
 }
 
+func (l *LayouterBase) indexChildFunc(f func(Layouter) bool) int {
+	return slices.IndexFunc(l.children, f)
+}
+
 func (l *LayouterBase) removeChildIndex(n int) {
-	l.children[n].setParent(nil)
 	l.children = slices.Delete(l.children, n, n+1)
 }
 
 func (l *LayouterBase) removeChild(child Layouter) {
 	l.children = slices.DeleteFunc(l.children, func(l Layouter) bool { return l == child })
+}
+
+func (l *LayouterBase) removeChildrenRange(start, end int) {
+	l.children = slices.Delete(l.children, start, end)
 }
 
 func (l *LayouterBase) setChildInSlice(i int, child Layouter) {
@@ -127,6 +136,9 @@ func Layouter_AppendChild(parent, child Layouter) {
 //
 // See [element_AppendChild] for explanation why this is a package-level function.
 func Layouter_SetChild(parent Layouter, n int, child Layouter) {
+	if parent.child(n) == child {
+		return
+	}
 	parent.setChildInSlice(n, child)
 	child.setParent(parent)
 }
@@ -142,25 +154,4 @@ func Layouter_InsertChild(parent Layouter, i int, child Layouter) {
 // LayouterHolder is an interface that [Element] can implement to provide a Layouter.
 type LayouterHolder interface {
 	Layouter() Layouter
-}
-
-func buildLayouterTree(ctx *Context, elem Element) (layouter Layouter, err error) {
-	if layouterHolder, ok := elem.(LayouterHolder); ok {
-		layouter = layouterHolder.Layouter()
-		layouter.setElement(elem)
-	}
-	for i := 0; i < elem.numChildren(); i++ {
-		childElem := elem.child(i)
-		childLayouter, err := buildLayouterTree(ctx, childElem)
-		if err != nil {
-			return nil, err
-		}
-		if layouter == nil {
-			// buildElementTree ensures that Container widget must have a Layouter,
-			// so when this happens, the childLayouter must be the only child of StatefulWidget or StatelessWidget.
-			layouter = childLayouter
-		}
-		Layouter_AppendChild(layouter, childLayouter)
-	}
-	return layouter, nil
 }

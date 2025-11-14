@@ -35,7 +35,7 @@ func (e *statefulElement) destroy() {
 	e.element.destroy()
 }
 
-func createStatefulElement(ctx *Context) (Element, error) {
+func createStatefulElement(*Context) (Element, error) {
 	return &statefulElement{}, nil
 }
 
@@ -61,16 +61,14 @@ func (ws *WidgetState) destroyData() {
 func (ws *WidgetState) Update(updater func()) error {
 	updater()
 
-	err := updateElementTree(ws.ctx, ws.element, ws.element.widget())
+	elem, layouter, err := updateElementTree(ws.ctx, ws.element, ws.element.widget())
 	if err != nil {
 		return err
 	}
-	layouter, err := buildLayouterTree(ws.ctx, ws.ctx.window.Root)
-	if err != nil {
-		return err
+	if ws.element == ws.ctx.window.Root {
+		ws.ctx.window.Root = elem
+		ws.ctx.window.Layouter = layouter
 	}
-
-	ws.ctx.window.Layouter = layouter
 
 	return layoutWindow(ws.ctx.window)
 }
