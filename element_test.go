@@ -69,11 +69,11 @@ type mockLayouter struct {
 	LayouterBase
 }
 
-func (l *mockLayouter) Layout(ctx *Context, constraints Constraints) Size {
-	return Size{Width: 100, Height: 100}
+func (l *mockLayouter) Layout(ctx *Context, constraints Constraints) (Size, error) {
+	return Size{Width: 100, Height: 100}, nil
 }
 
-func (l *mockLayouter) Apply(x, y int) error {
+func (l *mockLayouter) PositionAt(x, y int) error {
 	return nil
 }
 

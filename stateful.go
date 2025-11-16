@@ -1,5 +1,7 @@
 package goui
 
+import "errors"
+
 type StatefulWidget interface {
 	Widget
 	CreateState(*Context) *WidgetState
@@ -70,7 +72,37 @@ func (ws *WidgetState) Update(updater func()) error {
 		ws.ctx.window.Layouter = layouter
 	}
 
-	return layoutWindow(ws.ctx.window)
+	if layouter == nil {
+		return nil
+	}
+
+	if err = replayParentLayouter(ws.ctx, layouter); err == nil {
+		return nil
+	}
+
+	if err == errNotReplayable {
+		return layoutWindow(ws.ctx.window)
+	}
+	return err
+}
+
+var errNotReplayable = errors.New("the parent layouter does not support replaying")
+
+// replayParentLayouter replays the laying out of the nearest recursive parent
+// which supports replaying.
+// If no such parent exists, it returns errNotReplayable.
+func replayParentLayouter(ctx *Context, root Layouter) error {
+	// Find the nearest child-independent recursive parent(replayer).
+	var replayer func(*Context) error
+	for parent := root.parent(); parent != nil; parent = parent.parent() {
+		if replayer = Layouter_Replayer(parent); replayer != nil {
+			break
+		}
+	}
+	if replayer == nil {
+		return errNotReplayable
+	}
+	return replayer(ctx)
 }
 
 // statelessWidget is an implementation of StatelessWidget.

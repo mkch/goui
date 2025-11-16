@@ -32,31 +32,43 @@ func (e *columnElement) Layouter() Layouter {
 
 type columnLayouter struct {
 	LayouterBase
-	size         Size
 	childOffsets []Point
 }
 
-func (l *columnLayouter) Layout(ctx *Context, constraints Constraints) Size {
+func (l *columnLayouter) Layout(ctx *Context, constraints Constraints) (Size, error) {
+	l.LayouterBase.Layout(ctx, constraints)
 	l.size.Width = constraints.MaxWidth
 	l.size.Height = constraints.MaxHeight
 	l.childOffsets = make([]Point, l.numChildren())
 	var y = 20
 	for i, child := range l.children {
-		childSize := child.Layout(ctx, Constraints{
+		childConstraints := Constraints{
 			MinWidth:  0,
 			MinHeight: 0,
 			MaxWidth:  l.size.Width,
 			MaxHeight: l.size.Height,
-		})
+		}
+		childSize, err := child.Layout(ctx, childConstraints)
+		if err != nil {
+			return Size{}, err
+		}
+		if childSize.Width > childConstraints.MaxWidth || childSize.Height > childConstraints.MaxHeight {
+			return Size{}, &OverflowParentError{
+				Widget:      child.element().widget(),
+				Size:        childSize,
+				Constraints: childConstraints,
+			}
+		}
 		l.childOffsets[i] = Point{X: (l.size.Width - childSize.Width) / 2, Y: y}
 		y += childSize.Height + 20
 	}
-	return l.size
+	return l.size, nil
 }
 
-func (l *columnLayouter) Apply(x, y int) error {
+func (l *columnLayouter) PositionAt(x, y int) (err error) {
+	l.LayouterBase.PositionAt(x, y)
 	for i, child := range l.children {
-		child.Apply(l.childOffsets[i].X, l.childOffsets[i].Y)
+		child.PositionAt(x+l.childOffsets[i].X, y+l.childOffsets[i].Y)
 	}
 	return nil
 }

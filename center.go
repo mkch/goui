@@ -35,21 +35,39 @@ func (e *centerElement) Layouter() Layouter {
 
 type centerLayouter struct {
 	LayouterBase
-	size        Size
 	childOffset Point
 }
 
-func (l *centerLayouter) Layout(ctx *Context, constraints Constraints) Size {
+func (l *centerLayouter) Layout(ctx *Context, constraints Constraints) (Size, error) {
+	l.LayouterBase.Layout(ctx, constraints)
 	l.size.Width = constraints.MaxWidth
 	l.size.Height = constraints.MaxHeight
-	childSize := l.child(0).Layout(ctx, Constraints{
+	if l.numChildren() == 0 {
+		return l.size, nil
+	}
+	childConstraints := Constraints{
 		MinWidth: 0, MinHeight: 0,
-		MaxWidth: l.size.Width, MaxHeight: l.size.Height})
+		MaxWidth: l.size.Width, MaxHeight: l.size.Height}
+	childSize, err := l.child(0).Layout(ctx, childConstraints)
+	if err != nil {
+		return Size{}, err
+	}
+	if childSize.Width > childConstraints.MaxWidth || childSize.Height > childConstraints.MaxHeight {
+		return Size{}, &OverflowParentError{
+			Widget:      l.child(0).element().widget(),
+			Size:        childSize,
+			Constraints: childConstraints,
+		}
+	}
 	l.childOffset.X = (l.size.Width - childSize.Width) / 2
 	l.childOffset.Y = (l.size.Height - childSize.Height) / 2
-	return l.size
+	return l.size, nil
 }
 
-func (l *centerLayouter) Apply(x, y int) error {
-	return l.child(0).Apply(x+l.childOffset.X, y+l.childOffset.Y)
+func (l *centerLayouter) PositionAt(x, y int) (err error) {
+	l.LayouterBase.PositionAt(x, y)
+	if l.numChildren() == 0 {
+		return nil
+	}
+	return l.child(0).PositionAt(x+l.childOffset.X, y+l.childOffset.Y)
 }

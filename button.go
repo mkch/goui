@@ -5,6 +5,7 @@ import "github.com/mkch/goui/native"
 type Button struct {
 	ID      ID
 	Label   string
+	Padding *Size // Padding around the label text. If nil, default padding is used.
 	OnClick func()
 }
 
@@ -56,17 +57,37 @@ func (e *buttonElement) setWidget(widget Widget) {
 
 type buttonLayouter struct {
 	LayouterBase
-	size Size
 }
 
-func (l *buttonLayouter) Layout(ctx *Context, constraints Constraints) Size {
-	l.size = Size{
-		Width:  clampInt(200, constraints.MinWidth, constraints.MaxWidth),
-		Height: clampInt(40, constraints.MinHeight, constraints.MaxHeight),
+var defaultButtonPadding = Size{Width: 15, Height: 10}
+
+func (l *buttonLayouter) Layout(ctx *Context, constraints Constraints) (size Size, err error) {
+	l.LayouterBase.Layout(ctx, constraints)
+	if constraints.Tight() {
+		l.size = Size{
+			Width:  constraints.MinWidth,
+			Height: constraints.MinHeight,
+		}
+		return l.size, nil
 	}
-	return l.size
+	elem := l.element().(*buttonElement)
+	widget := elem.widget().(*Button)
+	padding := widget.Padding
+	if padding == nil {
+		padding = &defaultButtonPadding
+	}
+	intrinsicWidth, intrinsicHeight, err := native.GetButtonMinimumSize(elem.Handle, widget.Label)
+	if err != nil {
+		return
+	}
+	l.size = Size{
+		Width:  clampInt(intrinsicWidth+padding.Width, constraints.MinWidth, constraints.MaxWidth),
+		Height: clampInt(intrinsicHeight+padding.Height, constraints.MinHeight, constraints.MaxHeight),
+	}
+	return l.size, nil
 }
 
-func (l *buttonLayouter) Apply(x, y int) error {
+func (l *buttonLayouter) PositionAt(x, y int) (err error) {
+	l.LayouterBase.PositionAt(x, y)
 	return native.SetWidgetDimensions(l.element().(*buttonElement).Handle, x, y, l.size.Width, l.size.Height)
 }

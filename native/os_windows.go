@@ -1,10 +1,13 @@
 package native
 
 import (
+	"unsafe"
+
 	"github.com/mkch/gw/app/gwapp"
 	"github.com/mkch/gw/button"
 	"github.com/mkch/gw/metrics"
 	"github.com/mkch/gw/win32"
+	"github.com/mkch/gw/win32/win32util"
 	"github.com/mkch/gw/window"
 )
 
@@ -90,4 +93,62 @@ func WindowClientRect(handle Handle) (x, y, width, height int, err error) {
 		return
 	}
 	return int(rect.Left), int(rect.Top), int(rect.Right - rect.Left), int(rect.Bottom - rect.Top), nil
+}
+
+var GetSystemMetricsXEdge = func() func() int {
+	var x win32.INT = 0
+	return func() int {
+		if x == 0 {
+			x = win32.GetSystemMetrics(win32.SystemMetricsIndex(win32.SM_CXEDGE))
+		}
+		return int(x)
+	}
+}()
+
+var GetSystemMetricsYEdge = func() func() int {
+	var y win32.INT = 0
+	return func() int {
+		if y == 0 {
+			y = win32.GetSystemMetrics(win32.SystemMetricsIndex(win32.SM_CYEDGE))
+		}
+		return int(y)
+	}
+}()
+
+func GetButtonMinimumSize(handle Handle, label string) (width, height int, err error) {
+	btn := handle.(*button.Button)
+	hdc, err := win32.GetDC(btn.HWND())
+	if err != nil {
+		return
+	}
+	font, err := win32.SendMessageW(btn.HWND(), win32.WM_GETFONT, 0, 0)
+	if err != nil {
+		return
+	}
+	oldFont, err := win32.SelectObject(hdc, win32.HFONT(font))
+	if err != nil {
+		return
+	}
+	defer func() { win32.SelectObject(hdc, oldFont); win32.ReleaseDC(btn.HWND(), hdc) }()
+
+	var buf []win32.WCHAR
+	win32util.CString(label, &buf)
+	style, err := win32.GetWindowLongPtrW(btn.HWND(), win32.GWL_STYLE)
+	if err != nil {
+		return
+	}
+	format := win32.DT_CALCRECT
+	if style&win32.BS_MULTILINE == 0 {
+		format |= win32.DT_SINGLELINE
+	}
+
+	const MAX_SIZE = 1<<(unsafe.Sizeof(win32.LONG(0))*8-1) - 1
+	rect := win32.RECT{Left: 0, Top: 0, Right: MAX_SIZE, Bottom: MAX_SIZE}
+	_, err = win32.DrawTextExW(hdc, &buf[0], -1,
+		&rect,
+		format, nil)
+	if err != nil {
+		return
+	}
+	return int(rect.Width() + win32.LONG(GetSystemMetricsXEdge())*2), int(rect.Height() + win32.LONG(GetSystemMetricsYEdge())*2), nil
 }

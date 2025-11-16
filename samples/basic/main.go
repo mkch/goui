@@ -14,19 +14,32 @@ func main() {
 		Width:  600,
 		Height: 400,
 		Root: &goui.Column{Widgets: []goui.Widget{
-			&goui.Button{
-				Label: "Click me!",
-				OnClick: func() {
-					fmt.Println("Button clicked!")
+			&goui.SizedBox{
+				Width: 80, Height: 30,
+				Widget: &goui.Button{
+					Label: "Click me!",
+					OnClick: func() {
+						fmt.Println("Button clicked!")
+					},
 				},
 			},
-			&goui.Button{
-				Label: "Click me!",
-				OnClick: func() {
-					fmt.Println("Button clicked~~~!")
+			&goui.SizedBox{
+				Width: 300, Height: 30,
+				Widget: &goui.Button{
+					Label: "Click\r\nme!",
+					OnClick: func() {
+						fmt.Println("Button clicked~~~!")
+					},
 				},
 			},
-			CounterButton,
+			&goui.Padding{
+				Left:  50,
+				Right: 100,
+				Widget: &goui.SizedBox{
+					Width: 200, Height: 40,
+					Widget: CounterButton,
+				},
+			},
 		}},
 	})
 	app.Run()

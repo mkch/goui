@@ -63,17 +63,20 @@ func layoutWindow(window *window) error {
 	return nil
 }
 
-func performLayoutWindow(window *window, width, height int) error {
+func performLayoutWindow(window *window, width, height int) (err error) {
 	if window.Layouter == nil {
 		return nil
 	}
-	window.Layouter.Layout(&Context{window: window}, Constraints{
+	_, err = window.Layouter.Layout(&Context{window: window}, Constraints{
 		MinWidth:  0,
 		MinHeight: 0,
 		MaxWidth:  width,
 		MaxHeight: height,
 	})
-	return window.Layouter.Apply(0, 0)
+	if err != nil {
+		return err
+	}
+	return window.Layouter.PositionAt(0, 0)
 
 }
 
