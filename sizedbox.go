@@ -35,11 +35,11 @@ func (e *sizedBoxElement) Layouter() Layouter {
 
 type sizedBoxLayouter struct {
 	LayouterBase
+	lastConstraints *Constraints
 }
 
 func (l *sizedBoxLayouter) Layout(ctx *Context, constraints Constraints) (Size, error) {
-	l.LayouterBase.Layout(ctx, constraints)
-
+	l.lastConstraints = &constraints
 	sizedBox := l.element().(*sizedBoxElement).widget().(*SizedBox)
 	l.size = Size{
 		Width:  clampInt(sizedBox.Width, constraints.MinWidth, constraints.MaxWidth),
@@ -69,13 +69,22 @@ func (l *sizedBoxLayouter) Layout(ctx *Context, constraints Constraints) (Size, 
 }
 
 func (l *sizedBoxLayouter) PositionAt(x, y int) (err error) {
-	l.LayouterBase.PositionAt(x, y)
+	l.position = Point{x, y}
 	if l.numChildren() == 0 {
 		return nil
 	}
 	return l.child(0).PositionAt(x, y)
 }
 
-func (l *sizedBoxLayouter) ChildrenIndependent() bool {
-	return true
+func (l *sizedBoxLayouter) Replayer() func(ctx *Context) error {
+	if l.lastConstraints == nil {
+		return nil
+	}
+	return func(ctx *Context) error {
+		_, err := l.Layout(ctx, *l.lastConstraints)
+		if err != nil {
+			return err
+		}
+		return l.PositionAt(l.position.X, l.position.Y)
+	}
 }

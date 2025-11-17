@@ -36,7 +36,6 @@ type paddingLayouter struct {
 }
 
 func (l *paddingLayouter) Layout(ctx *Context, constraints Constraints) (Size, error) {
-	l.LayouterBase.Layout(ctx, constraints)
 	padding := l.element().(*paddingElement).widget().(*Padding)
 	if l.numChildren() == 0 {
 		return Size{
@@ -71,7 +70,7 @@ func (l *paddingLayouter) Layout(ctx *Context, constraints Constraints) (Size, e
 }
 
 func (l *paddingLayouter) PositionAt(x, y int) (err error) {
-	l.LayouterBase.PositionAt(x, y)
+	l.position = Point{x, y}
 	if l.numChildren() == 0 {
 		return
 	}

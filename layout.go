@@ -18,6 +18,7 @@ func (e *OverflowParentError) Error() string {
 		e.Widget, e.Widget.WidgetID(), &e.Size, &e.Constraints)
 }
 
+// Infinite represents an infinite size(unbounded) constraint.
 const Infinite = 1<<(unsafe.Sizeof(int(0))*8-1) - 1
 
 // clampInt clamps value between min and max.
@@ -44,9 +45,24 @@ func (c *Constraints) String() string {
 		c.MinWidth, c.MinHeight, c.MaxWidth, c.MaxHeight)
 }
 
-// Tight returns true if the constraints are tight (min and max are equal).
-func (c *Constraints) Tight() bool {
-	return c.MinWidth == c.MaxWidth && c.MinHeight == c.MaxHeight
+// TightWidth returns true if the constraint has a finite and equal min and max width.
+func (c *Constraints) TightWidth() bool {
+	return c.MinWidth == c.MaxWidth && c.MinWidth != Infinite
+}
+
+// TightHeight returns true if the constraint has a finite and equal min and max height.
+func (c *Constraints) TightHeight() bool {
+	return c.MinHeight == c.MaxHeight && c.MinHeight != Infinite
+}
+
+// UnboundWidth returns true if no constraint is imposed on width.
+func (c *Constraints) UnboundWidth() bool {
+	return c.MaxWidth == Infinite
+}
+
+// UnboundHeight returns true if no constraint is imposed on height.
+func (c *Constraints) UnboundHeight() bool {
+	return c.MaxHeight == Infinite
 }
 
 type Size struct {
@@ -82,19 +98,15 @@ func (r *Rect) BottomRight() Point {
 	return Point{X: r.Right, Y: r.Bottom}
 }
 
-type layouterReplayData struct {
-	constraints Constraints
-	position    Point
-}
-
 // Layouter is the interface for laying out elements.
 type Layouter interface {
 	// Layout computes the size of the element given the constraints.
 	Layout(ctx *Context, constraints Constraints) (Size, error)
 	// PositionAt puts the element at the given position.
 	PositionAt(x, y int) error
-	// ChildrenIndependent returns true if the size of layout does not depend on its children.
-	ChildrenIndependent() bool
+	// Replayer returns a function that can replay the last layout operations,
+	// or nil if replay is not supported (e.g., when the layout depends on children).
+	Replayer() func(*Context) error
 
 	numChildren() int
 	child(n int) Layouter
@@ -107,10 +119,6 @@ type Layouter interface {
 	element() Element
 	setElement(e Element)
 
-	// replayData is a helper of [Layouter_Replayer].
-	// If the current state of the Layouter does not support replaying,
-	// it should return nil.
-	replayData() *layouterReplayData
 	// appendChildToSlice is a helper of [Layouter_AppendChild].
 	// The implementation should just append child to the children slice or some equivalent.
 	appendChildToSlice(child Layouter)
@@ -126,12 +134,11 @@ type Layouter interface {
 // Embedding LayouterBase in a struct and implementing
 // Layout and Apply methods implements the Layouter interface.
 type LayouterBase struct {
-	theElement      Element
-	theParent       Layouter
-	lastConstraints *Constraints
-	position        Point
-	size            Size
-	children        []Layouter
+	theElement Element
+	theParent  Layouter
+	position   Point
+	size       Size
+	children   []Layouter
 }
 
 func (l *LayouterBase) element() Element {
@@ -186,51 +193,8 @@ func (l *LayouterBase) insertChildInSlice(i int, child Layouter) {
 	l.children = slices.Insert(l.children, i, child)
 }
 
-// Layout should be called by the embedding struct's Layout method.
-// Note that this Layout method does not satisfy the Layouter interface
-// due to the different return type.
-func (l *LayouterBase) Layout(ctx *Context, constraints Constraints) {
-	l.lastConstraints = &constraints
-}
-
-// PositionAt should be called by the embedding struct's PositionAt method.
-// Note that this PositionAt method does not satisfy the Layouter interface
-// due to the different return type.
-func (l *LayouterBase) PositionAt(x, y int) {
-	l.position = Point{X: x, Y: y}
-}
-
-func (l *LayouterBase) replayData() *layouterReplayData {
-	if l.lastConstraints == nil {
-		return nil
-	}
-	return &layouterReplayData{
-		constraints: *l.lastConstraints,
-		position:    l.position,
-	}
-}
-
-func (l *LayouterBase) ChildrenIndependent() bool {
-	return false
-}
-
-// Layouter_Replayer returns a function that replays the lat layout operations of the given Layouter.
-//
-// See [element_AppendChild] for explanation why this is a package-level function.
-func Layouter_Replayer(l Layouter) func(*Context) error {
-	if !l.ChildrenIndependent() {
-		return nil
-	}
-	data := l.replayData()
-	if data == nil {
-		return nil
-	}
-	return func(ctx *Context) error {
-		if _, err := l.Layout(ctx, data.constraints); err != nil {
-			return err
-		}
-		return l.PositionAt(data.position.X, data.position.Y)
-	}
+func (l *LayouterBase) Replayer() func(*Context) error {
+	return nil
 }
 
 // Layouter_AppendChild appends child to parent Layouter.

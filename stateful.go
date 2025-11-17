@@ -95,7 +95,7 @@ func replayParentLayouter(ctx *Context, root Layouter) error {
 	// Find the nearest child-independent recursive parent(replayer).
 	var replayer func(*Context) error
 	for parent := root.parent(); parent != nil; parent = parent.parent() {
-		if replayer = Layouter_Replayer(parent); replayer != nil {
+		if replayer = parent.Replayer(); replayer != nil {
 			break
 		}
 	}

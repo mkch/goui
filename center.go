@@ -35,13 +35,13 @@ func (e *centerElement) Layouter() Layouter {
 
 type centerLayouter struct {
 	LayouterBase
-	childOffset Point
+	lastConstraints *Constraints
+	childOffset     Point
 }
 
 func (l *centerLayouter) Layout(ctx *Context, constraints Constraints) (Size, error) {
-	l.LayouterBase.Layout(ctx, constraints)
-	l.size.Width = constraints.MaxWidth
-	l.size.Height = constraints.MaxHeight
+	l.lastConstraints = &constraints
+	l.size = Size{constraints.MaxWidth, constraints.MaxHeight}
 	if l.numChildren() == 0 {
 		return l.size, nil
 	}
@@ -65,7 +65,7 @@ func (l *centerLayouter) Layout(ctx *Context, constraints Constraints) (Size, er
 }
 
 func (l *centerLayouter) PositionAt(x, y int) (err error) {
-	l.LayouterBase.PositionAt(x, y)
+	l.position = Point{x, y}
 	if l.numChildren() == 0 {
 		return nil
 	}

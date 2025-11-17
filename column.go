@@ -36,7 +36,6 @@ type columnLayouter struct {
 }
 
 func (l *columnLayouter) Layout(ctx *Context, constraints Constraints) (Size, error) {
-	l.LayouterBase.Layout(ctx, constraints)
 	l.size.Width = constraints.MaxWidth
 	l.size.Height = constraints.MaxHeight
 	l.childOffsets = make([]Point, l.numChildren())
@@ -66,7 +65,7 @@ func (l *columnLayouter) Layout(ctx *Context, constraints Constraints) (Size, er
 }
 
 func (l *columnLayouter) PositionAt(x, y int) (err error) {
-	l.LayouterBase.PositionAt(x, y)
+	l.position = Point{x, y}
 	for i, child := range l.children {
 		child.PositionAt(x+l.childOffsets[i].X, y+l.childOffsets[i].Y)
 	}

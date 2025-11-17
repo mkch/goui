@@ -62,8 +62,7 @@ type buttonLayouter struct {
 var defaultButtonPadding = Size{Width: 15, Height: 10}
 
 func (l *buttonLayouter) Layout(ctx *Context, constraints Constraints) (size Size, err error) {
-	l.LayouterBase.Layout(ctx, constraints)
-	if constraints.Tight() {
+	if constraints.TightWidth() && constraints.TightHeight() {
 		l.size = Size{
 			Width:  constraints.MinWidth,
 			Height: constraints.MinHeight,
@@ -88,6 +87,6 @@ func (l *buttonLayouter) Layout(ctx *Context, constraints Constraints) (size Siz
 }
 
 func (l *buttonLayouter) PositionAt(x, y int) (err error) {
-	l.LayouterBase.PositionAt(x, y)
+	l.position = Point{x, y}
 	return native.SetWidgetDimensions(l.element().(*buttonElement).Handle, x, y, l.size.Width, l.size.Height)
 }
