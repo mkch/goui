@@ -18,6 +18,19 @@ func (e *OverflowParentError) Error() string {
 		e.Widget, e.Widget.WidgetID(), &e.Size, &e.Constraints)
 }
 
+// checkOverflow returns an [OverflowParentError] if the given size exceeds the given constraints.
+func checkOverflow(widget Widget, size Size, constraints Constraints) error {
+	if size.Width < constraints.MinWidth || size.Width > constraints.MaxWidth ||
+		size.Height < constraints.MinHeight || size.Height > constraints.MaxHeight {
+		return &OverflowParentError{
+			Widget:      widget,
+			Size:        size,
+			Constraints: constraints,
+		}
+	}
+	return nil
+}
+
 // Infinite represents an infinite size(unbounded) constraint.
 const Infinite = 1<<(unsafe.Sizeof(int(0))*8-1) - 1
 

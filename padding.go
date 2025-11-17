@@ -44,22 +44,20 @@ func (l *paddingLayouter) Layout(ctx *Context, constraints Constraints) (Size, e
 		}, nil
 	}
 
-	childMaxWidth := max(constraints.MaxWidth-padding.Left-padding.Right, 0)
-	childMaxHeight := max(constraints.MaxHeight-padding.Top-padding.Bottom, 0)
+	childMaxWidth := clampInt(constraints.MaxWidth-padding.Left-padding.Right, constraints.MinWidth, constraints.MaxWidth)
+	childMaxHeight := clampInt(constraints.MaxHeight-padding.Top-padding.Bottom, constraints.MinHeight, constraints.MaxHeight)
 	childConstraints := Constraints{
+		MinWidth:  constraints.MinWidth,
 		MaxWidth:  childMaxWidth,
+		MinHeight: constraints.MinHeight,
 		MaxHeight: childMaxHeight,
 	}
 	childSize, err := l.child(0).Layout(ctx, childConstraints)
 	if err != nil {
 		return Size{}, err
 	}
-	if childSize.Width > childConstraints.MaxWidth || childSize.Height > childConstraints.MaxHeight {
-		return Size{}, &OverflowParentError{
-			Widget:      l.child(0).element().widget(),
-			Size:        childSize,
-			Constraints: childConstraints,
-		}
+	if err = checkOverflow(l.child(0).element().widget(), childSize, childConstraints); err != nil {
+		return Size{}, err
 	}
 
 	l.size = Size{

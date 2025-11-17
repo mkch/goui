@@ -39,27 +39,23 @@ func (l *columnLayouter) Layout(ctx *Context, constraints Constraints) (Size, er
 	l.size.Width = constraints.MaxWidth
 	l.size.Height = constraints.MaxHeight
 	l.childOffsets = make([]Point, l.numChildren())
-	var y = 20
+	var childrenHeight = 0
 	for i, child := range l.children {
 		childConstraints := Constraints{
-			MinWidth:  0,
-			MinHeight: 0,
+			MinWidth:  constraints.MinWidth,
+			MinHeight: constraints.MinHeight,
 			MaxWidth:  l.size.Width,
-			MaxHeight: l.size.Height,
+			MaxHeight: l.size.Height - childrenHeight,
 		}
 		childSize, err := child.Layout(ctx, childConstraints)
 		if err != nil {
 			return Size{}, err
 		}
-		if childSize.Width > childConstraints.MaxWidth || childSize.Height > childConstraints.MaxHeight {
-			return Size{}, &OverflowParentError{
-				Widget:      child.element().widget(),
-				Size:        childSize,
-				Constraints: childConstraints,
-			}
+		if err := checkOverflow(child.element().widget(), childSize, childConstraints); err != nil {
+			return Size{}, err
 		}
-		l.childOffsets[i] = Point{X: (l.size.Width - childSize.Width) / 2, Y: y}
-		y += childSize.Height + 20
+		l.childOffsets[i] = Point{X: 0, Y: childrenHeight}
+		childrenHeight += childSize.Height
 	}
 	return l.size, nil
 }

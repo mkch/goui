@@ -58,12 +58,8 @@ func (l *sizedBoxLayouter) Layout(ctx *Context, constraints Constraints) (Size, 
 	if err != nil {
 		return Size{}, err
 	}
-	if childSize.Width > childConstraints.MaxWidth || childSize.Height > childConstraints.MaxHeight {
-		return Size{}, &OverflowParentError{
-			Widget:      l.child(0).element().widget(),
-			Size:        childSize,
-			Constraints: childConstraints,
-		}
+	if err = checkOverflow(l.child(0).element().widget(), childSize, childConstraints); err != nil {
+		return Size{}, err
 	}
 	return l.size, nil
 }
