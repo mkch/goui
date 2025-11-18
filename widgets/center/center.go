@@ -87,7 +87,7 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 }
 
 func (l *centerLayouter) PositionAt(x, y int) (err error) {
-	l.Position = goui.Point{x, y}
+	l.Position = goui.Point{X: x, Y: y}
 	if l.NumChildren() == 0 {
 		return nil
 	}
