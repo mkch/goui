@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/widgets"
 )
 
 var app = goui.NewApp()
@@ -13,12 +14,12 @@ func main() {
 		Title:  "goui demo",
 		Width:  600,
 		Height: 400,
-		Root: &goui.Column{Widgets: []goui.Widget{
-			&goui.Center{
+		Root: &widgets.Column{Widgets: []goui.Widget{
+			&widgets.Center{
 				HeightFactor: 2,
-				Widget: &goui.SizedBox{
+				Widget: &widgets.SizedBox{
 					Width: 80, Height: 30,
-					Widget: &goui.Button{
+					Widget: &widgets.Button{
 						Label: "Click me!",
 						OnClick: func() {
 							fmt.Println("Button clicked!")
@@ -26,11 +27,11 @@ func main() {
 					},
 				},
 			},
-			&goui.Center{
+			&widgets.Center{
 				HeightFactor: 2,
-				Widget: &goui.SizedBox{
+				Widget: &widgets.SizedBox{
 					Width: 300, Height: 30,
-					Widget: &goui.Button{
+					Widget: &widgets.Button{
 						Label: "Click\r\nme!",
 						OnClick: func() {
 							fmt.Println("Button clicked~~~!")
@@ -38,8 +39,8 @@ func main() {
 					},
 				},
 			},
-			&goui.Center{
-				Widget: &goui.Padding{
+			&widgets.Center{
+				Widget: &widgets.Padding{
 					Left:   50,
 					Right:  100,
 					Widget: CounterButton,
@@ -50,12 +51,12 @@ func main() {
 	app.Run()
 }
 
-var CounterButton = goui.StatefulWidgetFuc(
+var CounterButton = goui.StatefulWidgetFunc(
 	func(ctx *goui.Context) (state *goui.WidgetState) {
 		var data int
 		state = &goui.WidgetState{
 			Build: func() goui.Widget {
-				return &goui.Button{
+				return &widgets.Button{
 					Label: fmt.Sprintf("Clicked %d times", data),
 					OnClick: func() {
 						state.Update(func() {

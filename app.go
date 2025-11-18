@@ -10,6 +10,11 @@ type Context struct {
 	window *window // can't be nil
 }
 
+// NativeWindow returns the native window handle associated with this context.
+func (ctx *Context) NativeWindow() native.Handle {
+	return ctx.window.Handle
+}
+
 type Widget interface {
 	WidgetID() ID
 	CreateElement(ctx *Context) (Element, error)

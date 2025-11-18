@@ -18,32 +18,8 @@ func (e *OverflowParentError) Error() string {
 		e.Widget, e.Widget.WidgetID(), &e.Size, &e.Constraints)
 }
 
-// checkOverflow returns an [OverflowParentError] if the given size exceeds the given constraints.
-func checkOverflow(widget Widget, size Size, constraints Constraints) error {
-	if size.Width < constraints.MinWidth || size.Width > constraints.MaxWidth ||
-		size.Height < constraints.MinHeight || size.Height > constraints.MaxHeight {
-		return &OverflowParentError{
-			Widget:      widget,
-			Size:        size,
-			Constraints: constraints,
-		}
-	}
-	return nil
-}
-
 // Infinite represents an infinite size(unbounded) constraint.
 const Infinite = 1<<(unsafe.Sizeof(int(0))*8-1) - 1
-
-// clampInt clamps value between min and max.
-func clampInt(value, min, max int) int {
-	if value < min {
-		return min
-	}
-	if value > max {
-		return max
-	}
-	return value
-}
 
 // Constraints represents layout constraints.
 type Constraints struct {
@@ -120,16 +96,16 @@ type Layouter interface {
 	// Replayer returns a function that can replay the last layout operations,
 	// or nil if replay is not supported (e.g., when the layout depends on children).
 	Replayer() func(*Context) error
+	NumChildren() int
+	Child(n int) Layouter
 
-	numChildren() int
-	child(n int) Layouter
 	indexChildFunc(f func(Layouter) bool) int
 	removeChild(child Layouter)
 	removeChildIndex(n int)
 	removeChildrenRange(start, end int)
 	parent() Layouter
 	setParent(parent Layouter)
-	element() Element
+	Element() Element
 	setElement(e Element)
 
 	// appendChildToSlice is a helper of [Layouter_AppendChild].
@@ -147,14 +123,14 @@ type Layouter interface {
 // Embedding LayouterBase in a struct and implementing
 // Layout and Apply methods implements the Layouter interface.
 type LayouterBase struct {
+	Position   Point
+	Size       Size
 	theElement Element
 	theParent  Layouter
-	position   Point
-	size       Size
 	children   []Layouter
 }
 
-func (l *LayouterBase) element() Element {
+func (l *LayouterBase) Element() Element {
 	return l.theElement
 }
 
@@ -166,11 +142,11 @@ func (l *LayouterBase) parent() Layouter {
 	return l.theParent
 }
 
-func (l *LayouterBase) numChildren() int {
+func (l *LayouterBase) NumChildren() int {
 	return len(l.children)
 }
 
-func (l *LayouterBase) child(n int) Layouter {
+func (l *LayouterBase) Child(n int) Layouter {
 	return l.children[n]
 }
 
@@ -210,19 +186,19 @@ func (l *LayouterBase) Replayer() func(*Context) error {
 	return nil
 }
 
-// Layouter_AppendChild appends child to parent Layouter.
+// layouter_AppendChild appends child to parent Layouter.
 //
 // See [element_AppendChild] for explanation why this is a package-level function.
-func Layouter_AppendChild(parent, child Layouter) {
+func layouter_AppendChild(parent, child Layouter) {
 	child.setParent(parent)
 	parent.appendChildToSlice(child)
 }
 
-// Layouter_SetChild sets child at index n of parent Layouter.
+// layouter_SetChild sets child at index n of parent Layouter.
 //
 // See [element_AppendChild] for explanation why this is a package-level function.
-func Layouter_SetChild(parent Layouter, n int, child Layouter) {
-	if parent.child(n) == child {
+func layouter_SetChild(parent Layouter, n int, child Layouter) {
+	if parent.Child(n) == child {
 		return
 	}
 	parent.setChildInSlice(n, child)
@@ -232,12 +208,12 @@ func Layouter_SetChild(parent Layouter, n int, child Layouter) {
 // Layout_InsertChild inserts child at index n of parent Layouter.
 //
 // See [element_AppendChild] for explanation why this is a package-level function.
-func Layouter_InsertChild(parent Layouter, i int, child Layouter) {
+func layouter_InsertChild(parent Layouter, i int, child Layouter) {
 	parent.insertChildInSlice(i, child)
 	child.setParent(parent)
 }
 
 // LayouterHolder is an interface that [Element] can implement to provide a Layouter.
 type LayouterHolder interface {
-	Layouter() Layouter
+	ElementLayouter() Layouter
 }

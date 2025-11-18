@@ -7,9 +7,10 @@ import (
 	"github.com/mkch/goui/native"
 )
 
+// Element is the persistent representation of a [Widget] in the GUI tree.
 type Element interface {
-	widget() Widget
-	setWidget(widget Widget)
+	Widget() Widget
+	SetWidget(widget Widget)
 	parent() Element
 	numChildren() int
 	child(n int) Element
@@ -30,37 +31,39 @@ type Element interface {
 	setChildInSlice(n int, child Element)
 }
 
-type element struct {
+// ElementBase is a helper struct for implementing [Element].
+// Embedding ElementBase in a struct implements the [Element] interface.
+type ElementBase struct {
 	theWidget Widget
 	theParent Element
 	children  []Element
 }
 
-func (e *element) widget() Widget {
+func (e *ElementBase) Widget() Widget {
 	return e.theWidget
 }
 
-func (e *element) setWidget(widget Widget) {
+func (e *ElementBase) SetWidget(widget Widget) {
 	e.theWidget = widget
 }
 
-func (e *element) parent() Element {
+func (e *ElementBase) parent() Element {
 	return e.theParent
 }
 
-func (e *element) numChildren() int {
+func (e *ElementBase) numChildren() int {
 	return len(e.children)
 }
 
-func (e *element) child(n int) Element {
+func (e *ElementBase) child(n int) Element {
 	return e.children[n]
 }
 
-func (e *element) indexChild(child Element) int {
+func (e *ElementBase) indexChild(child Element) int {
 	return slices.Index(e.children, child)
 }
 
-func (e *element) removeChild(child Element) {
+func (e *ElementBase) removeChild(child Element) {
 	i := slices.Index(e.children, child)
 	if i == -1 {
 		return
@@ -69,33 +72,33 @@ func (e *element) removeChild(child Element) {
 	e.children = slices.Delete(e.children, i, i+1)
 }
 
-func (e *element) removeChildIndex(n int) {
+func (e *ElementBase) removeChildIndex(n int) {
 	e.children[n].destroy()
 	e.children = slices.Delete(e.children, n, n+1)
 }
 
-func (e *element) removeChildrenRange(start, end int) {
+func (e *ElementBase) removeChildrenRange(start, end int) {
 	for i := start; i < end; i++ {
 		e.children[i].destroy()
 	}
 	e.children = slices.Delete(e.children, start, end)
 }
 
-func (e *element) destroy() {
+func (e *ElementBase) destroy() {
 	for _, child := range e.children {
 		child.destroy()
 	}
 }
 
-func (e *element) setParent(parent Element) {
+func (e *ElementBase) setParent(parent Element) {
 	e.theParent = parent
 }
 
-func (e *element) appendChildToSlice(child Element) {
+func (e *ElementBase) appendChildToSlice(child Element) {
 	e.children = append(e.children, child)
 }
 
-func (e *element) setChildInSlice(n int, child Element) {
+func (e *ElementBase) setChildInSlice(n int, child Element) {
 	e.children[n] = child
 }
 
@@ -129,24 +132,25 @@ func element_SetChild(parent Element, n int, child Element) {
 	child.setParent(parent)
 }
 
-type nativeElement struct {
-	element
-	layouter Layouter
+// NativeElement is an [Element] that represents a native GUI widget.
+type NativeElement struct {
+	ElementBase
+	Layouter Layouter
 	Handle   native.Handle
 	// DestroyFunc is called to destroy the native handle.
 	// A nil value means no special destruction is needed.
 	DestroyFunc func(native.Handle) error
 }
 
-func (e *nativeElement) Layouter() Layouter {
-	return e.layouter
+func (e *NativeElement) ElementLayouter() Layouter {
+	return e.Layouter
 }
 
-func (e *nativeElement) NativeHandle(*Context) native.Handle {
+func (e *NativeElement) NativeHandle(*Context) native.Handle {
 	return e.Handle
 }
 
-func (e *nativeElement) destroy() {
+func (e *NativeElement) destroy() {
 	if e.DestroyFunc != nil {
 		e.DestroyFunc(e.Handle)
 	}
@@ -163,11 +167,11 @@ func buildElementTree(ctx *Context, widget Widget, parentLayouter Layouter) (Ele
 	if err != nil {
 		return nil, nil, err
 	}
-	elem.setWidget(widget)
+	elem.SetWidget(widget)
 
 	var layouter Layouter
 	if holder, ok := elem.(LayouterHolder); ok {
-		layouter = holder.Layouter()
+		layouter = holder.ElementLayouter()
 		layouter.setElement(elem)
 	}
 	if statefulWidget, ok := widget.(StatefulWidget); ok {
@@ -192,7 +196,7 @@ func buildContainerElement(ctx *Context, elem Element, container Container, layo
 		}
 		element_AppendChild(elem, childElem)
 		if childLayouter != nil {
-			Layouter_AppendChild(layouter, childLayouter)
+			layouter_AppendChild(layouter, childLayouter)
 		}
 	}
 	return elem, layouter, nil
@@ -231,12 +235,12 @@ func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulWid
 // The returned [Layouter] is the layouter of the returned [Element] or its nearest child.
 func performUpdateElementTree(ctx *Context, elem Element, widget Widget, parentLayouter Layouter, layouterIndex int) (Element, Layouter, error) {
 	// Widgets do not match, recreate the entire element tree.
-	if !widgetMatch(elem.widget(), widget) {
+	if !widgetMatch(elem.Widget(), widget) {
 		elem.destroy()
 		return buildElementTree(ctx, widget, parentLayouter)
 	}
 	// Widgets match, update the widget of the element.
-	elem.setWidget(widget)
+	elem.SetWidget(widget)
 	if container, ok := widget.(Container); ok {
 		return updateContainerElement(ctx, elem, container)
 	}
@@ -247,7 +251,7 @@ func performUpdateElementTree(ctx *Context, elem Element, widget Widget, parentL
 		return updateStatelessWidget(ctx, elem, statelessWidget, parentLayouter, layouterIndex)
 	}
 	if holder, ok := elem.(LayouterHolder); ok {
-		return elem, holder.Layouter(), nil
+		return elem, holder.ElementLayouter(), nil
 	}
 	return elem, nil, nil
 }
@@ -282,11 +286,11 @@ func updateStatefulWidget(ctx *Context, elem Element, parentLayouter Layouter, l
 // updateContainerElement updates the container element elem to hold the new container widget.
 func updateContainerElement(ctx *Context, elem Element, container Container) (Element, Layouter, error) {
 	// Container must have a Layouter
-	layouter := elem.(LayouterHolder).Layouter()
+	layouter := elem.(LayouterHolder).ElementLayouter()
 	// Update children.
 	numWidgets := container.NumChildren()
 	numElements := elem.numChildren()
-	var oldChildrenLayoutCount = layouter.numChildren()
+	var oldChildrenLayoutCount = layouter.NumChildren()
 	var childrenLayoutCount = 0
 	var layouterIndex = -1
 
@@ -302,9 +306,9 @@ func updateContainerElement(ctx *Context, elem Element, container Container) (El
 		element_SetChild(elem, i, childElem)
 		if childLayouter != nil {
 			if childrenLayoutCount < oldChildrenLayoutCount {
-				Layouter_SetChild(layouter, childrenLayoutCount, childLayouter)
+				layouter_SetChild(layouter, childrenLayoutCount, childLayouter)
 			} else {
-				Layouter_AppendChild(layouter, childLayouter)
+				layouter_AppendChild(layouter, childLayouter)
 			}
 			childrenLayoutCount++
 		}
@@ -326,9 +330,9 @@ func updateContainerElement(ctx *Context, elem Element, container Container) (El
 			element_AppendChild(elem, childElement)
 			if childLayouter != nil {
 				if childrenLayoutCount < oldChildrenLayoutCount {
-					Layouter_SetChild(layouter, childrenLayoutCount, childLayouter)
+					layouter_SetChild(layouter, childrenLayoutCount, childLayouter)
 				} else {
-					Layouter_AppendChild(layouter, childLayouter)
+					layouter_AppendChild(layouter, childLayouter)
 				}
 				childrenLayoutCount++
 			}
@@ -361,9 +365,9 @@ func updateLayouter(newLayouter Layouter, parentLayouter Layouter, oldIndex int)
 		return
 	}
 	if oldIndex == -1 {
-		Layouter_AppendChild(parentLayouter, newLayouter)
+		layouter_AppendChild(parentLayouter, newLayouter)
 	} else {
-		Layouter_SetChild(parentLayouter, oldIndex, newLayouter)
+		layouter_SetChild(parentLayouter, oldIndex, newLayouter)
 	}
 }
 
@@ -380,13 +384,13 @@ func updateElementTree(ctx *Context, elem Element, widget Widget) (Element, Layo
 	var parentLayouter Layouter
 	for parent := elem.parent(); parent != nil; parent = parent.parent() {
 		if holder, ok := parent.(LayouterHolder); ok {
-			parentLayouter = holder.Layouter()
+			parentLayouter = holder.ElementLayouter()
 			break
 		}
 	}
 	var layouterIndex = -1
 	if parentLayouter != nil {
-		layouterIndex = parentLayouter.indexChildFunc(func(l Layouter) bool { return l.element() == elem })
+		layouterIndex = parentLayouter.indexChildFunc(func(l Layouter) bool { return l.Element() == elem })
 	}
 	return performUpdateElementTree(ctx, elem, widget, parentLayouter, layouterIndex)
 }
