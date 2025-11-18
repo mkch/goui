@@ -14,6 +14,6 @@ type window struct {
 	Window
 	ID       ID
 	Handle   native.Handle
-	Root     Element
-	Layouter Layouter
+	Root     Element  // Root element.
+	Layouter Layouter // Layouter for the root element.
 }
