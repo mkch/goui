@@ -24,7 +24,9 @@ func (btn *Button) CreateElement(ctx *goui.Context) (goui.Element, error) {
 	}
 	elem := &buttonElement{
 		goui.NativeElement{
-			Layouter:    &buttonLayouter{},
+			ElementBase: goui.ElementBase{
+				ElementLayouter: &buttonLayouter{},
+			},
 			Handle:      handle,
 			DestroyFunc: native.DestroyWindow,
 		},

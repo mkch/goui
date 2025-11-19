@@ -23,7 +23,9 @@ func (c *Column) WidgetID() goui.ID {
 }
 
 func (c *Column) CreateElement(ctx *goui.Context) (goui.Element, error) {
-	return &columnElement{}, nil
+	return &goui.ElementBase{
+		ElementLayouter: &columnLayouter{},
+	}, nil
 }
 
 func (c *Column) NumChildren() int {
@@ -32,14 +34,6 @@ func (c *Column) NumChildren() int {
 
 func (c *Column) Child(n int) goui.Widget {
 	return c.Widgets[n]
-}
-
-type columnElement struct {
-	goui.ElementBase
-}
-
-func (e *columnElement) ElementLayouter() goui.Layouter {
-	return &columnLayouter{}
 }
 
 type columnLayouter struct {
@@ -71,7 +65,7 @@ func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		childrenHeight += childSize.Height
 		size.Width = max(size.Width, childSize.Width)
 	}
-	switch l.Element().(*columnElement).Widget().(*Column).MainAxisSize {
+	switch l.Element().Widget().(*Column).MainAxisSize {
 	case axes.MainAxisSizeMin:
 		size.Height = childrenHeight
 	case axes.MainAxisSizeMax:

@@ -9,6 +9,7 @@ import (
 	"github.com/mkch/gw/button"
 	"github.com/mkch/gw/metrics"
 	"github.com/mkch/gw/paint"
+	"github.com/mkch/gw/paint/brush"
 	"github.com/mkch/gw/paint/pen"
 	"github.com/mkch/gw/win32"
 	"github.com/mkch/gw/win32/win32util"
@@ -28,7 +29,7 @@ type Handle any
 func CreateWindow(title string, width, height int) (handle Handle, err error) {
 	win, err := window.New(&window.Spec{
 		Text:   title,
-		Style:  win32.WS_OVERLAPPEDWINDOW | win32.WS_VISIBLE,
+		Style:  win32.WS_OVERLAPPEDWINDOW | win32.WS_CLIPCHILDREN | win32.WS_VISIBLE,
 		X:      metrics.Px(win32.CW_USEDEFAULT),
 		Width:  metrics.Px(win32.INT(width)),
 		Height: metrics.Px(win32.INT(height)),
@@ -39,6 +40,10 @@ func CreateWindow(title string, width, height int) (handle Handle, err error) {
 	win.Show(win32.SW_SHOWNORMAL)
 	handle = win
 	return
+}
+
+func InvalidWindow(handle Handle) error {
+	return handle.(*window.Window).InvalidateRect(nil, true)
 }
 
 type winBase interface {
@@ -181,39 +186,54 @@ var debugRectPen = func() func() *pen.Pen {
 	}
 }()
 
-var debugRectBrush = func() func() win32.HBRUSH {
-	var brush win32.HBRUSH
-	return func() win32.HBRUSH {
-		if brush == 0 {
-			brush = win32.GetStockObject[win32.HBRUSH](win32.NULL_BRUSH)
+var debugRectHollowBrush = func() func() *brush.Brush {
+	var b *brush.Brush
+	return func() *brush.Brush {
+		if b == nil {
+			b, _ = brush.NewStock(win32.NULL_BRUSH)
 		}
-		return brush
+		return b
 	}
 }()
 
-type Rect struct {
+var debugRectHighlightBrush = func() func() *brush.Brush {
+	var b *brush.Brush
+	return func() *brush.Brush {
+		if b == nil {
+			b = gg.Must(brush.New(&win32.LOGBRUSH{
+				Style: win32.BS_SOLID,
+				Color: win32.RGB(255, 0, 0),
+			}))
+		}
+		return b
+	}
+}()
+
+type DebugRect struct {
 	Left, Top, Right, Bottom int
+	Highlight                bool
 }
 
-func EnableDrawDebugRect(winHandle Handle, rects func() iter.Seq[Rect]) error {
+func EnableDrawDebugRect(winHandle Handle, rects func() iter.Seq[DebugRect]) error {
 	win := winHandle.(*window.Window)
-	win.AddMsgListener(win32.WM_SIZE, func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM) {
-		win32.InvalidateRect(hwnd, nil, true)
-	})
 	win.SetPaintCallback(func(dc *paint.PaintDC, prev func(*paint.PaintDC)) {
 		pen := debugRectPen()
 		oldPen, _ := win32.SelectObject(dc.HDC(), pen.HPEN())
 		defer win32.SelectObject(dc.HDC(), oldPen)
-		brush := debugRectBrush()
-		oldBrush, _ := win32.SelectObject(dc.HDC(), brush)
-		defer win32.SelectObject(dc.HDC(), oldBrush)
 
 		for rect := range rects() {
+			var oldBrush win32.HBRUSH
+			if rect.Highlight {
+				oldBrush, _ = win32.SelectObject(dc.HDC(), debugRectHighlightBrush().HBRUSH())
+			} else {
+				oldBrush, _ = win32.SelectObject(dc.HDC(), debugRectHollowBrush().HBRUSH())
+			}
 			win32.Rectangle(dc.HDC(),
 				rect.Left,
 				rect.Top,
 				rect.Right,
 				rect.Bottom)
+			win32.SelectObject(dc.HDC(), oldBrush)
 		}
 
 	})

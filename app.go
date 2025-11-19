@@ -8,7 +8,15 @@ import (
 )
 
 type Context struct {
+	app    *App    // can't be nil
 	window *window // can't be nil
+}
+
+// newMockContext creates and returns a new mock goui.Context for testing.
+func newMockContext() *Context {
+	return &Context{
+		window: &window{},
+	}
 }
 
 // NativeWindow returns the native window handle associated with this context.
@@ -32,6 +40,11 @@ type App struct {
 	windows map[ID]*window
 }
 
+// Post posts a function to be executed on the main GUI goroutine.
+func (app *App) Post(f func()) error {
+	return app.app.Post(f)
+}
+
 func NewApp() *App {
 	return &App{
 		app:     native.NewApp(),
@@ -40,9 +53,10 @@ func NewApp() *App {
 }
 
 func (app *App) Run() int {
+	ctx := &Context{app: app}
 	for _, window := range app.windows {
 		if window.Window.Root != nil {
-			ctx := &Context{window: window}
+			ctx.window = window
 			elem, layouter, err := buildElementTree(ctx, window.Window.Root, nil)
 			if err != nil {
 				panic(err)
@@ -108,11 +122,11 @@ func (app *App) CreateWindow(config Window) error {
 		}
 	})
 	if config.DebugLayout {
-		native.EnableDrawDebugRect(handle, func() iter.Seq[native.Rect] {
+		native.EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {
-				return func(yield func(native.Rect) bool) {}
+				return func(yield func(native.DebugRect) bool) {}
 			}
-			return layouterDebugRects(window.Layouter)
+			return allLayouterDebugOutlines(window.Layouter)
 		})
 	}
 	app.windows[config.ID] = window

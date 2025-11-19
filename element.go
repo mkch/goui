@@ -4,8 +4,7 @@ import (
 	"iter"
 	"reflect"
 	"slices"
-
-	_ "unsafe" // for go:linkname
+	"time"
 
 	"github.com/mkch/goui/native"
 )
@@ -14,6 +13,8 @@ import (
 type Element interface {
 	Widget() Widget
 	SetWidget(widget Widget)
+	// Layouter returns the layouter of the element. Can be nil.
+	Layouter() Layouter
 	parent() Element
 	numChildren() int
 	child(n int) Element
@@ -23,6 +24,8 @@ type Element interface {
 	removeChildrenRange(start, end int)
 	destroy()
 
+	// setLayouter sets the layouter of the element. For debug purposes only.
+	setLayouter(layouter Layouter)
 	// setParent is a helper of [element_AppendChild].
 	// The implementation should just set the parent field or some equivalent.
 	setParent(parent Element)
@@ -34,12 +37,14 @@ type Element interface {
 	setChildInSlice(n int, child Element)
 }
 
-// ElementBase is a helper struct for implementing [Element].
-// Embedding ElementBase in a struct implements the [Element] interface.
+// ElementBase implements [Element], and is the building block for other Element types.
 type ElementBase struct {
-	theWidget Widget
-	theParent Element
-	children  []Element
+	// ElementLayouter is the layouter of the element. Can be nil.
+	// This field is returned by Layouter() method.
+	ElementLayouter Layouter
+	theWidget       Widget
+	theParent       Element
+	children        []Element
 }
 
 func (e *ElementBase) Widget() Widget {
@@ -48,6 +53,14 @@ func (e *ElementBase) Widget() Widget {
 
 func (e *ElementBase) SetWidget(widget Widget) {
 	e.theWidget = widget
+}
+
+func (e *ElementBase) Layouter() Layouter {
+	return e.ElementLayouter
+}
+
+func (e *ElementBase) setLayouter(layouter Layouter) {
+	e.ElementLayouter = layouter
 }
 
 func (e *ElementBase) parent() Element {
@@ -138,15 +151,10 @@ func element_SetChild(parent Element, n int, child Element) {
 // NativeElement is an [Element] that represents a native GUI widget.
 type NativeElement struct {
 	ElementBase
-	Layouter Layouter
-	Handle   native.Handle
+	Handle native.Handle
 	// DestroyFunc is called to destroy the native handle.
 	// A nil value means no special destruction is needed.
 	DestroyFunc func(native.Handle) error
-}
-
-func (e *NativeElement) ElementLayouter() Layouter {
-	return e.Layouter
 }
 
 func (e *NativeElement) NativeHandle(*Context) native.Handle {
@@ -159,19 +167,55 @@ func (e *NativeElement) destroy() {
 	}
 }
 
-// debugLayouter is a [Layouter] wrapper that records layout position and size for debugging.
+// debugLayouter is a [Layouter] wrapper that records debugging information.
 type debugLayouter struct {
 	Layouter
-	size Size
-	pos  Point
+	Ctx                  *Context
+	Size                 Size              // Last computed size
+	Pos                  Point             // Last computed position
+	Highlight            bool              // Whether to highlight the outline of this layouter
+	CancelHighlightBatch *[]*debugLayouter // Batch of layouters to cancel highlight together
 }
 
 func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size, err error) {
+	l.Highlight = true // Mark to highlight
+
+	if debugParent, ok := l.parent().(*debugLayouter); ok &&
+		debugParent.CancelHighlightBatch != nil && *debugParent.CancelHighlightBatch != nil {
+		// Inherit and join the cancel highlight batch from parent
+		l.CancelHighlightBatch = debugParent.CancelHighlightBatch
+		*l.CancelHighlightBatch = append(*l.CancelHighlightBatch, l)
+	} else {
+		// This is the root of laying out
+		l.CancelHighlightBatch = &[]*debugLayouter{l}
+		defer func() {
+			if err != nil {
+				return // do not show highlight if layout fails
+			}
+			// Show highlight after laying out(include children) is done
+			native.InvalidWindow(l.Ctx.window.Handle)
+			// Schedule canceling all highlights in the batch after a delay
+			const delay = 100 * time.Millisecond
+			batch := *l.CancelHighlightBatch
+			*l.CancelHighlightBatch = nil
+			time.AfterFunc(delay, func() {
+				l.Ctx.app.Post(func() {
+					// Cancel all highlights in a batch
+					for _, layouter := range batch {
+						layouter.Highlight = false
+					}
+					// Request a redraw to remove the highlights
+					native.InvalidWindow(l.Ctx.window.Handle)
+				})
+			})
+		}()
+	}
+
 	size, err = l.Layouter.Layout(ctx, constraints)
 	if err != nil {
 		return
 	}
-	l.size = size
+	l.Size = size // Record size
 	return
 }
 
@@ -180,26 +224,27 @@ func (l *debugLayouter) PositionAt(x, y int) (err error) {
 	if err != nil {
 		return
 	}
-	l.pos = Point{X: x, Y: y}
+	l.Pos = Point{X: x, Y: y} // Record position
 	return
 }
 
-// layouterDebugRects returns an iterator of debug rectangles for the given layouter tree
-func layouterDebugRects(l Layouter) iter.Seq[native.Rect] {
-	return func(yield func(native.Rect) bool) {
+// allLayouterDebugOutlines returns an iterator of debug rectangles for the given layouter tree.
+// The tree must be built with debugging([Window.DebugLayout]) on.
+func allLayouterDebugOutlines(root Layouter) iter.Seq[native.DebugRect] {
+	return func(yield func(native.DebugRect) bool) {
 		// Use a stack to avoid recursive iterator calls
-		stack := []Layouter{l}
+		stack := []Layouter{root}
 		for len(stack) > 0 {
 			current := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
 
 			if debugLayouter, ok := current.(*debugLayouter); ok {
-				if !yield(native.Rect{
-					Left:   debugLayouter.pos.X,
-					Top:    debugLayouter.pos.Y,
-					Right:  debugLayouter.pos.X + debugLayouter.size.Width,
-					Bottom: debugLayouter.pos.Y + debugLayouter.size.Height,
-				}) {
+				if !yield(native.DebugRect{
+					Left:      debugLayouter.Pos.X,
+					Top:       debugLayouter.Pos.Y,
+					Right:     debugLayouter.Pos.X + debugLayouter.Size.Width,
+					Bottom:    debugLayouter.Pos.Y + debugLayouter.Size.Height,
+					Highlight: debugLayouter.Highlight}) {
 					return
 				}
 				// Add children to stack in reverse order to maintain left-to-right traversal
@@ -210,8 +255,6 @@ func layouterDebugRects(l Layouter) iter.Seq[native.Rect] {
 		}
 	}
 }
-
-//go:linkname buildElementTree github.com/mkch/goui/widgets/widgetstest.BuildElementTree
 
 // buildElementTree builds the element tree for the given widget.
 // Parameter parentLayouter is thee nearest recursive parent layouter,
@@ -224,18 +267,21 @@ func buildElementTree(ctx *Context, widget Widget, parentLayouter Layouter) (Ele
 	if err != nil {
 		return nil, nil, err
 	}
-	elem.SetWidget(widget)
 
-	var layouter Layouter
-	if holder, ok := elem.(LayouterHolder); ok {
-		layouter = holder.ElementLayouter()
-
+	layouter := elem.Layouter()
+	if layouter != nil {
 		if ctx.window.DebugLayout {
-			layouter = &debugLayouter{Layouter: layouter}
+			layouter = &debugLayouter{
+				Layouter: layouter,
+				Ctx:      ctx,
+			}
+			elem.setLayouter(layouter)
 		}
-
 		layouter.setElement(elem)
 	}
+
+	elem.SetWidget(widget)
+
 	if statefulWidget, ok := widget.(StatefulWidget); ok {
 		return buildStatefulElement(ctx, elem, statefulWidget, parentLayouter)
 	}
@@ -243,13 +289,14 @@ func buildElementTree(ctx *Context, widget Widget, parentLayouter Layouter) (Ele
 		return buildStatelessElement(ctx, elem, statelessWidget, parentLayouter)
 	}
 	if container, ok := widget.(Container); ok {
-		// Container must have a Layouter
-		return buildContainerElement(ctx, elem, container, layouter)
+		return buildContainerElement(ctx, elem, container)
 	}
 	return elem, layouter, nil
 }
 
-func buildContainerElement(ctx *Context, elem Element, container Container, layouter Layouter) (Element, Layouter, error) {
+func buildContainerElement(ctx *Context, elem Element, container Container) (Element, Layouter, error) {
+	// Container must have a Layouter
+	layouter := elem.Layouter()
 	numChildren := container.NumChildren()
 	for i := range numChildren {
 		childElem, childLayouter, err := buildElementTree(ctx, container.Child(i), layouter)
@@ -312,10 +359,7 @@ func performUpdateElementTree(ctx *Context, elem Element, widget Widget, parentL
 	if statelessWidget, ok := widget.(StatelessWidget); ok {
 		return updateStatelessWidget(ctx, elem, statelessWidget, parentLayouter, layouterIndex)
 	}
-	if holder, ok := elem.(LayouterHolder); ok {
-		return elem, holder.ElementLayouter(), nil
-	}
-	return elem, nil, nil
+	return elem, elem.Layouter(), nil
 }
 
 // updateStatelessWidget updates the stateless element elem to hold the new stateless widget.
@@ -348,7 +392,7 @@ func updateStatefulWidget(ctx *Context, elem Element, parentLayouter Layouter, l
 // updateContainerElement updates the container element elem to hold the new container widget.
 func updateContainerElement(ctx *Context, elem Element, container Container) (Element, Layouter, error) {
 	// Container must have a Layouter
-	layouter := elem.(LayouterHolder).ElementLayouter()
+	layouter := elem.Layouter()
 	// Update children.
 	numWidgets := container.NumChildren()
 	numElements := elem.numChildren()
@@ -358,7 +402,7 @@ func updateContainerElement(ctx *Context, elem Element, container Container) (El
 
 	var updateElement = func(i int) error {
 		child := elem.child(i)
-		if _, ok := child.(LayouterHolder); ok {
+		if child.Layouter() != nil {
 			layouterIndex++
 		}
 		childElem, childLayouter, err := performUpdateElementTree(ctx, child, container.Child(i), layouter, layouterIndex)
@@ -445,8 +489,7 @@ func widgetMatch(widget1, widget2 Widget) bool {
 func updateElementTree(ctx *Context, elem Element, widget Widget) (Element, Layouter, error) {
 	var parentLayouter Layouter
 	for parent := elem.parent(); parent != nil; parent = parent.parent() {
-		if holder, ok := parent.(LayouterHolder); ok {
-			parentLayouter = holder.ElementLayouter()
+		if parentLayouter = parent.Layouter(); parentLayouter != nil {
 			break
 		}
 	}

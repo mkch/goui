@@ -114,9 +114,6 @@ type Layouter interface {
 	// setChildInSlice is a helper of [Layouter_SetChild].
 	// The implementation should just set child at index n in the children slice or some equivalent.
 	setChildInSlice(i int, child Layouter)
-	// insertChildInSlice is a helper of [Layouter_InsertChild].
-	// The implementation should just insert child at index n in the children slice or some equivalent.
-	insertChildInSlice(i int, child Layouter)
 }
 
 // LayouterBase is a helper struct for implementing Layouter.
@@ -176,10 +173,6 @@ func (l *LayouterBase) appendChildToSlice(child Layouter) {
 	l.children = append(l.children, child)
 }
 
-func (l *LayouterBase) insertChildInSlice(i int, child Layouter) {
-	l.children = slices.Insert(l.children, i, child)
-}
-
 func (l *LayouterBase) Replayer() func(*Context) error {
 	return nil
 }
@@ -201,17 +194,4 @@ func layouter_SetChild(parent Layouter, n int, child Layouter) {
 	}
 	parent.setChildInSlice(n, child)
 	child.setParent(parent)
-}
-
-// Layout_InsertChild inserts child at index n of parent Layouter.
-//
-// See [element_AppendChild] for explanation why this is a package-level function.
-func layouter_InsertChild(parent Layouter, i int, child Layouter) {
-	parent.insertChildInSlice(i, child)
-	child.setParent(parent)
-}
-
-// LayouterHolder is an interface that [Element] can implement to provide a Layouter.
-type LayouterHolder interface {
-	ElementLayouter() Layouter
 }

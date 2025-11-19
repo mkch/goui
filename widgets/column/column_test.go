@@ -24,11 +24,6 @@ func (w *mockWidget) CreateElement(ctx *goui.Context) (goui.Element, error) {
 
 type mockElement struct {
 	goui.ElementBase
-	Layouter mockLayouter
-}
-
-func (e *mockElement) ElementLayouter() goui.Layouter {
-	return &e.Layouter
 }
 
 type mockLayouter struct {
@@ -47,12 +42,14 @@ func (l *mockLayouter) PositionAt(x, y int) error {
 }
 
 func Test_Column(t *testing.T) {
-	ctx := &goui.Context{}
+	ctx := widgetstest.NewContext()
 	widget1 := &mockWidget{
 		ID: goui.ValueID("widget1"),
 		Element: mockElement{
-			Layouter: mockLayouter{
-				IntrinsicSize: goui.Size{Width: 100, Height: 50},
+			ElementBase: goui.ElementBase{
+				ElementLayouter: &mockLayouter{
+					IntrinsicSize: goui.Size{Width: 100, Height: 50},
+				},
 			},
 		},
 	}
@@ -60,8 +57,10 @@ func Test_Column(t *testing.T) {
 	widget2 := &mockWidget{
 		ID: goui.ValueID("widget2"),
 		Element: mockElement{
-			Layouter: mockLayouter{
-				IntrinsicSize: goui.Size{Width: 200, Height: 30},
+			ElementBase: goui.ElementBase{
+				ElementLayouter: &mockLayouter{
+					IntrinsicSize: goui.Size{Width: 200, Height: 30},
+				},
 			},
 		},
 	}

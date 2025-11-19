@@ -26,7 +26,11 @@ func (c *Center) WidgetID() goui.ID {
 }
 
 func (c *Center) CreateElement(ctx *goui.Context) (goui.Element, error) {
-	return &centerElement{}, nil
+	return &centerElement{
+		ElementBase: goui.ElementBase{
+			ElementLayouter: &centerLayouter{},
+		},
+	}, nil
 }
 
 func (c *Center) NumChildren() int {
@@ -53,10 +57,6 @@ func (e *centerElement) SetWidget(widget goui.Widget) {
 		panic("Center.HeightFactor must be either 0 or greater than 100")
 	}
 	e.ElementBase.SetWidget(widget)
-}
-
-func (e *centerElement) ElementLayouter() goui.Layouter {
-	return &centerLayouter{}
 }
 
 type centerLayouter struct {
@@ -112,7 +112,7 @@ func (l *centerLayouter) Replayer() func(ctx *goui.Context) error {
 		return nil
 	}
 	center := l.Element().(*centerElement).Widget().(*Center)
-	if center.WidthFactor == 0 || center.HeightFactor == 0 {
+	if center.WidthFactor != 0 || center.HeightFactor != 0 {
 		return nil
 	}
 	return func(ctx *goui.Context) error {

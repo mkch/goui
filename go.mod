@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	github.com/mkch/gg v0.0.0-20240126094904-8d17c81281f6
-	github.com/mkch/gw v0.0.0-20251031114118-60c145e4d1ac
+	github.com/mkch/gw v0.0.0-20251119125618-7a7edd46be89
 )
 
 require (

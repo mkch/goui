@@ -18,7 +18,9 @@ func (s *SizedBox) WidgetID() goui.ID {
 }
 
 func (s *SizedBox) CreateElement(ctx *goui.Context) (goui.Element, error) {
-	return &sizedBoxElement{}, nil
+	return &goui.ElementBase{
+		ElementLayouter: &sizedBoxLayouter{},
+	}, nil
 }
 
 func (s *SizedBox) NumChildren() int {
@@ -29,15 +31,6 @@ func (s *SizedBox) Child(n int) goui.Widget {
 	return s.Widget
 }
 
-type sizedBoxElement struct {
-	goui.ElementBase
-	layouter sizedBoxLayouter
-}
-
-func (e *sizedBoxElement) ElementLayouter() goui.Layouter {
-	return &e.layouter
-}
-
 type sizedBoxLayouter struct {
 	goui.LayouterBase
 	lastConstraints *goui.Constraints
@@ -46,7 +39,7 @@ type sizedBoxLayouter struct {
 
 func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	l.lastConstraints = &constraints
-	sizedBox := l.Element().(*sizedBoxElement).Widget().(*SizedBox)
+	sizedBox := l.Element().Widget().(*SizedBox)
 	size = goui.Size{
 		Width:  layoututil.Clamp(sizedBox.Width, constraints.MinWidth, constraints.MaxWidth),
 		Height: layoututil.Clamp(sizedBox.Height, constraints.MinHeight, constraints.MaxHeight),

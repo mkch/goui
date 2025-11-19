@@ -16,7 +16,9 @@ func (p *Padding) WidgetID() goui.ID {
 }
 
 func (p *Padding) CreateElement(ctx *goui.Context) (goui.Element, error) {
-	return &paddingElement{}, nil
+	return &goui.ElementBase{
+		ElementLayouter: &paddingLayouter{},
+	}, nil
 }
 
 func (p *Padding) NumChildren() int {
@@ -27,21 +29,12 @@ func (p *Padding) Child(n int) goui.Widget {
 	return p.Widget
 }
 
-type paddingElement struct {
-	goui.ElementBase
-	layouter paddingLayouter
-}
-
-func (e *paddingElement) ElementLayouter() goui.Layouter {
-	return &e.layouter
-}
-
 type paddingLayouter struct {
 	goui.LayouterBase
 }
 
 func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
-	padding := l.Element().(*paddingElement).Widget().(*Padding)
+	padding := l.Element().Widget().(*Padding)
 	if l.NumChildren() == 0 {
 		return goui.Size{
 			Width:  padding.Left + padding.Right,
@@ -77,6 +70,6 @@ func (l *paddingLayouter) PositionAt(x, y int) (err error) {
 	if l.NumChildren() == 0 {
 		return
 	}
-	padding := l.Element().(*paddingElement).Widget().(*Padding)
+	padding := l.Element().Widget().(*Padding)
 	return l.Child(0).PositionAt(x+padding.Left, y+padding.Top)
 }
