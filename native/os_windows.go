@@ -76,6 +76,20 @@ func SetWidgetDimensions(handle Handle, x, y, width, height int) error {
 		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE)
 }
 
+func SetWidgetSize(handle Handle, width, height int) error {
+	return win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
+		0, 0,
+		win32.INT(width), win32.INT(height),
+		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE|win32.SWP_NOMOVE)
+}
+
+func SetWidgetPosition(handle Handle, x, y int) error {
+	return win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
+		win32.INT(x), win32.INT(y),
+		0, 0,
+		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE|win32.SWP_NOSIZE)
+}
+
 func SetWindowOnSizeChangedListener(handle Handle, onSizeChanged func(width, height int)) {
 	win := handle.(*window.Window)
 	win.AddMsgListener(win32.WM_SIZE, func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM) {

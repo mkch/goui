@@ -123,8 +123,6 @@ type Layouter interface {
 // Embedding LayouterBase in a struct and implementing
 // Layout and Apply methods implements the Layouter interface.
 type LayouterBase struct {
-	Position   Point
-	Size       Size
 	theElement Element
 	theParent  Layouter
 	children   []Layouter

@@ -63,13 +63,13 @@ type centerLayouter struct {
 	goui.LayouterBase
 	lastConstraints *goui.Constraints
 	childOffset     goui.Point
+	pos             goui.Point
 }
 
-func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (goui.Size, error) {
+func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	l.lastConstraints = &constraints
 
 	var childSize goui.Size
-	var err error
 
 	if l.NumChildren() > 0 {
 		childSize, err = l.Child(0).Layout(ctx, constraints)
@@ -78,29 +78,29 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		}
 	}
 
-	if err := layoututil.CheckOverflow(l.Child(0).Element().Widget(), childSize, constraints); err != nil {
-		return goui.Size{}, err
+	if err = layoututil.CheckOverflow(l.Child(0).Element().Widget(), childSize, constraints); err != nil {
+		return
 	}
 
 	center := l.Element().(*centerElement).Widget().(*Center)
 	if center.WidthFactor == 0 {
-		l.Size.Width = constraints.MaxWidth
+		size.Width = constraints.MaxWidth
 	} else {
-		l.Size.Width = layoututil.Clamp(childSize.Width*center.WidthFactor/100, constraints.MinWidth, constraints.MaxWidth)
+		size.Width = layoututil.Clamp(childSize.Width*center.WidthFactor/100, constraints.MinWidth, constraints.MaxWidth)
 	}
 	if center.HeightFactor == 0 {
-		l.Size.Height = constraints.MaxHeight
+		size.Height = constraints.MaxHeight
 	} else {
-		l.Size.Height = layoututil.Clamp(childSize.Height*center.HeightFactor/100, constraints.MinHeight, constraints.MaxHeight)
+		size.Height = layoututil.Clamp(childSize.Height*center.HeightFactor/100, constraints.MinHeight, constraints.MaxHeight)
 	}
 
-	l.childOffset.X = (l.Size.Width - childSize.Width) / 2
-	l.childOffset.Y = (l.Size.Height - childSize.Height) / 2
-	return l.Size, nil
+	l.childOffset.X = (size.Width - childSize.Width) / 2
+	l.childOffset.Y = (size.Height - childSize.Height) / 2
+	return
 }
 
 func (l *centerLayouter) PositionAt(x, y int) (err error) {
-	l.Position = goui.Point{X: x, Y: y}
+	l.pos = goui.Point{X: x, Y: y}
 	if l.NumChildren() == 0 {
 		return nil
 	}
@@ -119,6 +119,6 @@ func (l *centerLayouter) Replayer() func(ctx *goui.Context) error {
 		if _, err := l.Layout(ctx, *l.lastConstraints); err != nil {
 			return err
 		}
-		return l.PositionAt(l.Position.X, l.Position.Y)
+		return l.PositionAt(l.pos.X, l.pos.Y)
 	}
 }

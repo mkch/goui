@@ -40,7 +40,7 @@ type paddingLayouter struct {
 	goui.LayouterBase
 }
 
-func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (goui.Size, error) {
+func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	padding := l.Element().(*paddingElement).Widget().(*Padding)
 	if l.NumChildren() == 0 {
 		return goui.Size{
@@ -57,26 +57,26 @@ func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints
 		MinHeight: constraints.MinHeight,
 		MaxHeight: childMaxHeight,
 	}
-	childSize, err := l.Child(0).Layout(ctx, childConstraints)
+	var childSize goui.Size
+	childSize, err = l.Child(0).Layout(ctx, childConstraints)
 	if err != nil {
-		return goui.Size{}, err
+		return
 	}
 	if err = layoututil.CheckOverflow(l.Child(0).Element().Widget(), childSize, childConstraints); err != nil {
-		return goui.Size{}, err
+		return
 	}
 
-	l.Size = goui.Size{
+	size = goui.Size{
 		Width:  layoututil.Clamp(childSize.Width+padding.Left+padding.Right, constraints.MinWidth, constraints.MaxWidth),
 		Height: layoututil.Clamp(childSize.Height+padding.Top+padding.Bottom, constraints.MinHeight, constraints.MaxHeight),
 	}
-	return l.Size, err
+	return
 }
 
 func (l *paddingLayouter) PositionAt(x, y int) (err error) {
-	l.Position = goui.Point{X: x, Y: y}
 	if l.NumChildren() == 0 {
 		return
 	}
 	padding := l.Element().(*paddingElement).Widget().(*Padding)
-	return l.Child(0).PositionAt(l.Position.X+padding.Left, l.Position.Y+padding.Top)
+	return l.Child(0).PositionAt(x+padding.Left, y+padding.Top)
 }

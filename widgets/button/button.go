@@ -66,14 +66,19 @@ type buttonLayouter struct {
 var defaultButtonPadding = goui.Size{Width: 15, Height: 10}
 
 func (l *buttonLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+	elem := l.Element().(*buttonElement)
+	defer func() {
+		if err == nil {
+			err = native.SetWidgetSize(elem.Handle, size.Width, size.Height)
+		}
+	}()
 	if constraints.TightWidth() && constraints.TightHeight() {
-		l.Size = goui.Size{
+		size = goui.Size{
 			Width:  constraints.MinWidth,
 			Height: constraints.MinHeight,
 		}
-		return l.Size, nil
+		return
 	}
-	elem := l.Element().(*buttonElement)
 	widget := elem.Widget().(*Button)
 	padding := widget.Padding
 	if padding == nil {
@@ -83,14 +88,13 @@ func (l *buttonLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 	if err != nil {
 		return
 	}
-	l.Size = goui.Size{
+	size = goui.Size{
 		Width:  layoututil.Clamp(intrinsicWidth+padding.Width, constraints.MinWidth, constraints.MaxWidth),
 		Height: layoututil.Clamp(intrinsicHeight+padding.Height, constraints.MinHeight, constraints.MaxHeight),
 	}
-	return l.Size, nil
+	return
 }
 
 func (l *buttonLayouter) PositionAt(x, y int) (err error) {
-	l.Position = goui.Point{X: x, Y: y}
-	return native.SetWidgetDimensions(l.Element().(*buttonElement).Handle, x, y, l.Size.Width, l.Size.Height)
+	return native.SetWidgetPosition(l.Element().(*buttonElement).Handle, x, y)
 }

@@ -47,10 +47,10 @@ type columnLayouter struct {
 	childOffsets []goui.Point
 }
 
-func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (goui.Size, error) {
+func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	l.childOffsets = l.childOffsets[:0]
 	var childrenHeight = 0
-	l.Size.Width = 0
+	size.Width = constraints.MinWidth
 	for i := range l.NumChildren() {
 		child := l.Child(i)
 		childConstraints := goui.Constraints{
@@ -59,28 +59,28 @@ func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 			MaxWidth:  constraints.MaxWidth,
 			MaxHeight: gg.If(constraints.MaxHeight == goui.Infinity, goui.Infinity, constraints.MaxHeight-childrenHeight),
 		}
-		childSize, err := child.Layout(ctx, childConstraints)
+		var childSize goui.Size
+		childSize, err = child.Layout(ctx, childConstraints)
 		if err != nil {
-			return goui.Size{}, err
+			return
 		}
 		if err := layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
 			return goui.Size{}, err
 		}
 		l.childOffsets = append(l.childOffsets, goui.Point{X: 0, Y: childrenHeight})
 		childrenHeight += childSize.Height
-		l.Size.Width = max(l.Size.Width, childSize.Width)
+		size.Width = max(size.Width, childSize.Width)
 	}
 	switch l.Element().(*columnElement).Widget().(*Column).MainAxisSize {
 	case axes.MainAxisSizeMin:
-		l.Size.Height = childrenHeight
+		size.Height = childrenHeight
 	case axes.MainAxisSizeMax:
-		l.Size.Height = constraints.MaxHeight
+		size.Height = constraints.MaxHeight
 	}
-	return l.Size, nil
+	return
 }
 
 func (l *columnLayouter) PositionAt(x, y int) (err error) {
-	l.Position = goui.Point{X: x, Y: y}
 	for i := range l.NumChildren() {
 		l.Child(i).PositionAt(x+l.childOffsets[i].X, y+l.childOffsets[i].Y)
 	}

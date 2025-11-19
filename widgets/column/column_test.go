@@ -34,11 +34,11 @@ func (e *mockElement) ElementLayouter() goui.Layouter {
 type mockLayouter struct {
 	goui.LayouterBase
 	IntrinsicSize goui.Size
+	Position      goui.Point
 }
 
-func (l *mockLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (goui.Size, error) {
-	l.Size = layoututil.ClampSize(l.IntrinsicSize, constraints)
-	return l.Size, nil
+func (l *mockLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+	return layoututil.ClampSize(l.IntrinsicSize, constraints), nil
 }
 
 func (l *mockLayouter) PositionAt(x, y int) error {
