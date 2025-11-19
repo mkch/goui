@@ -25,3 +25,10 @@ func Clamp(value, min, max int) int {
 	}
 	return value
 }
+
+func ClampSize(size goui.Size, constraints goui.Constraints) goui.Size {
+	return goui.Size{
+		Width:  Clamp(size.Width, constraints.MinWidth, constraints.MaxWidth),
+		Height: Clamp(size.Height, constraints.MinHeight, constraints.MaxHeight),
+	}
+}

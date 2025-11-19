@@ -16,7 +16,7 @@ func main() {
 		Height: 400,
 		Root: &widgets.Column{Widgets: []goui.Widget{
 			&widgets.Center{
-				HeightFactor: 2,
+				HeightFactor: 120,
 				Widget: &widgets.SizedBox{
 					Width: 80, Height: 30,
 					Widget: &widgets.Button{
@@ -28,7 +28,7 @@ func main() {
 				},
 			},
 			&widgets.Center{
-				HeightFactor: 2,
+				HeightFactor: 120,
 				Widget: &widgets.SizedBox{
 					Width: 300, Height: 30,
 					Widget: &widgets.Button{

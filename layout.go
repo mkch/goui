@@ -18,8 +18,8 @@ func (e *OverflowParentError) Error() string {
 		e.Widget, e.Widget.WidgetID(), &e.Size, &e.Constraints)
 }
 
-// Infinite represents an infinite size(unbounded) constraint.
-const Infinite = 1<<(unsafe.Sizeof(int(0))*8-1) - 1
+// Infinity represents an infinite size(unbounded) constraint.
+const Infinity = 1<<(unsafe.Sizeof(int(0))*8-1) - 1
 
 // Constraints represents layout constraints.
 type Constraints struct {
@@ -36,22 +36,22 @@ func (c *Constraints) String() string {
 
 // TightWidth returns true if the constraint has a finite and equal min and max width.
 func (c *Constraints) TightWidth() bool {
-	return c.MinWidth == c.MaxWidth && c.MinWidth != Infinite
+	return c.MinWidth == c.MaxWidth && c.MinWidth != Infinity
 }
 
 // TightHeight returns true if the constraint has a finite and equal min and max height.
 func (c *Constraints) TightHeight() bool {
-	return c.MinHeight == c.MaxHeight && c.MinHeight != Infinite
+	return c.MinHeight == c.MaxHeight && c.MinHeight != Infinity
 }
 
 // UnboundWidth returns true if no constraint is imposed on width.
 func (c *Constraints) UnboundWidth() bool {
-	return c.MaxWidth == Infinite
+	return c.MaxWidth == Infinity
 }
 
 // UnboundHeight returns true if no constraint is imposed on height.
 func (c *Constraints) UnboundHeight() bool {
-	return c.MaxHeight == Infinite
+	return c.MaxHeight == Infinity
 }
 
 type Size struct {

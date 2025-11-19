@@ -10,12 +10,14 @@ type Center struct {
 	ID     goui.ID
 	Widget goui.Widget
 	// Width scaling factor. If not 0, the desired with of Center is calculated as
-	// child's width multiplied by WidthFactor.
+	// child's width multiplied by WidthFactor%(i.e, 120 means 120%).
 	// A 0 WidthFactor means to take all available width from parent.
+	// A non-zero WidthFactor must be greater than 100, or it panics.
 	WidthFactor int
 	// Height scaling factor. If not 0, the desired height of Center is calculated as
-	// child's height multiplied by HeightFactor.
+	// child's height multiplied by HeightFactor%(i.e, 120 means 120%).
 	// A 0 HeightFactor means to take all available height from parent.
+	// A non-zero HeightFactor must be greater than 100, or it panics.
 	HeightFactor int
 }
 
@@ -40,6 +42,17 @@ func (c *Center) Child(n int) goui.Widget {
 
 type centerElement struct {
 	goui.ElementBase
+}
+
+func (e *centerElement) SetWidget(widget goui.Widget) {
+	center := widget.(*Center)
+	if center.WidthFactor < 100 && center.WidthFactor != 0 {
+		panic("Center.WidthFactor must be either 0 or greater than 100")
+	}
+	if center.HeightFactor < 100 && center.HeightFactor != 0 {
+		panic("Center.HeightFactor must be either 0 or greater than 100")
+	}
+	e.ElementBase.SetWidget(widget)
 }
 
 func (e *centerElement) ElementLayouter() goui.Layouter {
@@ -73,12 +86,12 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 	if center.WidthFactor == 0 {
 		l.Size.Width = constraints.MaxWidth
 	} else {
-		l.Size.Width = layoututil.Clamp(childSize.Width*center.WidthFactor, constraints.MinWidth, constraints.MaxWidth)
+		l.Size.Width = layoututil.Clamp(childSize.Width*center.WidthFactor/100, constraints.MinWidth, constraints.MaxWidth)
 	}
 	if center.HeightFactor == 0 {
 		l.Size.Height = constraints.MaxHeight
 	} else {
-		l.Size.Height = layoututil.Clamp(childSize.Height*center.HeightFactor, constraints.MinHeight, constraints.MaxHeight)
+		l.Size.Height = layoututil.Clamp(childSize.Height*center.HeightFactor/100, constraints.MinHeight, constraints.MaxHeight)
 	}
 
 	l.childOffset.X = (l.Size.Width - childSize.Width) / 2

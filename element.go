@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"slices"
 
+	_ "unsafe" // for go:linkname
+
 	"github.com/mkch/goui/native"
 )
 
@@ -155,6 +157,8 @@ func (e *NativeElement) destroy() {
 		e.DestroyFunc(e.Handle)
 	}
 }
+
+//go:linkname buildElementTree github.com/mkch/goui/widgets/widgetstest.BuildElementTree
 
 // buildElementTree builds the element tree for the given widget.
 // Parameter parentLayouter is thee nearest recursive parent layouter,

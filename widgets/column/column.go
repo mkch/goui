@@ -1,14 +1,21 @@
 package column
 
 import (
+	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/layoututil"
+	"github.com/mkch/goui/widgets/axes"
 )
 
 // Column is a [Container] [Widget] that arranges its children in a vertical column.
+// The width of Column is the maximum width of its children.
+// The height of Column is calculated based on its MainAxisSize property:
+// - If MainAxisSize is Min, the height of Column is the sum of heights of its children.
+// - If MainAxisSize is Max, the height of Column is the maximum height allowed by its parent.
 type Column struct {
-	ID      goui.ID
-	Widgets []goui.Widget
+	ID           goui.ID
+	Widgets      []goui.Widget
+	MainAxisSize axes.MainAxisSize
 }
 
 func (c *Column) WidgetID() goui.ID {
@@ -41,17 +48,16 @@ type columnLayouter struct {
 }
 
 func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (goui.Size, error) {
-	l.Size.Width = constraints.MaxWidth
-	l.Size.Height = constraints.MaxHeight
-	l.childOffsets = make([]goui.Point, l.NumChildren())
+	l.childOffsets = l.childOffsets[:0]
 	var childrenHeight = 0
+	l.Size.Width = 0
 	for i := range l.NumChildren() {
 		child := l.Child(i)
 		childConstraints := goui.Constraints{
-			MinWidth:  constraints.MinWidth,
-			MinHeight: constraints.MinHeight,
-			MaxWidth:  l.Size.Width,
-			MaxHeight: l.Size.Height - childrenHeight,
+			MinWidth:  0,
+			MinHeight: 0,
+			MaxWidth:  constraints.MaxWidth,
+			MaxHeight: gg.If(constraints.MaxHeight == goui.Infinity, goui.Infinity, constraints.MaxHeight-childrenHeight),
 		}
 		childSize, err := child.Layout(ctx, childConstraints)
 		if err != nil {
@@ -60,8 +66,15 @@ func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		if err := layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
 			return goui.Size{}, err
 		}
-		l.childOffsets[i] = goui.Point{X: 0, Y: childrenHeight}
+		l.childOffsets = append(l.childOffsets, goui.Point{X: 0, Y: childrenHeight})
 		childrenHeight += childSize.Height
+		l.Size.Width = max(l.Size.Width, childSize.Width)
+	}
+	switch l.Element().(*columnElement).Widget().(*Column).MainAxisSize {
+	case axes.MainAxisSizeMin:
+		l.Size.Height = childrenHeight
+	case axes.MainAxisSizeMax:
+		l.Size.Height = constraints.MaxHeight
 	}
 	return l.Size, nil
 }
