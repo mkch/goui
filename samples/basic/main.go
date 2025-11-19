@@ -11,9 +11,10 @@ var app = goui.NewApp()
 
 func main() {
 	app.CreateWindow(goui.Window{
-		Title:  "goui demo",
-		Width:  600,
-		Height: 400,
+		DebugLayout: true,
+		Title:       "goui demo",
+		Width:       600,
+		Height:      400,
 		Root: &widgets.Column{Widgets: []goui.Widget{
 			&widgets.Center{
 				HeightFactor: 120,

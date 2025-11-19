@@ -2,6 +2,7 @@ package goui
 
 import (
 	"fmt"
+	"iter"
 
 	"github.com/mkch/goui/native"
 )
@@ -106,6 +107,14 @@ func (app *App) CreateWindow(config Window) error {
 			panic(err)
 		}
 	})
+	if config.DebugLayout {
+		native.EnableDrawDebugRect(handle, func() iter.Seq[native.Rect] {
+			if window.Layouter == nil {
+				return func(yield func(native.Rect) bool) {}
+			}
+			return layouterDebugRects(window.Layouter)
+		})
+	}
 	app.windows[config.ID] = window
 	return nil
 }

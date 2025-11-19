@@ -1,11 +1,15 @@
 package native
 
 import (
+	"iter"
 	"unsafe"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/gw/app/gwapp"
 	"github.com/mkch/gw/button"
 	"github.com/mkch/gw/metrics"
+	"github.com/mkch/gw/paint"
+	"github.com/mkch/gw/paint/pen"
 	"github.com/mkch/gw/win32"
 	"github.com/mkch/gw/win32/win32util"
 	"github.com/mkch/gw/window"
@@ -165,4 +169,54 @@ func GetButtonMinimumSize(handle Handle, label string) (width, height int, err e
 		return
 	}
 	return int(rect.Width() + win32.LONG(GetSystemMetricsXEdge())*2), int(rect.Height() + win32.LONG(GetSystemMetricsYEdge())*2), nil
+}
+
+var debugRectPen = func() func() *pen.Pen {
+	var p *pen.Pen
+	return func() *pen.Pen {
+		if p == nil {
+			p = gg.Must(pen.NewCosmetic(win32.PS_DOT, win32.RGB(255, 0, 0)))
+		}
+		return p
+	}
+}()
+
+var debugRectBrush = func() func() win32.HBRUSH {
+	var brush win32.HBRUSH
+	return func() win32.HBRUSH {
+		if brush == 0 {
+			brush = win32.GetStockObject[win32.HBRUSH](win32.NULL_BRUSH)
+		}
+		return brush
+	}
+}()
+
+type Rect struct {
+	Left, Top, Right, Bottom int
+}
+
+func EnableDrawDebugRect(winHandle Handle, rects func() iter.Seq[Rect]) error {
+	win := winHandle.(*window.Window)
+	win.AddMsgListener(win32.WM_SIZE, func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM) {
+		win32.InvalidateRect(hwnd, nil, true)
+	})
+	win.SetPaintCallback(func(dc *paint.PaintDC, prev func(*paint.PaintDC)) {
+		pen := debugRectPen()
+		oldPen, _ := win32.SelectObject(dc.HDC(), pen.HPEN())
+		defer win32.SelectObject(dc.HDC(), oldPen)
+		brush := debugRectBrush()
+		oldBrush, _ := win32.SelectObject(dc.HDC(), brush)
+		defer win32.SelectObject(dc.HDC(), oldBrush)
+
+		for rect := range rects() {
+			win32.Rectangle(dc.HDC(),
+				rect.Left,
+				rect.Top,
+				rect.Right,
+				rect.Bottom)
+		}
+
+	})
+	return nil
+
 }

@@ -1,6 +1,7 @@
 package goui
 
 import (
+	"iter"
 	"reflect"
 	"slices"
 
@@ -158,6 +159,58 @@ func (e *NativeElement) destroy() {
 	}
 }
 
+// debugLayouter is a [Layouter] wrapper that records layout position and size for debugging.
+type debugLayouter struct {
+	Layouter
+	size Size
+	pos  Point
+}
+
+func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size, err error) {
+	size, err = l.Layouter.Layout(ctx, constraints)
+	if err != nil {
+		return
+	}
+	l.size = size
+	return
+}
+
+func (l *debugLayouter) PositionAt(x, y int) (err error) {
+	err = l.Layouter.PositionAt(x, y)
+	if err != nil {
+		return
+	}
+	l.pos = Point{X: x, Y: y}
+	return
+}
+
+// layouterDebugRects returns an iterator of debug rectangles for the given layouter tree
+func layouterDebugRects(l Layouter) iter.Seq[native.Rect] {
+	return func(yield func(native.Rect) bool) {
+		// Use a stack to avoid recursive iterator calls
+		stack := []Layouter{l}
+		for len(stack) > 0 {
+			current := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+
+			if debugLayouter, ok := current.(*debugLayouter); ok {
+				if !yield(native.Rect{
+					Left:   debugLayouter.pos.X,
+					Top:    debugLayouter.pos.Y,
+					Right:  debugLayouter.pos.X + debugLayouter.size.Width,
+					Bottom: debugLayouter.pos.Y + debugLayouter.size.Height,
+				}) {
+					return
+				}
+				// Add children to stack in reverse order to maintain left-to-right traversal
+				for i := debugLayouter.NumChildren() - 1; i >= 0; i-- {
+					stack = append(stack, debugLayouter.Child(i))
+				}
+			}
+		}
+	}
+}
+
 //go:linkname buildElementTree github.com/mkch/goui/widgets/widgetstest.BuildElementTree
 
 // buildElementTree builds the element tree for the given widget.
@@ -176,6 +229,11 @@ func buildElementTree(ctx *Context, widget Widget, parentLayouter Layouter) (Ele
 	var layouter Layouter
 	if holder, ok := elem.(LayouterHolder); ok {
 		layouter = holder.ElementLayouter()
+
+		if ctx.window.DebugLayout {
+			layouter = &debugLayouter{Layouter: layouter}
+		}
+
 		layouter.setElement(elem)
 	}
 	if statefulWidget, ok := widget.(StatefulWidget); ok {

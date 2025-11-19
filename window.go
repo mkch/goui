@@ -3,11 +3,12 @@ package goui
 import "github.com/mkch/goui/native"
 
 type Window struct {
-	ID     ID
-	Title  string
-	Width  int
-	Height int
-	Root   Widget
+	ID          ID
+	Title       string
+	Width       int
+	Height      int
+	Root        Widget
+	DebugLayout bool // If true, draw layout debug info.
 }
 
 type window struct {
