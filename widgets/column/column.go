@@ -36,6 +36,8 @@ func (c *Column) Child(n int) goui.Widget {
 	return c.Widgets[n]
 }
 
+func (c *Column) Exclusive(goui.Container) { /*Nop*/ }
+
 type columnLayouter struct {
 	goui.LayouterBase
 	childOffsets []goui.Point

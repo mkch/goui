@@ -33,6 +33,8 @@ type Container interface {
 	Widget
 	NumChildren() int
 	Child(n int) Widget
+	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
+	Exclusive(Container)
 }
 
 type App struct {

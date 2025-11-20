@@ -3,6 +3,19 @@ package goui
 type StatelessWidget interface {
 	Widget
 	Build(ctx *Context) Widget
+	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
+	Exclusive(statelessWidget)
+}
+
+// StatelessWidgetImpl is a building block to implement [StatelessWidget].
+// Embedding this struct in a struct and implementing the remaining methods of
+// [StatelessWidget] allows the struct type to satisfy the [StatelessWidget] interface.
+type StatelessWidgetImpl struct{}
+
+func (StatelessWidgetImpl) Exclusive(statelessWidget) { /*Nop*/ }
+
+func (StatelessWidgetImpl) CreateElement(ctx *Context) (Element, error) {
+	return createStatelessElement(ctx), nil
 }
 
 type StatelessWidgetFunc func(ctx *Context) Widget
@@ -12,15 +25,17 @@ func (f StatelessWidgetFunc) WidgetID() ID {
 }
 
 func (f StatelessWidgetFunc) CreateElement(ctx *Context) (Element, error) {
-	return CreateStatelessElement(ctx), nil
+	return createStatelessElement(ctx), nil
 }
 
 func (f StatelessWidgetFunc) Build(ctx *Context) Widget {
 	return f(ctx)
 }
 
-// CreateStatelessElement creates a new [Element] for a [StatelessWidget].
-func CreateStatelessElement(*Context) Element {
+func (f StatelessWidgetFunc) Exclusive(statelessWidget) { /*Nop*/ }
+
+// createStatelessElement creates a new [Element] for a [StatelessWidget].
+func createStatelessElement(*Context) Element {
 	return &ElementBase{}
 }
 
@@ -35,12 +50,14 @@ func (w *statelessWidget) WidgetID() ID {
 }
 
 func (w *statelessWidget) CreateElement(ctx *Context) (Element, error) {
-	return CreateStatelessElement(ctx), nil
+	return createStatelessElement(ctx), nil
 }
 
 func (w *statelessWidget) Build(ctx *Context) Widget {
 	return w.build(ctx)
 }
+
+func (w *statelessWidget) Exclusive(statelessWidget) { /*Nop*/ }
 
 // NewStatelessWidget creates a new StatelessWidget with the given ID and build function.
 // The build function is called in StatelessWidget.Build method.

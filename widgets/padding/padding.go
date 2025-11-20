@@ -29,6 +29,8 @@ func (p *Padding) Child(n int) goui.Widget {
 	return p.Widget
 }
 
+func (p *Padding) Exclusive(goui.Container) { /*Nop*/ }
+
 type paddingLayouter struct {
 	goui.LayouterBase
 }

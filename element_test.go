@@ -193,6 +193,8 @@ func (c *mockContainer) Child(n int) Widget {
 	return c.Children[n]
 }
 
+func (c *mockContainer) Exclusive(Container) { /*Nop*/ }
+
 func TestBuildElementTree_Container(t *testing.T) {
 	ctx := newMockContext()
 	layouter1 := &mockLayouter{}

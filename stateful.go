@@ -7,6 +7,19 @@ import (
 type StatefulWidget interface {
 	Widget
 	CreateState(*Context) *WidgetState
+	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
+	Exclusive(statefulWidget)
+}
+
+// StatefulWidgetImpl is a building block to implement [StatefulWidget].
+// Embedding this struct in a  struct and implementing the remaining methods of
+// [StatefulWidget] allows the struct type to satisfy the [StatefulWidget] interface.
+type StatefulWidgetImpl struct{}
+
+func (StatefulWidgetImpl) Exclusive(statefulWidget) { /*Nop*/ }
+
+func (StatefulWidgetImpl) CreateElement(ctx *Context) (Element, error) {
+	return createStatefulElement(ctx), nil
 }
 
 type StatefulWidgetFunc func(*Context) *WidgetState
@@ -16,12 +29,14 @@ func (f StatefulWidgetFunc) WidgetID() ID {
 }
 
 func (f StatefulWidgetFunc) CreateElement(ctx *Context) (Element, error) {
-	return CreateStatefulElement(ctx), nil
+	return createStatefulElement(ctx), nil
 }
 
 func (f StatefulWidgetFunc) CreateState(ctx *Context) *WidgetState {
 	return f(ctx)
 }
+
+func (f StatefulWidgetFunc) Exclusive(statefulWidget) { /*Nop*/ }
 
 type statefulElement struct {
 	ElementBase
@@ -33,8 +48,8 @@ func (e *statefulElement) destroy() {
 	e.ElementBase.destroy()
 }
 
-// CreateStatefulElement creates a new [Element] for a [StatefulWidget].
-func CreateStatefulElement(*Context) Element {
+// createStatefulElement creates a new [Element] for a [StatefulWidget].
+func createStatefulElement(*Context) Element {
 	return &statefulElement{}
 }
 
@@ -113,12 +128,14 @@ func (w *statefulWidget) WidgetID() ID {
 }
 
 func (w *statefulWidget) CreateElement(ctx *Context) (Element, error) {
-	return CreateStatefulElement(ctx), nil
+	return createStatefulElement(ctx), nil
 }
 
 func (w *statefulWidget) CreateState(ctx *Context) *WidgetState {
 	return w.createState(ctx)
 }
+
+func (w *statefulWidget) Exclusive(statefulWidget) { /*Nop*/ }
 
 // NewStatefulWidget creates a new StatefulWidget with the given ID and createState function.
 // The createState function is called in StatefulWidget.CreateState method.

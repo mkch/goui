@@ -44,6 +44,8 @@ func (c *Center) Child(n int) goui.Widget {
 	return c.Widget
 }
 
+func (c *Center) Exclusive(goui.Container) { /*Nop*/ }
+
 type centerElement struct {
 	goui.ElementBase
 }
