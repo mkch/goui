@@ -12,7 +12,7 @@ type StatefulWidget interface {
 }
 
 // StatefulWidgetImpl is a building block to implement [StatefulWidget].
-// Embedding this struct in a  struct and implementing the remaining methods of
+// Embedding StatefulWidgetImpl in a struct and implementing the remaining methods of
 // [StatefulWidget] allows the struct type to satisfy the [StatefulWidget] interface.
 type StatefulWidgetImpl struct{}
 

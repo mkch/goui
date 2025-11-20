@@ -8,7 +8,7 @@ type StatelessWidget interface {
 }
 
 // StatelessWidgetImpl is a building block to implement [StatelessWidget].
-// Embedding this struct in a struct and implementing the remaining methods of
+// Embedding StatelessWidgetImpl in a struct and implementing the remaining methods of
 // [StatelessWidget] allows the struct type to satisfy the [StatelessWidget] interface.
 type StatelessWidgetImpl struct{}
 
