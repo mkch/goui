@@ -128,7 +128,7 @@ func (e *ElementBase) setChildInSlice(n int, child Element) {
 // dynamic type to *elementBase, not the outer concrete type that embeds
 // elementBase (e.g. *nativeElement).
 //
-// Using this package-level function (taking the interface `element`)
+// Using this package-level function (taking the interface `Element`)
 // preserves the original parent's dynamic type when calling
 // child.setParent(parent).
 func element_AppendChild(parent, child Element) {
