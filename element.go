@@ -167,27 +167,35 @@ func (e *NativeElement) destroy() {
 	}
 }
 
+// debugLayouterVer records a debug layouter and its highlight version.
+type debugLayouterVer struct {
+	Layouter *debugLayouter
+	Version  uintptr
+}
+
 // debugLayouter is a [Layouter] wrapper that records debugging information.
 type debugLayouter struct {
 	Layouter
 	Ctx                  *Context
-	Size                 Size              // Last computed size
-	Pos                  Point             // Last computed position
-	Highlight            bool              // Whether to highlight the outline of this layouter
-	CancelHighlightBatch *[]*debugLayouter // Batch of layouters to cancel highlight together
+	Size                 Size                // Last computed size
+	Pos                  Point               // Last computed position
+	Highlight            bool                // Whether to highlight the outline of this layouter
+	HighlightVer         uintptr             // Version of the highlight, used to avoid redundant redraws
+	CancelHighlightBatch *[]debugLayouterVer // Batch of layouters to cancel highlight together
 }
 
 func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size, err error) {
 	l.Highlight = true // Mark to highlight
+	l.HighlightVer++
 
-	if debugParent, ok := l.parent().(*debugLayouter); ok &&
+	if debugParent, ok := l.parent().(*debugLayouter); ok && // parent is debug layouter but can be nil
 		debugParent.CancelHighlightBatch != nil && *debugParent.CancelHighlightBatch != nil {
 		// Inherit and join the cancel highlight batch from parent
 		l.CancelHighlightBatch = debugParent.CancelHighlightBatch
-		*l.CancelHighlightBatch = append(*l.CancelHighlightBatch, l)
+		*l.CancelHighlightBatch = append(*l.CancelHighlightBatch, debugLayouterVer{Layouter: l, Version: l.HighlightVer})
 	} else {
 		// This is the root of laying out
-		l.CancelHighlightBatch = &[]*debugLayouter{l}
+		l.CancelHighlightBatch = &[]debugLayouterVer{{Layouter: l, Version: l.HighlightVer}}
 		defer func() {
 			if err != nil {
 				return // do not show highlight if layout fails
@@ -201,11 +209,19 @@ func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size
 			time.AfterFunc(delay, func() {
 				l.Ctx.app.Post(func() {
 					// Cancel all highlights in a batch
-					for _, layouter := range batch {
-						layouter.Highlight = false
+					var cancelled bool
+					for _, record := range batch {
+						if record.Version < record.Layouter.HighlightVer {
+							continue // too late, already updated
+						}
+						record.Layouter.Highlight = false
+						record.Layouter.HighlightVer = 0
+						cancelled = true
 					}
 					// Request a redraw to remove the highlights
-					native.InvalidWindow(l.Ctx.window.Handle)
+					if cancelled {
+						native.InvalidWindow(l.Ctx.window.Handle)
+					}
 				})
 			})
 		}()
