@@ -4,7 +4,7 @@ type StatelessWidget interface {
 	Widget
 	Build(ctx *Context) Widget
 	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
-	Exclusive(statelessWidget)
+	Exclusive(StatelessWidget)
 }
 
 // StatelessWidgetImpl is a building block to implement [StatelessWidget].
@@ -12,7 +12,7 @@ type StatelessWidget interface {
 // [StatelessWidget] allows the struct type to satisfy the [StatelessWidget] interface.
 type StatelessWidgetImpl struct{}
 
-func (StatelessWidgetImpl) Exclusive(statelessWidget) { /*Nop*/ }
+func (StatelessWidgetImpl) Exclusive(StatelessWidget) { /*Nop*/ }
 
 func (StatelessWidgetImpl) CreateElement(ctx *Context) (Element, error) {
 	return createStatelessElement(ctx), nil
@@ -32,7 +32,7 @@ func (f StatelessWidgetFunc) Build(ctx *Context) Widget {
 	return f(ctx)
 }
 
-func (f StatelessWidgetFunc) Exclusive(statelessWidget) { /*Nop*/ }
+func (f StatelessWidgetFunc) Exclusive(StatelessWidget) { /*Nop*/ }
 
 // createStatelessElement creates a new [Element] for a [StatelessWidget].
 func createStatelessElement(*Context) Element {
@@ -57,7 +57,7 @@ func (w *statelessWidget) Build(ctx *Context) Widget {
 	return w.build(ctx)
 }
 
-func (w *statelessWidget) Exclusive(statelessWidget) { /*Nop*/ }
+func (w *statelessWidget) Exclusive(StatelessWidget) { /*Nop*/ }
 
 // NewStatelessWidget creates a new StatelessWidget with the given ID and build function.
 // The build function is called in StatelessWidget.Build method.

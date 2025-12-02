@@ -8,7 +8,7 @@ type StatefulWidget interface {
 	Widget
 	CreateState(*Context) *WidgetState
 	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
-	Exclusive(statefulWidget)
+	Exclusive(StatefulWidget)
 }
 
 // StatefulWidgetImpl is a building block to implement [StatefulWidget].
@@ -16,7 +16,7 @@ type StatefulWidget interface {
 // [StatefulWidget] allows the struct type to satisfy the [StatefulWidget] interface.
 type StatefulWidgetImpl struct{}
 
-func (StatefulWidgetImpl) Exclusive(statefulWidget) { /*Nop*/ }
+func (StatefulWidgetImpl) Exclusive(StatefulWidget) { /*Nop*/ }
 
 func (StatefulWidgetImpl) CreateElement(ctx *Context) (Element, error) {
 	return createStatefulElement(ctx), nil
@@ -36,7 +36,7 @@ func (f StatefulWidgetFunc) CreateState(ctx *Context) *WidgetState {
 	return f(ctx)
 }
 
-func (f StatefulWidgetFunc) Exclusive(statefulWidget) { /*Nop*/ }
+func (f StatefulWidgetFunc) Exclusive(StatefulWidget) { /*Nop*/ }
 
 type statefulElement struct {
 	ElementBase
@@ -135,7 +135,7 @@ func (w *statefulWidget) CreateState(ctx *Context) *WidgetState {
 	return w.createState(ctx)
 }
 
-func (w *statefulWidget) Exclusive(statefulWidget) { /*Nop*/ }
+func (w *statefulWidget) Exclusive(StatefulWidget) { /*Nop*/ }
 
 // NewStatefulWidget creates a new StatefulWidget with the given ID and createState function.
 // The createState function is called in StatefulWidget.CreateState method.
