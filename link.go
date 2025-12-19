@@ -5,8 +5,8 @@ package goui
 import _ "unsafe" // for go:linkname
 
 //go:linkname link_BuildElementTree github.com/mkch/goui/widgets/widgetstest.BuildElementTree
-func link_BuildElementTree(ctx *Context, widget Widget, parentLayouter Layouter) (Element, Layouter, error) {
-	return buildElementTree(ctx, widget, parentLayouter)
+func link_BuildElementTree(ctx *Context, widget Widget) (Element, Layouter, error) {
+	return buildElementTree(ctx, widget)
 }
 
 //go:linkname link_NewMockContext github.com/mkch/goui/widgets/widgetstest.NewContext

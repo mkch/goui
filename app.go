@@ -59,7 +59,7 @@ func (app *App) Run() int {
 	for _, window := range app.windows {
 		if window.Window.Root != nil {
 			ctx.window = window
-			elem, layouter, err := buildElementTree(ctx, window.Window.Root, nil)
+			elem, layouter, err := buildElementTree(ctx, window.Window.Root)
 			if err != nil {
 				panic(err)
 			}

@@ -3,7 +3,6 @@ package goui
 import (
 	"fmt"
 	"iter"
-	"slices"
 	"time"
 	"unsafe"
 
@@ -103,10 +102,7 @@ type Layouter interface {
 	NumChildren() int
 	Child(n int) Layouter
 
-	indexChildFunc(f func(Layouter) bool) int
-	removeChild(child Layouter)
-	removeChildIndex(n int)
-	removeChildrenRange(start, end int)
+	clearChildren()
 	parent() Layouter
 	setParent(parent Layouter)
 	Element() Element
@@ -115,14 +111,11 @@ type Layouter interface {
 	// appendChildToSlice is a helper of [Layouter_AppendChild].
 	// The implementation should just append child to the children slice or some equivalent.
 	appendChildToSlice(child Layouter)
-	// setChildInSlice is a helper of [Layouter_SetChild].
-	// The implementation should just set child at index n in the children slice or some equivalent.
-	setChildInSlice(i int, child Layouter)
 }
 
 // LayouterBase is a helper struct for implementing Layouter.
 // Embedding LayouterBase in a struct and implementing
-// Layout and Apply methods implements the Layouter interface.
+// Layout and PositionAt methods implements the Layouter interface.
 type LayouterBase struct {
 	theElement Element
 	theParent  Layouter
@@ -149,20 +142,8 @@ func (l *LayouterBase) Child(n int) Layouter {
 	return l.children[n]
 }
 
-func (l *LayouterBase) indexChildFunc(f func(Layouter) bool) int {
-	return slices.IndexFunc(l.children, f)
-}
-
-func (l *LayouterBase) removeChildIndex(n int) {
-	l.children = slices.Delete(l.children, n, n+1)
-}
-
-func (l *LayouterBase) removeChild(child Layouter) {
-	l.children = slices.DeleteFunc(l.children, func(l Layouter) bool { return l == child })
-}
-
-func (l *LayouterBase) removeChildrenRange(start, end int) {
-	l.children = slices.Delete(l.children, start, end)
+func (l *LayouterBase) clearChildren() {
+	l.children = l.children[:0]
 }
 
 func (l *LayouterBase) setChildInSlice(i int, child Layouter) {
@@ -187,17 +168,6 @@ func (l *LayouterBase) Replayer() func(*Context) error {
 func layouter_AppendChild(parent, child Layouter) {
 	child.setParent(parent)
 	parent.appendChildToSlice(child)
-}
-
-// layouter_SetChild sets child at index n of parent Layouter.
-//
-// See [element_AppendChild] for explanation why this is a package-level function.
-func layouter_SetChild(parent Layouter, n int, child Layouter) {
-	if parent.Child(n) == child {
-		return
-	}
-	parent.setChildInSlice(n, child)
-	child.setParent(parent)
 }
 
 // debugLayouterVer records a debug layouter and its highlight version.
@@ -303,4 +273,41 @@ func allLayouterDebugOutlines(root Layouter) iter.Seq[native.DebugRect] {
 			}
 		}
 	}
+}
+
+// buildLayouterTree builds the layouter tree for the given element.
+func buildLayouterTree(ctx *Context, element Element) (layouter Layouter, err error) {
+	widget := element.Widget()
+	if _, ok := widget.(StatefulWidget); ok {
+		return buildLayouterTree(ctx, element.child(0))
+	}
+	if _, ok := widget.(StatelessWidget); ok {
+		return buildLayouterTree(ctx, element.child(0))
+	}
+	if _, ok := widget.(Container); ok {
+		layouter = element.Layouter() // Must be non-nil
+		layouter.clearChildren()
+		for i := 0; i < element.numChildren(); i++ {
+			childElement := element.child(i)
+			childLayouter, err := buildLayouterTree(ctx, childElement)
+			if err != nil {
+				return nil, err
+			}
+			layouter_AppendChild(layouter, childLayouter)
+		}
+	} else {
+		layouter = element.Layouter() // Must be non-nil
+	}
+
+	// layouter must be non-nil
+
+	layouter.setElement(element)
+	if ctx.window.DebugLayout {
+		layouter = &debugLayouter{
+			Layouter: layouter,
+			Ctx:      ctx,
+		}
+	}
+
+	return
 }

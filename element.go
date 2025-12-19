@@ -4,8 +4,13 @@ import (
 	"reflect"
 	"slices"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/goui/native"
 )
+
+// [Element] should be comparable, because instance of Element must be a pointer to
+// some struct type embedding [ElementBase], which is comparable.
+type elementSet = gg.Set[Element]
 
 // Element is the persistent representation of a [Widget] in the GUI tree.
 type Element interface {
@@ -17,9 +22,10 @@ type Element interface {
 	numChildren() int
 	child(n int) Element
 	indexChild(child Element) int
-	removeChild(child Element)
-	removeChildIndex(n int)
-	removeChildrenRange(start, end int)
+	// updateChildren updates the children of the element to newChildren.
+	// newChildren is the new slice of children, which may not have their parent set correctly.
+	// unusedChildren contains the children that are no longer used and should be destroyed.
+	updateChildren(newChildren []Element, unusedChildren elementSet)
 	destroy()
 
 	// setLayouter sets the layouter of the element. For debug purposes only.
@@ -77,25 +83,19 @@ func (e *ElementBase) indexChild(child Element) int {
 	return slices.Index(e.children, child)
 }
 
-func (e *ElementBase) removeChild(child Element) {
-	i := slices.Index(e.children, child)
-	if i == -1 {
-		return
-	}
-	e.children[i].destroy()
-	e.children = slices.Delete(e.children, i, i+1)
-}
-
 func (e *ElementBase) removeChildIndex(n int) {
 	e.children[n].destroy()
 	e.children = slices.Delete(e.children, n, n+1)
 }
 
-func (e *ElementBase) removeChildrenRange(start, end int) {
-	for i := start; i < end; i++ {
-		e.children[i].destroy()
+func (e *ElementBase) updateChildren(newChildren []Element, unusedChildren elementSet) {
+	for unused := range unusedChildren {
+		unused.destroy()
 	}
-	e.children = slices.Delete(e.children, start, end)
+	for _, child := range newChildren {
+		child.setParent(e)
+	}
+	e.children = newChildren
 }
 
 func (e *ElementBase) destroy() {
@@ -166,96 +166,81 @@ func (e *NativeElement) destroy() {
 }
 
 // buildElementTree builds the element tree for the given widget.
-// Parameter parentLayouter is thee nearest recursive parent layouter,
-// or nil if there is no recursive parent layouter.
-// If any error occurs during the build, the error is returned.
-// The returned [Element] is the root element of the built tree.
 // The returned [Layouter] is the layouter of the returned [Element] or its nearest child.
-func buildElementTree(ctx *Context, widget Widget, parentLayouter Layouter) (Element, Layouter, error) {
+func buildElementTree(ctx *Context, widget Widget) (elem Element, layouter Layouter, err error) {
+	elem, err = performBuildElementTree(ctx, widget)
+	if err != nil {
+		return
+	}
+	layouter, err = buildLayouterTree(ctx, elem)
+	return
+}
+
+// performBuildElementTree builds the element tree for the given widget.
+func performBuildElementTree(ctx *Context, widget Widget) (Element, error) {
 	elem, err := widget.CreateElement(ctx)
 	if err != nil {
-		return nil, nil, err
-	}
-
-	layouter := elem.Layouter()
-	if layouter != nil {
-		if ctx.window.DebugLayout {
-			layouter = &debugLayouter{
-				Layouter: layouter,
-				Ctx:      ctx,
-			}
-			elem.setLayouter(layouter)
-		}
-		layouter.setElement(elem)
+		return nil, err
 	}
 
 	elem.SetWidget(widget)
 
 	if statefulWidget, ok := widget.(StatefulWidget); ok {
-		return buildStatefulElement(ctx, elem, statefulWidget, parentLayouter)
+		return buildStatefulElement(ctx, elem, statefulWidget)
 	}
 	if statelessWidget, ok := widget.(StatelessWidget); ok {
-		return buildStatelessElement(ctx, elem, statelessWidget, parentLayouter)
+		return buildStatelessElement(ctx, elem, statelessWidget)
 	}
 	if container, ok := widget.(Container); ok {
 		return buildContainerElement(ctx, elem, container)
 	}
-	return elem, layouter, nil
+	return elem, nil
 }
 
-func buildContainerElement(ctx *Context, elem Element, container Container) (Element, Layouter, error) {
-	// Container must have a Layouter
-	layouter := elem.Layouter()
+func buildContainerElement(ctx *Context, elem Element, container Container) (Element, error) {
 	numChildren := container.NumChildren()
 	for i := range numChildren {
-		childElem, childLayouter, err := buildElementTree(ctx, container.Child(i), layouter)
+		childElem, err := performBuildElementTree(ctx, container.Child(i))
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		element_AppendChild(elem, childElem)
-		if childLayouter != nil {
-			layouter_AppendChild(layouter, childLayouter)
-		}
 	}
-	return elem, layouter, nil
+	return elem, nil
 }
 
-func buildStatelessElement(ctx *Context, elem Element, statelessWidget StatelessWidget, parentLayouter Layouter) (Element, Layouter, error) {
-	childElem, childLayouter, err := buildElementTree(ctx, statelessWidget.Build(ctx), parentLayouter)
+func buildStatelessElement(ctx *Context, elem Element, statelessWidget StatelessWidget) (Element, error) {
+	childElem, err := performBuildElementTree(ctx, statelessWidget.Build(ctx))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	element_AppendChild(elem, childElem)
-	return elem, childLayouter, nil
+	return elem, nil
 }
 
-func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulWidget, parentLayouter Layouter) (Element, Layouter, error) {
+func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulWidget) (Element, error) {
 	statefulElem := elem.(*statefulElement)
 	statefulElem.state = statefulWidget.CreateState(ctx)
 	statefulElem.state.ctx = ctx
 	statefulElem.state.element = elem
-	childElem, childLayouter, err := buildElementTree(ctx, statefulElem.state.Build(), parentLayouter)
+	childElem, err := performBuildElementTree(ctx, statefulElem.state.Build())
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	element_AppendChild(elem, childElem)
-	return elem, childLayouter, nil
+	return elem, nil
 }
 
 // performUpdateElementTree is a helper of [updateElementTree] that performs the actual update.
 // Parameter elem is the element to update.
 // Parameter widget is the new widget to update to.
-// Parameter parentLayouter is thee nearest recursive parent layouter, or nil if there is no recursive parent layouter.
-// Parameter layouterIndex is the index of the old layouter in the parentLayouter,
-// or -1 if parentLayouter is nil.
 // If any error occurs during the update, the error is returned.
 // The returned [Element] is the updated element(maybe the same as elem).
-// The returned [Layouter] is the layouter of the returned [Element] or its nearest child.
-func performUpdateElementTree(ctx *Context, elem Element, widget Widget, parentLayouter Layouter, layouterIndex int) (Element, Layouter, error) {
+func performUpdateElementTree(ctx *Context, elem Element, widget Widget) (Element, error) {
 	// Widgets do not match, recreate the entire element tree.
 	if !widgetMatch(elem.Widget(), widget) {
 		elem.destroy()
-		return buildElementTree(ctx, widget, parentLayouter)
+		return performBuildElementTree(ctx, widget)
 	}
 	// Widgets match, update the widget of the element.
 	elem.SetWidget(widget)
@@ -263,127 +248,120 @@ func performUpdateElementTree(ctx *Context, elem Element, widget Widget, parentL
 		return updateContainerElement(ctx, elem, container)
 	}
 	if _, ok := widget.(StatefulWidget); ok {
-		return updateStatefulWidget(ctx, elem, parentLayouter, layouterIndex)
+		return updateStatefulWidget(ctx, elem)
 	}
 	if statelessWidget, ok := widget.(StatelessWidget); ok {
-		return updateStatelessWidget(ctx, elem, statelessWidget, parentLayouter, layouterIndex)
+		return updateStatelessWidget(ctx, elem, statelessWidget)
 	}
-	return elem, elem.Layouter(), nil
+	return elem, nil
 }
 
 // updateStatelessWidget updates the stateless element elem to hold the new stateless widget.
-func updateStatelessWidget(ctx *Context, elem Element, statelessWidget StatelessWidget, parentLayouter Layouter, layouterIndex int) (Element, Layouter, error) {
-	childElem, childLayouter, err := performUpdateElementTree(ctx,
-		elem.child(0), statelessWidget.Build(ctx),
-		parentLayouter, layouterIndex)
+func updateStatelessWidget(ctx *Context, elem Element, statelessWidget StatelessWidget) (Element, error) {
+	childElem, err := performUpdateElementTree(ctx,
+		elem.child(0), statelessWidget.Build(ctx))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	element_SetChild(elem, 0, childElem)
-	updateLayouter(childLayouter, parentLayouter, layouterIndex)
-	return elem, childLayouter, nil
+	return elem, nil
 }
 
 // updateStatefulWidget updates the stateful element elem to hold the new stateful widget.
-func updateStatefulWidget(ctx *Context, elem Element, parentLayouter Layouter, layouterIndex int) (Element, Layouter, error) {
+func updateStatefulWidget(ctx *Context, elem Element) (Element, error) {
 	statefulElement := elem.(*statefulElement)
-	childElem, childLayouter, err := performUpdateElementTree(ctx,
-		statefulElement.child(0), statefulElement.state.Build(),
-		parentLayouter, layouterIndex)
+	childElem, err := performUpdateElementTree(ctx,
+		statefulElement.child(0), statefulElement.state.Build())
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	element_SetChild(elem, 0, childElem)
-	updateLayouter(childLayouter, parentLayouter, layouterIndex)
-	return elem, childLayouter, nil
+	return elem, nil
 }
 
 // updateContainerElement updates the container element elem to hold the new container widget.
-func updateContainerElement(ctx *Context, elem Element, container Container) (Element, Layouter, error) {
-	// Container must have a Layouter
-	layouter := elem.Layouter()
-	// Update children.
-	numWidgets := container.NumChildren()
-	numElements := elem.numChildren()
-	var oldChildrenLayoutCount = layouter.NumChildren()
-	var childrenLayoutCount = 0
-	var layouterIndex = -1
+func updateContainerElement(ctx *Context, elem Element, container Container) (Element, error) {
 
-	var updateElement = func(i int) error {
+	// Divide the children of elem into two parts:
+	var oldElementMap map[ID]Element   // those with an ID
+	var oldElementsWithoutID []Element // those without an ID
+	for i := 0; i < elem.numChildren(); i++ {
 		child := elem.child(i)
-		if child.Layouter() != nil {
-			layouterIndex++
+		id := child.Widget().WidgetID()
+		if id == nil {
+			oldElementsWithoutID = append(oldElementsWithoutID, child)
+			continue
 		}
-		childElem, childLayouter, err := performUpdateElementTree(ctx, child, container.Child(i), layouter, layouterIndex)
-		if err != nil {
-			return err
+		if oldElementMap == nil {
+			oldElementMap = make(map[ID]Element)
 		}
-		element_SetChild(elem, i, childElem)
-		if childLayouter != nil {
-			if childrenLayoutCount < oldChildrenLayoutCount {
-				layouter_SetChild(layouter, childrenLayoutCount, childLayouter)
-			} else {
-				layouter_AppendChild(layouter, childLayouter)
-			}
-			childrenLayoutCount++
-		}
-		return nil
+		oldElementMap[id] = child
 	}
-	if numElements <= numWidgets {
-		// Update existing elements.
-		for i := range numElements {
-			if err := updateElement(i); err != nil {
-				return nil, nil, err
-			}
-		}
-		// Add new elements.
-		for i := numElements; i < numWidgets; i++ {
-			childElement, childLayouter, err := buildElementTree(ctx, container.Child(i), layouter)
-			if err != nil {
-				return nil, nil, err
-			}
-			element_AppendChild(elem, childElement)
-			if childLayouter != nil {
-				if childrenLayoutCount < oldChildrenLayoutCount {
-					layouter_SetChild(layouter, childrenLayoutCount, childLayouter)
-				} else {
-					layouter_AppendChild(layouter, childLayouter)
-				}
-				childrenLayoutCount++
-			}
-		}
-	} else {
-		// Update existing elements.
-		for i := range numWidgets {
-			if err := updateElement(i); err != nil {
-				return nil, nil, err
-			}
-		}
-		// Remove extra elements.
-		elem.removeChildrenRange(numWidgets, numElements)
-	}
-	// Remove extra layouts.
-	if childrenLayoutCount < oldChildrenLayoutCount {
-		layouter.removeChildrenRange(childrenLayoutCount, oldChildrenLayoutCount)
-	}
-	return elem, layouter, nil
-}
 
-// updateLayouter updates the layouter in the parentLayouter.
-// Parameter oldIndex is the index of the old layouter in the parentLayouter,
-// or -1 if there was no corresponding old layouter.
-func updateLayouter(newLayouter Layouter, parentLayouter Layouter, oldIndex int) {
-	if newLayouter == nil {
-		if oldIndex >= 0 {
-			parentLayouter.removeChildIndex(oldIndex)
+	var newChildren []Element // the updated children
+	var withoutIDIndex = -1   // index of last used old element without ID
+
+	// For each child widget in the new container, try to find a matching old element.
+	// If found, update it in place; otherwise, create a new element.
+	//
+	// The matching is done by ID first, then by order for those without ID.
+	for i := 0; i < container.NumChildren(); i++ {
+		widget := container.Child(i)
+		id := widget.WidgetID()
+		if id != nil {
+			// new widget has ID
+			if oldElem, ok := oldElementMap[id]; ok {
+				// found matching old element by that ID
+				delete(oldElementMap, id)
+				updatedElem, err := performUpdateElementTree(ctx, oldElem, widget)
+				if err != nil {
+					return nil, err
+				}
+				newChildren = append(newChildren, updatedElem)
+				continue
+			}
+			// no matching old element by that ID, create a new one
+			updatedElem, err := performBuildElementTree(ctx, widget)
+			if err != nil {
+				return nil, err
+			}
+			newChildren = append(newChildren, updatedElem)
+			continue
 		}
-		return
+		// new widget has no ID
+		// try to find the next old element without ID
+		if withoutIDIndex+1 >= len(oldElementsWithoutID) {
+			// no more old elements without ID, create a new one
+			updatedElem, err := performBuildElementTree(ctx, widget)
+			if err != nil {
+				return nil, err
+			}
+			newChildren = append(newChildren, updatedElem)
+			continue
+		}
+		// found next old element without ID
+		withoutIDIndex++
+		updatedElem, err := performUpdateElementTree(ctx, oldElementsWithoutID[withoutIDIndex], widget)
+		if err != nil {
+			return nil, err
+		}
+		newChildren = append(newChildren, updatedElem)
 	}
-	if oldIndex == -1 {
-		layouter_AppendChild(parentLayouter, newLayouter)
-	} else {
-		layouter_SetChild(parentLayouter, oldIndex, newLayouter)
+
+	// Collect unused old elements
+	var unusedChildren elementSet
+	if len(oldElementMap) > 0 || withoutIDIndex < len(oldElementsWithoutID)-1 {
+		unusedChildren = make(elementSet)
+		for _, oldElem := range oldElementMap {
+			unusedChildren.Add(oldElem)
+		}
+		for i := withoutIDIndex + 1; i < len(oldElementsWithoutID); i++ {
+			unusedChildren.Add(oldElementsWithoutID[i])
+		}
 	}
+	// Do the update
+	elem.updateChildren(newChildren, unusedChildren)
+	return elem, nil
 }
 
 // widgetMatch returns whether widget1 and widget2 are considered the same which
@@ -393,18 +371,13 @@ func widgetMatch(widget1, widget2 Widget) bool {
 }
 
 // updateElementTree updates the element tree to match the given widget.
-// The returned [Element] is the updated element(maybe the same as elem).
-// The returned [Layouter] is the layouter of the returned [Element] or its nearest child.
-func updateElementTree(ctx *Context, elem Element, widget Widget) (Element, Layouter, error) {
-	var parentLayouter Layouter
-	for parent := elem.parent(); parent != nil; parent = parent.parent() {
-		if parentLayouter = parent.Layouter(); parentLayouter != nil {
-			break
-		}
+// The returned updated is the updated element(maybe the same as elem).
+// The returned layouter is the layouter of the updated element or its nearest child.
+func updateElementTree(ctx *Context, elem Element, widget Widget) (updated Element, layouter Layouter, err error) {
+	updated, err = performUpdateElementTree(ctx, elem, widget)
+	if err != nil {
+		return
 	}
-	var layouterIndex = -1
-	if parentLayouter != nil {
-		layouterIndex = parentLayouter.indexChildFunc(func(l Layouter) bool { return l.Element() == elem })
-	}
-	return performUpdateElementTree(ctx, elem, widget, parentLayouter, layouterIndex)
+	layouter, err = buildLayouterTree(ctx, updated)
+	return
 }

@@ -29,7 +29,7 @@ type Handle any
 func CreateWindow(title string, width, height int) (handle Handle, err error) {
 	win, err := window.New(&window.Spec{
 		Text:   title,
-		Style:  win32.WS_OVERLAPPEDWINDOW | win32.WS_CLIPCHILDREN | win32.WS_VISIBLE,
+		Style:  win32.WS_OVERLAPPEDWINDOW | win32.WS_VISIBLE,
 		X:      metrics.Px(win32.CW_USEDEFAULT),
 		Width:  metrics.Px(win32.INT(width)),
 		Height: metrics.Px(win32.INT(height)),
