@@ -263,6 +263,7 @@ func updateStatelessWidget(ctx *Context, elem Element, statelessWidget Stateless
 // updateStatefulWidget updates the stateful element elem to hold the new stateful widget.
 func updateStatefulWidget(ctx *Context, elem Element) error {
 	statefulElement := elem.(*statefulElement)
+	// rebuild the child widget and reconcile.
 	childElem, err := reconcileElementTreeImpl(ctx,
 		statefulElement.child(0), statefulElement.state.Build())
 	if err != nil {
