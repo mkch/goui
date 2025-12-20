@@ -4,13 +4,8 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/mkch/gg"
 	"github.com/mkch/goui/native"
 )
-
-// [Element] should be comparable, because instance of Element must be a pointer to
-// some struct type embedding [ElementBase], which is comparable.
-type elementSet = gg.Set[Element]
 
 // Element is the persistent representation of a [Widget] in the GUI tree.
 type Element interface {
@@ -25,7 +20,7 @@ type Element interface {
 	// updateChildren updates the children of the element to newChildren.
 	// newChildren is the new slice of children, which may not have their parent set correctly.
 	// unusedChildren contains the children that are no longer used and should be destroyed.
-	updateChildren(newChildren []Element, unusedChildren elementSet)
+	updateChildren(newChildren []Element, unusedChildren []Element)
 	destroy()
 
 	// setLayouter sets the layouter of the element. For debug purposes only.
@@ -88,8 +83,8 @@ func (e *ElementBase) removeChildIndex(n int) {
 	e.children = slices.Delete(e.children, n, n+1)
 }
 
-func (e *ElementBase) updateChildren(newChildren []Element, unusedChildren elementSet) {
-	for unused := range unusedChildren {
+func (e *ElementBase) updateChildren(newChildren []Element, unusedChildren []Element) {
+	for _, unused := range unusedChildren {
 		unused.destroy()
 	}
 	for _, child := range newChildren {
@@ -349,14 +344,13 @@ func updateContainerElement(ctx *Context, elem Element, container Container) (El
 	}
 
 	// Collect unused old elements
-	var unusedChildren elementSet
-	if len(oldElementMap) > 0 || withoutIDIndex < len(oldElementsWithoutID)-1 {
-		unusedChildren = make(elementSet)
-		for _, oldElem := range oldElementMap {
-			unusedChildren.Add(oldElem)
-		}
+	var unusedChildren []Element
+	for _, oldElem := range oldElementMap {
+		unusedChildren = append(unusedChildren, oldElem)
+	}
+	if withoutIDIndex > 0 {
 		for i := withoutIDIndex + 1; i < len(oldElementsWithoutID); i++ {
-			unusedChildren.Add(oldElementsWithoutID[i])
+			unusedChildren = append(unusedChildren, oldElementsWithoutID[i])
 		}
 	}
 	// Do the update
