@@ -74,6 +74,10 @@ func (app *App) Run() int {
 	return app.app.Run()
 }
 
+func (app *App) Exit(exitCode int) {
+	app.app.Quit(exitCode)
+}
+
 func layoutWindow(window *window) error {
 	_, _, width, height, err := native.WindowClientRect(window.Handle)
 	if err != nil {
@@ -123,6 +127,7 @@ func (app *App) CreateWindow(config Window) error {
 			panic(err)
 		}
 	})
+	native.SetWindowOnCloseListener(handle, config.OnClose)
 	if config.DebugLayout {
 		native.EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {

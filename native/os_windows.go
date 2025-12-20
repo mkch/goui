@@ -108,6 +108,11 @@ func SetWindowOnSizeChangedListener(handle Handle, onSizeChanged func(width, hei
 	})
 }
 
+func SetWindowOnCloseListener(handle Handle, onClose func()) {
+	win := handle.(*window.Window)
+	win.OnClose = onClose
+}
+
 func WindowClientRect(handle Handle) (x, y, width, height int, err error) {
 	win := handle.(*window.Window)
 	var rect win32.RECT

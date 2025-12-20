@@ -8,6 +8,7 @@ type Window struct {
 	Width       int
 	Height      int
 	Root        Widget
+	OnClose     func()
 	DebugLayout bool // If true, draw layout debug info.
 }
 
