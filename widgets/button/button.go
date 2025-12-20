@@ -22,10 +22,11 @@ func (btn *Button) CreateElement(ctx *goui.Context) (goui.Element, error) {
 	if err != nil {
 		return nil, err
 	}
+	layouter := &buttonLayouter{}
 	elem := &buttonElement{
 		goui.NativeElement{
 			ElementBase: goui.ElementBase{
-				ElementLayouter: &buttonLayouter{},
+				ElementLayouter: layouter,
 			},
 			Handle:      handle,
 			DestroyFunc: native.DestroyWindow,

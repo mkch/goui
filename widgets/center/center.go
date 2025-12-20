@@ -1,6 +1,8 @@
 package center
 
 import (
+	"slices"
+
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/layoututil"
 )
@@ -71,42 +73,43 @@ type centerLayouter struct {
 func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	l.lastConstraints = &constraints
 
-	var childSize goui.Size
-
-	if l.NumChildren() > 0 {
-		childSize, err = l.Child(0).Layout(ctx, constraints)
+	for child := range l.Children() {
+		var childSize goui.Size
+		childSize, err = child.Layout(ctx, constraints)
 		if err != nil {
 			return goui.Size{}, err
 		}
-	}
 
-	if err = layoututil.CheckOverflow(l.Child(0).Element().Widget(), childSize, constraints); err != nil {
+		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, constraints); err != nil {
+			return
+		}
+
+		center := l.Element().(*centerElement).Widget().(*Center)
+		if center.WidthFactor == 0 {
+			size.Width = constraints.MaxWidth
+		} else {
+			size.Width = layoututil.Clamp(childSize.Width*center.WidthFactor/100, constraints.MinWidth, constraints.MaxWidth)
+		}
+		if center.HeightFactor == 0 {
+			size.Height = constraints.MaxHeight
+		} else {
+			size.Height = layoututil.Clamp(childSize.Height*center.HeightFactor/100, constraints.MinHeight, constraints.MaxHeight)
+		}
+
+		l.childOffset.X = (size.Width - childSize.Width) / 2
+		l.childOffset.Y = (size.Height - childSize.Height) / 2
 		return
 	}
-
-	center := l.Element().(*centerElement).Widget().(*Center)
-	if center.WidthFactor == 0 {
-		size.Width = constraints.MaxWidth
-	} else {
-		size.Width = layoututil.Clamp(childSize.Width*center.WidthFactor/100, constraints.MinWidth, constraints.MaxWidth)
-	}
-	if center.HeightFactor == 0 {
-		size.Height = constraints.MaxHeight
-	} else {
-		size.Height = layoututil.Clamp(childSize.Height*center.HeightFactor/100, constraints.MinHeight, constraints.MaxHeight)
-	}
-
-	l.childOffset.X = (size.Width - childSize.Width) / 2
-	l.childOffset.Y = (size.Height - childSize.Height) / 2
-	return
+	return goui.Size{Width: constraints.MinWidth, Height: constraints.MinHeight}, nil
 }
 
 func (l *centerLayouter) PositionAt(x, y int) (err error) {
 	l.pos = goui.Point{X: x, Y: y}
-	if l.NumChildren() == 0 {
+	children := slices.Collect(l.Children())
+	if children == nil {
 		return nil
 	}
-	return l.Child(0).PositionAt(x+l.childOffset.X, y+l.childOffset.Y)
+	return children[0].PositionAt(x+l.childOffset.X, y+l.childOffset.Y)
 }
 
 func (l *centerLayouter) Replayer() func(ctx *goui.Context) error {

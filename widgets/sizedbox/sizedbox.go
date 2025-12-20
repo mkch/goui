@@ -46,32 +46,31 @@ func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 		Width:  layoututil.Clamp(sizedBox.Width, constraints.MinWidth, constraints.MaxWidth),
 		Height: layoututil.Clamp(sizedBox.Height, constraints.MinHeight, constraints.MaxHeight),
 	}
-	if l.NumChildren() == 0 {
-		return
-	}
-	childConstraints := goui.Constraints{
-		MinWidth:  size.Width,
-		MinHeight: size.Height,
-		MaxWidth:  size.Width,
-		MaxHeight: size.Height,
-	}
-	var childSize goui.Size
-	childSize, err = l.Child(0).Layout(ctx, childConstraints)
-	if err != nil {
-		return
-	}
-	if err = layoututil.CheckOverflow(l.Child(0).Element().Widget(), childSize, childConstraints); err != nil {
-		return
+	for child := range l.Children() {
+		childConstraints := goui.Constraints{
+			MinWidth:  size.Width,
+			MinHeight: size.Height,
+			MaxWidth:  size.Width,
+			MaxHeight: size.Height,
+		}
+		var childSize goui.Size
+		childSize, err = child.Layout(ctx, childConstraints)
+		if err != nil {
+			return
+		}
+		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
+			return
+		}
 	}
 	return
 }
 
 func (l *sizedBoxLayouter) PositionAt(x, y int) (err error) {
 	l.pos = goui.Point{X: x, Y: y}
-	if l.NumChildren() == 0 {
-		return nil
+	for child := range l.Children() {
+		return child.PositionAt(x, y)
 	}
-	return l.Child(0).PositionAt(x, y)
+	return
 }
 
 func (l *sizedBoxLayouter) Replayer() func(ctx *goui.Context) error {

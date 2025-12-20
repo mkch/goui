@@ -37,41 +37,41 @@ type paddingLayouter struct {
 
 func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	padding := l.Element().Widget().(*Padding)
-	if l.NumChildren() == 0 {
-		return goui.Size{
-			Width:  padding.Left + padding.Right,
-			Height: padding.Top + padding.Bottom,
-		}, nil
-	}
 
-	childMaxWidth := layoututil.Clamp(constraints.MaxWidth-padding.Left-padding.Right, constraints.MinWidth, constraints.MaxWidth)
-	childMaxHeight := layoututil.Clamp(constraints.MaxHeight-padding.Top-padding.Bottom, constraints.MinHeight, constraints.MaxHeight)
-	childConstraints := goui.Constraints{
-		MinWidth:  constraints.MinWidth,
-		MaxWidth:  childMaxWidth,
-		MinHeight: constraints.MinHeight,
-		MaxHeight: childMaxHeight,
-	}
-	var childSize goui.Size
-	childSize, err = l.Child(0).Layout(ctx, childConstraints)
-	if err != nil {
-		return
-	}
-	if err = layoututil.CheckOverflow(l.Child(0).Element().Widget(), childSize, childConstraints); err != nil {
-		return
-	}
+	for child := range l.Children() {
+		childMaxWidth := layoututil.Clamp(constraints.MaxWidth-padding.Left-padding.Right, constraints.MinWidth, constraints.MaxWidth)
+		childMaxHeight := layoututil.Clamp(constraints.MaxHeight-padding.Top-padding.Bottom, constraints.MinHeight, constraints.MaxHeight)
+		childConstraints := goui.Constraints{
+			MinWidth:  constraints.MinWidth,
+			MaxWidth:  childMaxWidth,
+			MinHeight: constraints.MinHeight,
+			MaxHeight: childMaxHeight,
+		}
+		var childSize goui.Size
+		childSize, err = child.Layout(ctx, childConstraints)
+		if err != nil {
+			return
+		}
+		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
+			return
+		}
 
-	size = goui.Size{
-		Width:  layoututil.Clamp(childSize.Width+padding.Left+padding.Right, constraints.MinWidth, constraints.MaxWidth),
-		Height: layoututil.Clamp(childSize.Height+padding.Top+padding.Bottom, constraints.MinHeight, constraints.MaxHeight),
+		size = goui.Size{
+			Width:  layoututil.Clamp(childSize.Width+padding.Left+padding.Right, constraints.MinWidth, constraints.MaxWidth),
+			Height: layoututil.Clamp(childSize.Height+padding.Top+padding.Bottom, constraints.MinHeight, constraints.MaxHeight),
+		}
+		return // only one child
 	}
-	return
+	return goui.Size{
+		Width:  padding.Left + padding.Right,
+		Height: padding.Top + padding.Bottom,
+	}, nil
 }
 
 func (l *paddingLayouter) PositionAt(x, y int) (err error) {
-	if l.NumChildren() == 0 {
-		return
+	for child := range l.Children() {
+		padding := l.Element().Widget().(*Padding)
+		return child.PositionAt(x+padding.Left, y+padding.Top)
 	}
-	padding := l.Element().Widget().(*Padding)
-	return l.Child(0).PositionAt(x+padding.Left, y+padding.Top)
+	return
 }

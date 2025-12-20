@@ -2,6 +2,7 @@ package goui
 
 import (
 	"errors"
+	"slices"
 	"testing"
 )
 
@@ -29,7 +30,7 @@ func TestBuildElementTree_CreateElementError(t *testing.T) {
 		createError: expectedErr,
 	}
 
-	elem, layouter, err := buildElementTree(ctx, widget, nil)
+	elem, layouter, err := buildElementTree(ctx, widget)
 
 	if err != expectedErr {
 		t.Errorf("expected error %v, got %v", expectedErr, err)
@@ -46,7 +47,7 @@ func TestBuildElementTree_SimpleWidget(t *testing.T) {
 	ctx := newMockContext()
 	widget := &mockWidget{ID: ValueID("test"), element: &ElementBase{}}
 
-	elem, layouter, err := buildElementTree(ctx, widget, nil)
+	elem, layouter, err := buildElementTree(ctx, widget)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -85,7 +86,7 @@ func TestBuildElementTree_WidgetWithLayouter(t *testing.T) {
 	}
 	mockWidget := &mockWidget{ID: ValueID("test"), element: mockElement}
 
-	resultElem, layouter, err := buildElementTree(ctx, mockWidget, nil)
+	resultElem, layouter, err := buildElementTree(ctx, mockWidget)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -116,7 +117,7 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 		return &WidgetState{Build: func() Widget { return childWidget }}
 	})
 
-	elem, layouter, err := buildElementTree(ctx, widget, nil)
+	elem, layouter, err := buildElementTree(ctx, widget)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -150,7 +151,7 @@ func TestBuildElementTree_StatelessWidget(t *testing.T) {
 		return childWidget
 	})
 
-	elem, layouter, err := buildElementTree(ctx, widget, nil)
+	elem, layouter, err := buildElementTree(ctx, widget)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -209,7 +210,7 @@ func TestBuildElementTree_Container(t *testing.T) {
 		})},
 	}
 
-	elem, layouter, err := buildElementTree(ctx, container, nil)
+	elem, layouter, err := buildElementTree(ctx, container)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -230,13 +231,14 @@ func TestBuildElementTree_Container(t *testing.T) {
 	if layouter == nil {
 		t.Errorf("expected non-nil layouter for container widget")
 	}
-	if layouter.NumChildren() != 2 {
-		t.Errorf("layouter should have 2 children, got %d", layouter.NumChildren())
+	children := slices.Collect(layouter.Children())
+	if len(children) != 2 {
+		t.Errorf("layouter should have 2 children, got %d", len(children))
 	}
-	if layouter.Child(0) != layouter1 {
+	if children[0] != layouter1 {
 		t.Errorf("first child layouter not set correctly")
 	}
-	if layouter.Child(1) != layouter2 {
+	if children[1] != layouter2 {
 		t.Errorf("second child layouter not set correctly")
 	}
 }
@@ -250,7 +252,7 @@ func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 			return childWidget
 		})},
 	}
-	elem, layouter, err := buildElementTree(ctx, container, nil)
+	elem, layouter, err := buildElementTree(ctx, container)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -264,12 +266,13 @@ func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 	if layouter == nil {
 		t.Errorf("expected non-nil layouter for container widget")
 	}
-	if layouter.NumChildren() != 0 {
-		t.Errorf("layouter should have 0 children, got %d", layouter.NumChildren())
+	children := slices.Collect(layouter.Children())
+	if len(children) != 0 {
+		t.Errorf("layouter should have 0 children, got %d", len(children))
 	}
 }
 
-func TestUpdateElementTree_Update(t *testing.T) {
+func TestUpdateElementTree_Reconcile(t *testing.T) {
 	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
 	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
 
@@ -279,7 +282,7 @@ func TestUpdateElementTree_Update(t *testing.T) {
 	}
 
 	ctx := newMockContext()
-	elem, layouter, err := buildElementTree(ctx, container1, nil)
+	elem, layouter, err := buildElementTree(ctx, container1)
 	if err != nil {
 		t.Fatalf("unexpected error during build: %v", err)
 	}
@@ -291,7 +294,7 @@ func TestUpdateElementTree_Update(t *testing.T) {
 			child2},
 	}
 
-	newElem, newLayouter, err := updateElementTree(ctx, elem, container2)
+	newElem, newLayouter, err := reconcileElementTree(ctx, elem, container2)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
@@ -321,10 +324,11 @@ func TestUpdateElementTree_Update(t *testing.T) {
 	if newLayouter != layouter {
 		t.Fatalf("expected root layouter to be the same")
 	}
-	if newLayouter.NumChildren() != layouter.NumChildren() || newLayouter.NumChildren() != 1 {
+	children := slices.Collect(newLayouter.Children())
+	if len(children) != len(slices.Collect(layouter.Children())) || len(children) != 1 {
 		t.Fatalf("expected layouter to have same number of children")
 	}
-	if newLayouter.Child(0) != layouter.Child(0) {
+	if children[0] != slices.Collect(layouter.Children())[0] {
 		t.Fatalf("first child layouter not the same")
 	}
 
@@ -334,7 +338,7 @@ func TestUpdateElementTree_Update(t *testing.T) {
 			child2},
 	}
 
-	newElem2, newLayouter2, err := updateElementTree(ctx, newElem, container3)
+	newElem2, newLayouter2, err := reconcileElementTree(ctx, newElem, container3)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
@@ -357,16 +361,16 @@ func TestUpdateElementTree_Update(t *testing.T) {
 	if newElem2.child(1).Widget() != child2 {
 		t.Fatalf("second child element not updated correctly")
 	}
-
-	if newLayouter2.NumChildren() != 1 {
+	children2 := slices.Collect(newLayouter2.Children())
+	if len(children2) != 1 {
 		t.Fatalf("expected layouter to have 1 child")
 	}
-	if newLayouter2.Child(0) != layouter.Child(0) {
+	if children2[0] != slices.Collect(layouter.Children())[0] {
 		t.Fatalf("first child layouter not the same")
 	}
 }
 
-func TestUpdateElementTree_UpdateID(t *testing.T) {
+func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
 	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
 	child3 := &mockWidget{ID: ValueID("child3"), element: &ElementBase{}}
@@ -374,12 +378,12 @@ func TestUpdateElementTree_UpdateID(t *testing.T) {
 	container1 := &mockContainer{
 		ID: ValueID("container"),
 		Children: []Widget{
-			NewStatelessWidget(nil, func(ctx *Context) Widget { return child1 }),
+			child1,
 			NewStatefulWidget(nil, func(ctx *Context) *WidgetState {
 				return &WidgetState{
 					Build: func() Widget { return child2 }}
 			}),
-			NewStatefulWidget(nil, func(ctx *Context) *WidgetState {
+			NewStatefulWidget(ValueID("no-change"), func(ctx *Context) *WidgetState {
 				return &WidgetState{
 					Build: func() Widget { return child3 }}
 			}),
@@ -387,7 +391,7 @@ func TestUpdateElementTree_UpdateID(t *testing.T) {
 	}
 
 	ctx := newMockContext()
-	elem, layouter, err := buildElementTree(ctx, container1, nil)
+	elem, layouter, err := buildElementTree(ctx, container1)
 	if err != nil {
 		t.Fatalf("unexpected error during build: %v", err)
 	}
@@ -396,24 +400,24 @@ func TestUpdateElementTree_UpdateID(t *testing.T) {
 		t.Fatalf("expected 3 children, got %d", elem.numChildren())
 	}
 
-	child4 := &mockWidget{ID: ValueID("child4"), element: &ElementBase{}}
+	child4 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
 	child5 := &mockWidget{ID: ValueID("child5"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
 	container2 := &mockContainer{
 		ID: ValueID("container"),
 		Children: []Widget{
-			NewStatelessWidget(nil, func(ctx *Context) Widget { return child4 }), // Build() method of StatelessWidget is always called.
-			NewStatefulWidget(ValueID("2"), func(ctx *Context) *WidgetState { // ID changed, so CreateState() is called.
+			child4, // Match old #0, update in-place.
+			NewStatefulWidget(ValueID("parent-of-child5"), func(ctx *Context) *WidgetState { // No match, recrated
 				return &WidgetState{
 					Build: func() Widget { return child5 }}
 			}),
-			NewStatefulWidget(nil, func(ctx *Context) *WidgetState { // Neither ID or type changed, so CreateState() will not called.
+			NewStatefulWidget(ValueID("no-change"), func(ctx *Context) *WidgetState { // Match old #2, update in-place and createState will not be called.
 				return &WidgetState{
 					Build: func() Widget { panic("should not be called") }}
 			}),
 		},
 	}
 
-	newElem, newLayouter, err := updateElementTree(ctx, elem, container2)
+	newElem, newLayouter, err := reconcileElementTree(ctx, elem, container2)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
@@ -427,10 +431,10 @@ func TestUpdateElementTree_UpdateID(t *testing.T) {
 	}
 
 	// The child elements should be replaced.
-	if newElem.numChildren() != elem.numChildren() {
-		t.Fatalf("expected same number of children, got %d and %d", newElem.numChildren(), elem.numChildren())
+	if newElem.numChildren() != 3 {
+		t.Fatalf("expected 3 children, got %d", newElem.numChildren())
 	}
-	if id := newElem.child(0).child(0).Widget().WidgetID(); id != ValueID("child4") {
+	if id := newElem.child(0).Widget().WidgetID(); id != ValueID("child1") {
 		t.Fatalf("expected first child element to be replaced, got %v", id)
 	}
 	if id := newElem.child(1).child(0).Widget().WidgetID(); id != ValueID("child5") {
@@ -452,7 +456,7 @@ func TestUpdateElementTree_Append(t *testing.T) {
 	}
 
 	ctx := newMockContext()
-	elem, layouter, err := buildElementTree(ctx, container1, nil)
+	elem, layouter, err := buildElementTree(ctx, container1)
 	if err != nil {
 		t.Fatalf("unexpected error during build: %v", err)
 	}
@@ -463,7 +467,7 @@ func TestUpdateElementTree_Append(t *testing.T) {
 			child1, child2, child3},
 	}
 
-	newElem, newLayouter, err := updateElementTree(ctx, elem, container2)
+	newElem, newLayouter, err := reconcileElementTree(ctx, elem, container2)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
@@ -481,10 +485,11 @@ func TestUpdateElementTree_Append(t *testing.T) {
 	if newLayouter != layouter {
 		t.Fatalf("expected root layouter to be the same")
 	}
-	if newLayouter.NumChildren() != 2 {
+	children := slices.Collect(newLayouter.Children())
+	if len(children) != 2 {
 		t.Fatalf("expected layouter to have 2 children")
 	}
-	if newLayouter.Child(0).Element().Widget() != child2 || newLayouter.Child(1).Element().Widget() != child3 {
+	if children[0].Element().Widget() != child2 || children[1].Element().Widget() != child3 {
 		t.Fatalf("child layouters not updated correctly")
 	}
 }
@@ -500,7 +505,7 @@ func TestUpdateElementTree_Remove(t *testing.T) {
 	}
 
 	ctx := newMockContext()
-	elem, layouter, err := buildElementTree(ctx, container1, nil)
+	elem, layouter, err := buildElementTree(ctx, container1)
 	if err != nil {
 		t.Fatalf("unexpected error during build: %v", err)
 	}
@@ -510,7 +515,7 @@ func TestUpdateElementTree_Remove(t *testing.T) {
 		Children: []Widget{child1, child3},
 	}
 
-	newElem, newLayouter, err := updateElementTree(ctx, elem, container2)
+	newElem, newLayouter, err := reconcileElementTree(ctx, elem, container2)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
@@ -528,10 +533,11 @@ func TestUpdateElementTree_Remove(t *testing.T) {
 	if newLayouter != layouter {
 		t.Fatalf("expected root layouter to be the same")
 	}
-	if newLayouter.NumChildren() != 1 {
+	children := slices.Collect(newLayouter.Children())
+	if len(children) != 1 {
 		t.Fatalf("expected layouter to have 1 child")
 	}
-	if newLayouter.Child(0).Element().Widget() != child3 {
+	if children[0].Element().Widget() != child3 {
 		t.Fatalf("child layouters not updated correctly")
 	}
 }

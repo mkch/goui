@@ -99,75 +99,59 @@ type Layouter interface {
 	// Replayer returns a function that can replay the last layout operations,
 	// or nil if replay is not supported (e.g., when the layout depends on children).
 	Replayer() func(*Context) error
-	NumChildren() int
-	Child(n int) Layouter
-
-	clearChildren()
-	parent() Layouter
-	setParent(parent Layouter)
+	// Children returns an iterator of child layouters.
+	Children() iter.Seq[Layouter]
+	// Parent returns the parent layouter, or nil.
+	Parent() Layouter
+	// Element returns the element that creates this layouter.
 	Element() Element
-	setElement(e Element)
 
-	// appendChildToSlice is a helper of [Layouter_AppendChild].
-	// The implementation should just append child to the children slice or some equivalent.
-	appendChildToSlice(child Layouter)
+	// setElement is a helper function to set the creator of this layouter.
+	// The implementation should just set the element field or some equivalent.
+	setElement(element Element)
 }
 
 // LayouterBase is a helper struct for implementing Layouter.
 // Embedding LayouterBase in a struct and implementing
 // Layout and PositionAt methods implements the Layouter interface.
 type LayouterBase struct {
-	theElement Element
-	theParent  Layouter
-	children   []Layouter
+	element Element
 }
 
 func (l *LayouterBase) Element() Element {
-	return l.theElement
+	return l.element
 }
 
-func (l *LayouterBase) setElement(e Element) {
-	l.theElement = e
+func (l *LayouterBase) setElement(element Element) {
+	l.element = element
 }
 
-func (l *LayouterBase) parent() Layouter {
-	return l.theParent
+func (l *LayouterBase) Children() iter.Seq[Layouter] {
+	return func(yield func(Layouter) bool) {
+		for i := 0; i < l.element.numChildren(); i++ {
+			childLayouter := layouterTree(l.element.child(i))
+			if childLayouter == nil {
+				continue
+			}
+			if !yield(childLayouter) {
+				return
+			}
+		}
+	}
 }
 
-func (l *LayouterBase) NumChildren() int {
-	return len(l.children)
-}
-
-func (l *LayouterBase) Child(n int) Layouter {
-	return l.children[n]
-}
-
-func (l *LayouterBase) clearChildren() {
-	l.children = l.children[:0]
-}
-
-func (l *LayouterBase) setChildInSlice(i int, child Layouter) {
-	l.children[i] = child
-}
-
-func (l *LayouterBase) setParent(parent Layouter) {
-	l.theParent = parent
-}
-
-func (l *LayouterBase) appendChildToSlice(child Layouter) {
-	l.children = append(l.children, child)
+func (l *LayouterBase) Parent() (parent Layouter) {
+	for element := l.element.parent(); element != nil; element = element.parent() {
+		parent = element.Layouter()
+		if parent != nil {
+			return
+		}
+	}
+	return nil
 }
 
 func (l *LayouterBase) Replayer() func(*Context) error {
 	return nil
-}
-
-// layouter_AppendChild appends child to parent Layouter.
-//
-// See [element_AppendChild] for explanation why this is a package-level function.
-func layouter_AppendChild(parent, child Layouter) {
-	child.setParent(parent)
-	parent.appendChildToSlice(child)
 }
 
 // debugLayouterVer records a debug layouter and its highlight version.
@@ -179,7 +163,6 @@ type debugLayouterVer struct {
 // debugLayouter is a [Layouter] wrapper that records debugging information.
 type debugLayouter struct {
 	Layouter
-	Ctx                  *Context
 	Size                 Size                // Last computed size
 	Pos                  Point               // Last computed position
 	Highlight            bool                // Whether to highlight the outline of this layouter
@@ -191,7 +174,7 @@ func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size
 	l.Highlight = true // Mark to highlight
 	l.HighlightVer++
 
-	if debugParent, ok := l.parent().(*debugLayouter); ok && // parent is debug layouter but can be nil
+	if debugParent, ok := l.Parent().(*debugLayouter); ok && // parent is debug layouter but can be nil
 		debugParent.CancelHighlightBatch != nil && *debugParent.CancelHighlightBatch != nil {
 		// Inherit and join the cancel highlight batch from parent
 		l.CancelHighlightBatch = debugParent.CancelHighlightBatch
@@ -204,13 +187,13 @@ func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size
 				return // do not show highlight if layout fails
 			}
 			// Show highlight after laying out(include children) is done
-			native.InvalidWindow(l.Ctx.window.Handle)
+			native.InvalidWindow(ctx.window.Handle)
 			// Schedule canceling all highlights in the batch after a delay
 			const delay = 100 * time.Millisecond
 			batch := *l.CancelHighlightBatch
 			*l.CancelHighlightBatch = nil
 			time.AfterFunc(delay, func() {
-				l.Ctx.app.Post(func() {
+				ctx.app.Post(func() {
 					// Cancel all highlights in a batch
 					var cancelled bool
 					for _, record := range batch {
@@ -223,7 +206,7 @@ func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size
 					}
 					// Request a redraw to remove the highlights
 					if cancelled {
-						native.InvalidWindow(l.Ctx.window.Handle)
+						native.InvalidWindow(ctx.window.Handle)
 					}
 				})
 			})
@@ -266,48 +249,28 @@ func allLayouterDebugOutlines(root Layouter) iter.Seq[native.DebugRect] {
 					Highlight: debugLayouter.Highlight}) {
 					return
 				}
-				// Add children to stack in reverse order to maintain left-to-right traversal
-				for i := debugLayouter.NumChildren() - 1; i >= 0; i-- {
-					stack = append(stack, debugLayouter.Child(i))
+				// The left-to-right traversal order for children is not maintained here.
+				// Reversing debugLayouter.Children() would be inefficient.
+				for child := range debugLayouter.Children() {
+					stack = append(stack, child)
 				}
 			}
 		}
 	}
 }
 
-// buildLayouterTree builds the layouter tree for the given element.
-func buildLayouterTree(ctx *Context, element Element) (layouter Layouter, err error) {
-	widget := element.Widget()
-	if _, ok := widget.(StatefulWidget); ok {
-		return buildLayouterTree(ctx, element.child(0))
+// layouterTree returns the layouter tree for the given element tree.
+// The returned layouter is the layouter of the given element or its nearest child.
+func layouterTree(element Element) (layouter Layouter) {
+	layouter = element.Layouter()
+	if layouter != nil {
+		return
 	}
-	if _, ok := widget.(StatelessWidget); ok {
-		return buildLayouterTree(ctx, element.child(0))
+	if _, isContainer := element.Widget().(Container); isContainer {
+		panic("container without a layouter")
 	}
-	if _, ok := widget.(Container); ok {
-		layouter = element.Layouter() // Must be non-nil
-		layouter.clearChildren()
-		for i := 0; i < element.numChildren(); i++ {
-			childElement := element.child(i)
-			childLayouter, err := buildLayouterTree(ctx, childElement)
-			if err != nil {
-				return nil, err
-			}
-			layouter_AppendChild(layouter, childLayouter)
-		}
-	} else {
-		layouter = element.Layouter() // Must be non-nil
+	if element.numChildren() == 0 {
+		return nil
 	}
-
-	// layouter must be non-nil
-
-	layouter.setElement(element)
-	if ctx.window.DebugLayout {
-		layouter = &debugLayouter{
-			Layouter: layouter,
-			Ctx:      ctx,
-		}
-	}
-
-	return
+	return layouterTree(element.child(0))
 }

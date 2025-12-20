@@ -47,8 +47,7 @@ func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 	l.childOffsets = l.childOffsets[:0]
 	var childrenHeight = 0
 	size.Width = constraints.MinWidth
-	for i := range l.NumChildren() {
-		child := l.Child(i)
+	for child := range l.Children() {
 		childConstraints := goui.Constraints{
 			MinWidth:  0,
 			MinHeight: 0,
@@ -77,8 +76,10 @@ func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 }
 
 func (l *columnLayouter) PositionAt(x, y int) (err error) {
-	for i := range l.NumChildren() {
-		l.Child(i).PositionAt(x+l.childOffsets[i].X, y+l.childOffsets[i].Y)
+	var i = 0
+	for child := range l.Children() {
+		child.PositionAt(x+l.childOffsets[i].X, y+l.childOffsets[i].Y)
+		i++
 	}
 	return nil
 }

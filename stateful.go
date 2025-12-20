@@ -75,7 +75,7 @@ func (ws *WidgetState) destroyData() {
 func (ws *WidgetState) Update(updater func()) error {
 	updater()
 
-	elem, layouter, err := updateElementTree(ws.ctx, ws.element, ws.element.Widget())
+	elem, layouter, err := reconcileElementTree(ws.ctx, ws.element, ws.element.Widget())
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (ws *WidgetState) Update(updater func()) error {
 	}
 
 	if err == errNotReplayable {
-		return layoutWindow(ws.ctx.window)
+		return layoutWindow(ws.ctx)
 	}
 	return err
 }
@@ -106,7 +106,7 @@ var errNotReplayable = errors.New("the parent layouter does not support replayin
 func replayParentLayouter(ctx *Context, root Layouter) error {
 	// Find the nearest child-independent recursive parent(replayer).
 	var replayer func(*Context) error
-	for parent := root.parent(); parent != nil; parent = parent.parent() {
+	for parent := root.Parent(); parent != nil; parent = parent.Parent() {
 		if replayer = parent.Replayer(); replayer != nil {
 			break
 		}

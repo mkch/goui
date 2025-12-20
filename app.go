@@ -65,7 +65,7 @@ func (app *App) Run() int {
 			}
 			window.Root = elem
 			window.Layouter = layouter
-			if err := layoutWindow(window); err != nil {
+			if err := layoutWindow(&Context{app, window}); err != nil {
 				panic(err)
 			}
 		}
@@ -78,22 +78,22 @@ func (app *App) Exit(exitCode int) {
 	app.app.Quit(exitCode)
 }
 
-func layoutWindow(window *window) error {
-	_, _, width, height, err := native.WindowClientRect(window.Handle)
+func layoutWindow(ctx *Context) error {
+	_, _, width, height, err := native.WindowClientRect(ctx.window.Handle)
 	if err != nil {
 		return err
 	}
-	if err := performLayoutWindow(window, width, height); err != nil {
+	if err := performLayoutWindow(ctx, width, height); err != nil {
 		return err
 	}
 	return nil
 }
 
-func performLayoutWindow(window *window, width, height int) (err error) {
-	if window.Layouter == nil {
+func performLayoutWindow(ctx *Context, width, height int) (err error) {
+	if ctx.window.Layouter == nil {
 		return nil
 	}
-	_, err = window.Layouter.Layout(&Context{window: window}, Constraints{
+	_, err = ctx.window.Layouter.Layout(ctx, Constraints{
 		MinWidth:  0,
 		MinHeight: 0,
 		MaxWidth:  width,
@@ -102,7 +102,7 @@ func performLayoutWindow(window *window, width, height int) (err error) {
 	if err != nil {
 		return err
 	}
-	return window.Layouter.PositionAt(0, 0)
+	return ctx.window.Layouter.PositionAt(0, 0)
 
 }
 
@@ -123,7 +123,7 @@ func (app *App) CreateWindow(config Window) error {
 		Handle: handle,
 	}
 	native.SetWindowOnSizeChangedListener(handle, func(width, height int) {
-		if err := performLayoutWindow(window, width, height); err != nil {
+		if err := performLayoutWindow(&Context{app, window}, width, height); err != nil {
 			panic(err)
 		}
 	})
