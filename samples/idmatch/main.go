@@ -31,9 +31,9 @@ type Person struct {
 }
 
 var personList = []Person{
-	{0, "Alice", 30},
-	{1, "Bob", 25},
-	{2, "Charlie", 35},
+	{0, "Charlie", 35},
+	{1, "Alice", 30},
+	{2, "Bob", 25},
 }
 
 func Root() goui.StatefulWidget {
