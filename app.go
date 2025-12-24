@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/native"
 )
 
@@ -61,12 +62,12 @@ func (app *App) Run() int {
 			ctx.window = window
 			elem, layouter, err := buildElementTree(ctx, window.Window.Root)
 			if err != nil {
-				panic(err)
+				errortrace.Panic(err)
 			}
 			window.Root = elem
 			window.Layouter = layouter
 			if err := layoutWindow(&Context{app, window}); err != nil {
-				panic(err)
+				errortrace.Panic(err)
 			}
 		}
 	}
@@ -76,6 +77,19 @@ func (app *App) Run() int {
 
 func (app *App) Exit(exitCode int) {
 	app.app.Quit(exitCode)
+}
+
+type MessageBoxIcon native.MessageBoxIcon
+
+const (
+	MessageBoxNone        = MessageBoxIcon(native.MessageBoxNone)
+	MessageBoxIconInfo    = MessageBoxIcon(native.MessageBoxIconInfo)
+	MessageBoxIconWarning = MessageBoxIcon(native.MessageBoxIconWarning)
+	MessageBoxIconError   = MessageBoxIcon(native.MessageBoxIconError)
+)
+
+func (app *App) MessageBox(title, message string, icon MessageBoxIcon) {
+	native.MessageBox(nil, title, message, native.MessageBoxIcon(icon))
 }
 
 func layoutWindow(ctx *Context) error {

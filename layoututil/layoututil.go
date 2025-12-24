@@ -26,6 +26,7 @@ func Clamp(value, min, max int) int {
 	return value
 }
 
+// ClampSize clamps the given size between the given constraints.
 func ClampSize(size goui.Size, constraints goui.Constraints) goui.Size {
 	return goui.Size{
 		Width:  Clamp(size.Width, constraints.MinWidth, constraints.MaxWidth),

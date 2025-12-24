@@ -78,7 +78,9 @@ func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 func (l *columnLayouter) PositionAt(x, y int) (err error) {
 	var i = 0
 	for child := range l.Children() {
-		child.PositionAt(x+l.childOffsets[i].X, y+l.childOffsets[i].Y)
+		if err = child.PositionAt(x+l.childOffsets[i].X, y+l.childOffsets[i].Y); err != nil {
+			return
+		}
 		i++
 	}
 	return nil

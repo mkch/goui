@@ -5,12 +5,15 @@ import (
 	"unsafe"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/gw/app/gwapp"
 	"github.com/mkch/gw/button"
+	"github.com/mkch/gw/edit"
 	"github.com/mkch/gw/metrics"
 	"github.com/mkch/gw/paint"
 	"github.com/mkch/gw/paint/brush"
 	"github.com/mkch/gw/paint/pen"
+	"github.com/mkch/gw/static"
 	"github.com/mkch/gw/win32"
 	"github.com/mkch/gw/win32/win32util"
 	"github.com/mkch/gw/window"
@@ -35,6 +38,7 @@ func CreateWindow(title string, width, height int) (handle Handle, err error) {
 		Height: metrics.Px(win32.INT(height)),
 	})
 	if err != nil {
+		err = errortrace.WithStack(err)
 		return
 	}
 	win.Show(win32.SW_SHOWNORMAL)
@@ -43,7 +47,8 @@ func CreateWindow(title string, width, height int) (handle Handle, err error) {
 }
 
 func InvalidWindow(handle Handle) error {
-	return handle.(*window.Window).InvalidateRect(nil, true)
+	err := handle.(*window.Window).InvalidateRect(nil, true)
+	return errortrace.WithStack(err)
 }
 
 type winBase interface {
@@ -51,20 +56,18 @@ type winBase interface {
 }
 
 func DestroyWindow(handle Handle) error {
-	return win32.DestroyWindow(handle.(winBase).HWND())
+	err := win32.DestroyWindow(handle.(winBase).HWND())
+	return errortrace.WithStack(err)
 }
 
 func CreateButton(parent Handle, title string) (handle Handle, err error) {
-	btn, err := button.New(parent.(winBase).HWND(), &button.Spec{
+	handle, err = button.New(parent.(winBase).HWND(), &button.Spec{
 		Style:  win32.WS_CHILD | win32.WS_VISIBLE,
 		Text:   title,
 		Width:  metrics.Px(100),
 		Height: metrics.Px(30),
 	})
-	if err != nil {
-		return
-	}
-	handle = btn
+	err = errortrace.WithStack(err)
 	return
 }
 
@@ -78,25 +81,57 @@ func SetButtonLabel(handle Handle, label string) {
 	btn.SetText(label)
 }
 
+func CreateLabel(parent Handle, title string) (handle Handle, err error) {
+	handle, err = static.New(parent.(winBase).HWND(), &static.Spec{
+		Style:  win32.WS_CHILD | win32.WS_VISIBLE,
+		Text:   title,
+		Width:  metrics.Px(100),
+		Height: metrics.Px(30),
+	})
+	err = errortrace.WithStack(err)
+	return
+}
+
+func SetLabelText(handle Handle, text string) error {
+	err := handle.(*static.Static).SetText(text)
+	return errortrace.WithStack(err)
+}
+
+func CreateTextField(parent Handle) (handle Handle, err error) {
+	handle, err = edit.New(parent.(winBase).HWND(), &edit.Spec{
+		Style:  win32.WS_CHILD | win32.WS_VISIBLE | win32.WS_BORDER | edit.ES_LEFT,
+		Width:  metrics.Px(200),
+		Height: metrics.Px(30),
+	})
+	err = errortrace.WithStack(err)
+	return
+}
+
+func GetTextFieldText(handle Handle) (text string, err error) {
+	text, err = handle.(*edit.Edit).Text()
+	err = errortrace.WithStack(err)
+	return
+}
+
+func SetTextFieldText(handle Handle, text string) error {
+	err := handle.(*edit.Edit).SetText(text)
+	return errortrace.WithStack(err)
+}
+
 func SetWidgetDimensions(handle Handle, x, y, width, height int) error {
-	return win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
+	err := win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
 		win32.INT(x), win32.INT(y),
 		win32.INT(width), win32.INT(height),
 		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE)
+	return errortrace.WithStack(err)
 }
 
 func SetWidgetSize(handle Handle, width, height int) error {
-	return win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
+	err := win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
 		0, 0,
 		win32.INT(width), win32.INT(height),
 		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE|win32.SWP_NOMOVE)
-}
-
-func SetWidgetPosition(handle Handle, x, y int) error {
-	return win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
-		win32.INT(x), win32.INT(y),
-		0, 0,
-		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE|win32.SWP_NOSIZE)
+	return errortrace.WithStack(err)
 }
 
 func SetWindowOnSizeChangedListener(handle Handle, onSizeChanged func(width, height int)) {
@@ -118,12 +153,13 @@ func WindowClientRect(handle Handle) (x, y, width, height int, err error) {
 	var rect win32.RECT
 	err = win32.GetClientRect(win.HWND(), &rect)
 	if err != nil {
+		err = errortrace.WithStack(err)
 		return
 	}
 	return int(rect.Left), int(rect.Top), int(rect.Right - rect.Left), int(rect.Bottom - rect.Top), nil
 }
 
-var GetSystemMetricsXEdge = func() func() int {
+var getSystemMetricsXEdge = func() func() int {
 	var x win32.INT = 0
 	return func() int {
 		if x == 0 {
@@ -133,7 +169,7 @@ var GetSystemMetricsXEdge = func() func() int {
 	}
 }()
 
-var GetSystemMetricsYEdge = func() func() int {
+var getSystemMetricsYEdge = func() func() int {
 	var y win32.INT = 0
 	return func() int {
 		if y == 0 {
@@ -143,42 +179,61 @@ var GetSystemMetricsYEdge = func() func() int {
 	}
 }()
 
-func GetButtonMinimumSize(handle Handle, label string) (width, height int, err error) {
-	btn := handle.(*button.Button)
-	hdc, err := win32.GetDC(btn.HWND())
+// GetTextDrawingSize returns the size required to draw the specified text
+// in the given control.
+// If multiline is true, the line ending characters are considered as line breaks.
+func GetTextDrawingSize(control Handle, text string, multiline bool) (width, height int, err error) {
+	win := control.(winBase)
+	hdc, err := win32.GetDC(win.HWND())
 	if err != nil {
+		err = errortrace.WithStack(err)
 		return
 	}
-	font, err := win32.SendMessageW(btn.HWND(), win32.WM_GETFONT, 0, 0)
+	defer win32.ReleaseDC(win.HWND(), hdc)
+	font, err := win32.SendMessageW(win.HWND(), win32.WM_GETFONT, 0, 0)
 	if err != nil {
+		err = errortrace.WithStack(err)
 		return
 	}
 	oldFont, err := win32.SelectObject(hdc, win32.HFONT(font))
 	if err != nil {
+		err = errortrace.WithStack(err)
 		return
 	}
-	defer func() { win32.SelectObject(hdc, oldFont); win32.ReleaseDC(btn.HWND(), hdc) }()
+	defer win32.SelectObject(hdc, oldFont)
 
-	var buf []win32.WCHAR
-	win32util.CString(label, &buf)
-	style, err := win32.GetWindowLongPtrW(btn.HWND(), win32.GWL_STYLE)
-	if err != nil {
-		return
-	}
 	format := win32.DT_CALCRECT
-	if style&win32.BS_MULTILINE == 0 {
+	if !multiline {
 		format |= win32.DT_SINGLELINE
 	}
 
+	var buf []win32.WCHAR
+	win32util.CString(text, &buf)
 	const MAX_SIZE = 1<<(unsafe.Sizeof(win32.LONG(0))*8-1) - 1
 	rect := win32.RECT{Left: 0, Top: 0, Right: MAX_SIZE, Bottom: MAX_SIZE}
 	_, err = win32.DrawTextExW(hdc, &buf[0], -1,
 		&rect,
 		format, nil)
 	if err != nil {
+		err = errortrace.WithStack(err)
 		return
 	}
-	return int(rect.Width() + win32.LONG(GetSystemMetricsXEdge())*2), int(rect.Height() + win32.LONG(GetSystemMetricsYEdge())*2), nil
+	return int(rect.Width()), int(rect.Height()), nil
+}
+
+func GetButtonMinimumSize(handle Handle, label string) (width, height int, err error) {
+	btn := handle.(*button.Button)
+	style, err := win32.GetWindowLongPtrW(btn.HWND(), win32.GWL_STYLE)
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	width, height, err = GetTextDrawingSize(handle, label, style&win32.BS_MULTILINE != 0)
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	return int(width + int(win32.LONG(getSystemMetricsXEdge())*2)), int(height + int(win32.LONG(getSystemMetricsYEdge())*2)), nil
 }
 
 var debugRectPen = func() func() *pen.Pen {
@@ -195,7 +250,7 @@ var debugRectHollowBrush = func() func() *brush.Brush {
 	var b *brush.Brush
 	return func() *brush.Brush {
 		if b == nil {
-			b, _ = brush.NewStock(win32.NULL_BRUSH)
+			b = gg.Must(brush.NewStock(win32.NULL_BRUSH))
 		}
 		return b
 	}
