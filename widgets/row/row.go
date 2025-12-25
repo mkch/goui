@@ -13,9 +13,10 @@ import (
 // - If MainAxisSize is Min, the width of Row is the sum of widths of its children.
 // - If MainAxisSize is Max, the width of Row is the maximum width allowed by its parent.
 type Row struct {
-	ID           goui.ID
-	Widgets      []goui.Widget
-	MainAxisSize axes.AxisSize
+	ID                 goui.ID
+	Widgets            []goui.Widget
+	MainAxisSize       axes.Size
+	CrossAxisAlignment axes.Alignment
 }
 
 func (c *Row) WidgetID() goui.ID {
@@ -47,30 +48,50 @@ func (l *rowLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (s
 	l.childOffsets = l.childOffsets[:0]
 	var childrenWidth = 0
 	size.Height = constraints.MinHeight
+	var childrenSizes []goui.Size
 	for child := range l.Children() {
 		childConstraints := goui.Constraints{
 			MinWidth:  0,
 			MinHeight: 0,
 			MaxHeight: constraints.MaxHeight,
-			MaxWidth:  gg.If(constraints.MaxWidth == goui.Infinity, goui.Infinity, constraints.MaxWidth-childrenWidth),
+			MaxWidth: gg.IfFunc(constraints.MaxWidth == goui.Infinity,
+				func() int { return goui.Infinity },
+				func() int { return constraints.MaxWidth - childrenWidth }),
 		}
 		var childSize goui.Size
 		childSize, err = child.Layout(ctx, childConstraints)
 		if err != nil {
 			return
 		}
-		if err := layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
-			return goui.Size{}, err
+		childrenSizes = append(childrenSizes, childSize)
+		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
+			return
 		}
 		l.childOffsets = append(l.childOffsets, goui.Point{X: childrenWidth, Y: 0})
 		childrenWidth += childSize.Width
+		// calculate cross axis size
 		size.Height = max(size.Height, childSize.Height)
 	}
-	switch l.Element().Widget().(*Row).MainAxisSize {
+	// determine main axis size
+	row := l.Element().Widget().(*Row)
+	switch row.MainAxisSize {
 	case axes.Min:
 		size.Width = childrenWidth
 	case axes.Max:
 		size.Width = constraints.MaxWidth
+	}
+	// apply cross axis alignment
+	switch row.CrossAxisAlignment {
+	case axes.Start:
+		// do nothing
+	case axes.Center:
+		for i := range l.childOffsets {
+			l.childOffsets[i].Y = (size.Height - childrenSizes[i].Height) / 2
+		}
+	case axes.End:
+		for i := range l.childOffsets {
+			l.childOffsets[i].Y = size.Height - childrenSizes[i].Height
+		}
 	}
 	return
 }

@@ -13,9 +13,10 @@ import (
 // - If MainAxisSize is Min, the height of Column is the sum of heights of its children.
 // - If MainAxisSize is Max, the height of Column is the maximum height allowed by its parent.
 type Column struct {
-	ID           goui.ID
-	Widgets      []goui.Widget
-	MainAxisSize axes.AxisSize
+	ID                 goui.ID
+	Widgets            []goui.Widget
+	MainAxisSize       axes.Size
+	CrossAxisAlignment axes.Alignment
 }
 
 func (c *Column) WidgetID() goui.ID {
@@ -46,6 +47,7 @@ type columnLayouter struct {
 func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	l.childOffsets = l.childOffsets[:0]
 	var childrenHeight = 0
+	var childrenWidths []int
 	size.Width = constraints.MinWidth
 	for child := range l.Children() {
 		childConstraints := goui.Constraints{
@@ -59,18 +61,35 @@ func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		if err != nil {
 			return
 		}
-		if err := layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
-			return goui.Size{}, err
+		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
+			return
 		}
+		childrenWidths = append(childrenWidths, childSize.Width)
 		l.childOffsets = append(l.childOffsets, goui.Point{X: 0, Y: childrenHeight})
 		childrenHeight += childSize.Height
+		// calculate cross axis size
 		size.Width = max(size.Width, childSize.Width)
 	}
-	switch l.Element().Widget().(*Column).MainAxisSize {
+	col := l.Element().Widget().(*Column)
+	// determine main axis size
+	switch col.MainAxisSize {
 	case axes.Min:
 		size.Height = childrenHeight
 	case axes.Max:
 		size.Height = constraints.MaxHeight
+	}
+	// apply cross axis alignment
+	switch col.CrossAxisAlignment {
+	case axes.Start:
+		// do nothing
+	case axes.Center:
+		for i := range l.childOffsets {
+			l.childOffsets[i].X = (size.Width - childrenWidths[i]) / 2
+		}
+	case axes.End:
+		for i := range l.childOffsets {
+			l.childOffsets[i].X = size.Width - childrenWidths[i]
+		}
 	}
 	return
 }
