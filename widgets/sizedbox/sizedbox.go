@@ -1,6 +1,7 @@
 package sizedbox
 
 import (
+	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/layoututil"
 )
@@ -24,7 +25,7 @@ func (s *SizedBox) CreateElement(ctx *goui.Context) (goui.Element, error) {
 }
 
 func (s *SizedBox) NumChildren() int {
-	return 1
+	return gg.If(s.Widget != nil, 1, 0)
 }
 
 func (s *SizedBox) Child(n int) goui.Widget {

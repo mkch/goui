@@ -1,6 +1,7 @@
 package padding
 
 import (
+	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/layoututil"
 )
@@ -22,7 +23,7 @@ func (p *Padding) CreateElement(ctx *goui.Context) (goui.Element, error) {
 }
 
 func (p *Padding) NumChildren() int {
-	return 1
+	return gg.If(p.Widget != nil, 1, 0)
 }
 
 func (p *Padding) Child(n int) goui.Widget {

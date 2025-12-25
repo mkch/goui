@@ -3,6 +3,7 @@ package center
 import (
 	"slices"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/layoututil"
 )
@@ -36,7 +37,7 @@ func (c *Center) CreateElement(ctx *goui.Context) (goui.Element, error) {
 }
 
 func (c *Center) NumChildren() int {
-	return 1
+	return gg.If(c.Widget != nil, 1, 0)
 }
 
 func (c *Center) Child(n int) goui.Widget {
