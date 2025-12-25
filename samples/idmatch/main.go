@@ -10,10 +10,9 @@ import (
 	"github.com/mkch/goui/widgets"
 )
 
-var enabled = true
 var app = goui.NewApp(&goui.AppConfig{
 	Debug: &goui.Debug{
-		Layout: &enabled,
+		LayoutOutline: true,
 	},
 })
 

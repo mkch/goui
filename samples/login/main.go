@@ -7,10 +7,9 @@ import (
 	"github.com/mkch/goui/widgets/axes"
 )
 
-var enabled = true
 var app = goui.NewApp(&goui.AppConfig{
 	Debug: &goui.Debug{
-		Layout: &enabled,
+		LayoutOutline: true,
 	},
 })
 

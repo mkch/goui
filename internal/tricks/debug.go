@@ -4,11 +4,11 @@ package tricks
 
 // Debug must have the same field layout of goui.Debug.
 type Debug struct {
-	Layout *bool
+	LayoutOutline bool
 }
 
-func (debug *Debug) LayoutDebugEnabled() bool {
-	return debug != nil && debug.Layout != nil && *debug.Layout
+func (debug *Debug) LayoutOutlineEnabled() bool {
+	return debug != nil && debug.LayoutOutline
 }
 
 func (debug *Debug) Clone() (result *Debug) {
@@ -16,9 +16,6 @@ func (debug *Debug) Clone() (result *Debug) {
 		return nil
 	}
 	result = &Debug{}
-	if debug.Layout != nil {
-		layoutDebug := *debug.Layout
-		result.Layout = &layoutDebug
-	}
+	*result = *debug
 	return
 }

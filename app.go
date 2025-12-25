@@ -61,15 +61,15 @@ func (app *App) Post(f func()) error {
 // AppConfig is the configuration for creating a new App.
 type AppConfig struct {
 	// Debug is the debug configuration for the app.
-	// Debug can be nil, in which case no debug features are enabled.
+	// If Debug is non-nil, debug mode is on, and the fields in Debug control which features are enabled.
+	// If Debug is nil, debug mode is off.
 	Debug *Debug
 }
 
 // Debug is the debug configuration for the app.
 type Debug struct {
-	// Layout debugging features.
-	// Nil or a pointer to false value means disabled, a pointer to true means enabled.
-	Layout *bool
+	// LayoutOutline specifies whether layout outlines are drawn in debug mode.
+	LayoutOutline bool
 }
 
 // NewApp creates and returns a new App instance.
@@ -170,7 +170,7 @@ func (app *App) CreateWindow(config Window) error {
 		}
 	})
 	native.SetWindowOnCloseListener(handle, config.OnClose)
-	if app.debug.LayoutDebugEnabled() {
+	if app.debug.LayoutOutlineEnabled() {
 		native.EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {
 				return func(yield func(native.DebugRect) bool) {}

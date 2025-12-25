@@ -18,7 +18,7 @@ func debug(ctx *goui.Context) *tricks.Debug
 // Widget can be nil and if widget is not nil, it is included in the error for better debugging.
 // This function is intended to be used when
 func CheckLayoutOverflow(ctx *goui.Context, widget goui.Widget, size goui.Size, constraints goui.Constraints) error {
-	if !debug(ctx).LayoutDebugEnabled() {
+	if debug(ctx) == nil {
 		return nil
 	}
 	if size.Width < constraints.MinWidth || size.Width > constraints.MaxWidth ||
