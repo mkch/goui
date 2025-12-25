@@ -15,7 +15,7 @@ import (
 type Column struct {
 	ID           goui.ID
 	Widgets      []goui.Widget
-	MainAxisSize axes.MainAxisSize
+	MainAxisSize axes.AxisSize
 }
 
 func (c *Column) WidgetID() goui.ID {
@@ -67,9 +67,9 @@ func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		size.Width = max(size.Width, childSize.Width)
 	}
 	switch l.Element().Widget().(*Column).MainAxisSize {
-	case axes.MainAxisSizeMin:
+	case axes.Min:
 		size.Height = childrenHeight
-	case axes.MainAxisSizeMax:
+	case axes.Max:
 		size.Height = constraints.MaxHeight
 	}
 	return

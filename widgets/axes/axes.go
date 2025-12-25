@@ -1,13 +1,13 @@
 package axes
 
-// MainAxisSize defines how much space a widget should take in the main axis.
-type MainAxisSize int
+// AxisSize defines how much space a widget should take in an axis.
+type AxisSize int
 
 const (
-	// MainAxisSizeMax means the widget takes all available space in the main axis.
-	MainAxisSizeMax MainAxisSize = iota
-	// MainAxisSizeMin means the widget takes the minimum space required in the main axis.
-	MainAxisSizeMin
+	// Max means the widget takes all available space in the the axis.
+	Max AxisSize = iota
+	// Min means the widget takes the minimum space required in the axis.
+	Min
 )
 
 type CrossAxisSize int

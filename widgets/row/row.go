@@ -15,7 +15,7 @@ import (
 type Row struct {
 	ID           goui.ID
 	Widgets      []goui.Widget
-	MainAxisSize axes.MainAxisSize
+	MainAxisSize axes.AxisSize
 }
 
 func (c *Row) WidgetID() goui.ID {
@@ -67,9 +67,9 @@ func (l *rowLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (s
 		size.Height = max(size.Height, childSize.Height)
 	}
 	switch l.Element().Widget().(*Row).MainAxisSize {
-	case axes.MainAxisSizeMin:
+	case axes.Min:
 		size.Width = childrenWidth
-	case axes.MainAxisSizeMax:
+	case axes.Max:
 		size.Width = constraints.MaxWidth
 	}
 	return

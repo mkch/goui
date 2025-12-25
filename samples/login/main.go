@@ -36,7 +36,7 @@ func rootWidget() goui.Widget {
 				Widget: &widgets.Padding{
 					Top: 10,
 					Widget: &widgets.Column{
-						MainAxisSize: axes.MainAxisSizeMin,
+						MainAxisSize: axes.Min,
 						Widgets: []goui.Widget{
 							&widgets.Center{
 								HeightFactor: 100,
@@ -79,12 +79,12 @@ func doLogin(userNameCtrl, passwordCtrl *widgets.TextFieldController) {
 
 func userPass(userNameCtrl, passwordCtrl *widgets.TextFieldController) goui.Widget {
 	return &widgets.Column{
-		MainAxisSize: axes.MainAxisSizeMin,
+		MainAxisSize: axes.Min,
 		Widgets: []goui.Widget{
 			&widgets.Padding{
 				Top: 10, Bottom: 10,
 				Widget: &widgets.Row{
-					MainAxisSize: axes.MainAxisSizeMin,
+					MainAxisSize: axes.Min,
 					Widgets: []goui.Widget{
 						&widgets.Padding{
 							Right: 10,
@@ -108,7 +108,7 @@ func userPass(userNameCtrl, passwordCtrl *widgets.TextFieldController) goui.Widg
 			&widgets.Padding{
 				Top: 10, Bottom: 10,
 				Widget: &widgets.Row{
-					MainAxisSize: axes.MainAxisSizeMin,
+					MainAxisSize: axes.Min,
 					Widgets: []goui.Widget{
 						&widgets.Padding{
 							Right: 10,

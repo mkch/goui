@@ -67,7 +67,7 @@ func Test_Column(t *testing.T) {
 
 	column := &Column{
 		Widgets:      []goui.Widget{widget1, widget2},
-		MainAxisSize: axes.MainAxisSizeMin,
+		MainAxisSize: axes.Min,
 	}
 	_, layouter, err := widgetstest.BuildElementTree(ctx, column, nil)
 	if err != nil {
@@ -86,7 +86,7 @@ func Test_Column(t *testing.T) {
 
 	column = &Column{
 		Widgets:      []goui.Widget{widget1, widget2},
-		MainAxisSize: axes.MainAxisSizeMax,
+		MainAxisSize: axes.Max,
 	}
 	_, layouter, err = widgetstest.BuildElementTree(ctx, column, nil)
 	if err != nil {
