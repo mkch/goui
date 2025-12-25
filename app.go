@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/goui/internal/tricks"
 	"github.com/mkch/goui/native"
 )
 
@@ -14,8 +16,9 @@ type Context struct {
 }
 
 // newMockContext creates and returns a new mock goui.Context for testing.
-func newMockContext() *Context {
+func newMockContext(config *AppConfig) *Context {
 	return &Context{
+		app:    NewApp(config),
 		window: &window{},
 	}
 }
@@ -39,6 +42,7 @@ type Container interface {
 }
 
 type App struct {
+	debug   *tricks.Debug
 	app     native.App
 	windows map[ID]*window
 }
@@ -48,8 +52,25 @@ func (app *App) Post(f func()) error {
 	return app.app.Post(f)
 }
 
-func NewApp() *App {
+// AppConfig is the configuration for creating a new App.
+type AppConfig struct {
+	// Debug is the debug configuration for the app.
+	// Debug can be nil, in which case no debug features are enabled.
+	Debug *Debug
+}
+
+// Debug is the debug configuration for the app.
+type Debug struct {
+	// Layout debugging features.
+	// Nil or a pointer to false value means disabled, a pointer to true means enabled.
+	Layout *bool
+}
+
+// NewApp creates and returns a new App instance.
+// The app is setup with the given config. If config is nil, default configuration is used.
+func NewApp(config *AppConfig) *App {
 	return &App{
+		debug:   gg.If(config == nil, nil, (*tricks.Debug)(config.Debug).Clone()),
 		app:     native.NewApp(),
 		windows: make(map[ID]*window),
 	}
@@ -142,7 +163,7 @@ func (app *App) CreateWindow(config Window) error {
 		}
 	})
 	native.SetWindowOnCloseListener(handle, config.OnClose)
-	if config.DebugLayout {
+	if app.debug.LayoutDebugEnabled() {
 		native.EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {
 				return func(yield func(native.DebugRect) bool) {}

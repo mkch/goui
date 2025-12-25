@@ -3,6 +3,7 @@ package sizedbox
 import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/debug"
 	"github.com/mkch/goui/layoututil"
 )
 
@@ -59,7 +60,7 @@ func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 		if err != nil {
 			return
 		}
-		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, childConstraints); err != nil {
 			return
 		}
 	}

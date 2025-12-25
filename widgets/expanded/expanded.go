@@ -4,7 +4,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/slices2"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/layoututil"
+	"github.com/mkch/goui/internal/debug"
 )
 
 // Expanded is a widget that expands to fill the available space in the parent container.
@@ -46,7 +46,7 @@ func (l *expandedLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 		if err != nil {
 			return
 		}
-		if err = layoututil.CheckOverflow(child.Element().Widget(), size, constraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), size, constraints); err != nil {
 			return
 		}
 		return // Only one child
@@ -62,7 +62,7 @@ func (l *expandedLayouter) PositionAt(x, y int) (err error) {
 }
 
 // Layout layouts the given Expanded widgets within the available space.
-func Layout(availableSpace int, expandedLayouters []goui.Layouter, setConstraints func(c *goui.Constraints, crossAxis int)) (sizes []goui.Size, err error) {
+func Layout(ctx *goui.Context, availableSpace int, expandedLayouters []goui.Layouter, setConstraints func(c *goui.Constraints, crossAxis int)) (sizes []goui.Size, err error) {
 	widgets := slices2.Map(expandedLayouters, func(l goui.Layouter) *Expanded {
 		return l.Element().Widget().(*Expanded)
 	})
@@ -99,11 +99,11 @@ func Layout(availableSpace int, expandedLayouters []goui.Layouter, setConstraint
 		}
 		setConstraints(&constraints, size)
 		var layoutSize goui.Size
-		layoutSize, err = l.Layout(nil, constraints)
+		layoutSize, err = l.Layout(ctx, constraints)
 		if err != nil {
 			return
 		}
-		if err = layoututil.CheckOverflow(l.Element().Widget(), layoutSize, constraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, l.Element().Widget(), layoutSize, constraints); err != nil {
 			return
 		}
 		sizes = append(sizes, layoutSize)

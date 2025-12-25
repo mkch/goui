@@ -9,15 +9,15 @@ import (
 	"github.com/mkch/goui/native"
 )
 
-// OverflowParentError is returned when a widget's size exceeds its parent's constraints.
+// OverflowConstraintsError is returned when a widget's size exceeds its constraints in debug mode.
 // Widget can be nil and if it is not nil, it is included in the error message for better debugging.
-type OverflowParentError struct {
+type OverflowConstraintsError struct {
 	Widget      Widget
 	Size        Size
 	Constraints Constraints
 }
 
-func (e *OverflowParentError) Error() string {
+func (e *OverflowConstraintsError) Error() string {
 	if e.Widget == nil {
 		return fmt.Sprintf("size %s overflows constraints %s", &e.Size, &e.Constraints)
 	}

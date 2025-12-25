@@ -175,7 +175,7 @@ func buildElementTreeImpl(ctx *Context, widget Widget) (Element, error) {
 
 	if layouter := elem.Layouter(); layouter != nil {
 		layouter.setElement(elem)
-		if ctx.window.DebugLayout {
+		if ctx.app.debug.LayoutDebugEnabled() {
 			layouter = &debugLayouter{
 				Layouter: layouter,
 			}

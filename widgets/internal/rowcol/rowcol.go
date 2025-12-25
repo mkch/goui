@@ -4,7 +4,7 @@ package rowcol
 import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/layoututil"
+	"github.com/mkch/goui/internal/debug"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/expanded"
 )
@@ -57,7 +57,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 			return
 		}
 		childrenSizes = append(childrenSizes, childSize)
-		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, childConstraints); err != nil {
 			return
 		}
 		notExpandableChildrenMain += *l.Main(&childSize)
@@ -68,7 +68,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 	if len(expandedChildren) > 0 {
 		availableSpace := *l.MaxMain(&constraints) - notExpandableChildrenMain
 		var sizes []goui.Size
-		sizes, err = expanded.Layout(availableSpace, expandedChildren, func(c *goui.Constraints, mainAxis int) {
+		sizes, err = expanded.Layout(ctx, availableSpace, expandedChildren, func(c *goui.Constraints, mainAxis int) {
 			*l.MinMain(c) = mainAxis
 			*l.MaxMain(c) = mainAxis
 			*l.MinCross(c) = 0
@@ -90,7 +90,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 		*l.MaxMain(&expandedTotalConstraints) = availableSpace
 		*l.MinCross(&expandedTotalConstraints) = 0
 		*l.MaxCross(&expandedTotalConstraints) = *l.MaxCross(&constraints)
-		if err = layoututil.CheckOverflow(nil, expandedTotalSize, expandedTotalConstraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, nil, expandedTotalSize, expandedTotalConstraints); err != nil {
 			return
 		}
 	}

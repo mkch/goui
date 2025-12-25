@@ -7,16 +7,20 @@ import (
 	"github.com/mkch/goui/widgets/axes"
 )
 
-var app = goui.NewApp()
+var enabled = true
+var app = goui.NewApp(&goui.AppConfig{
+	Debug: &goui.Debug{
+		Layout: &enabled,
+	},
+})
 
 func main() {
 	app.CreateWindow(goui.Window{
-		DebugLayout: true,
-		OnClose:     func() { app.Exit(0) },
-		Title:       "goui login sample",
-		Width:       400,
-		Height:      300,
-		Root:        rootWidget(),
+		OnClose: func() { app.Exit(0) },
+		Title:   "goui login sample",
+		Width:   400,
+		Height:  300,
+		Root:    rootWidget(),
 	})
 
 	app.Run()

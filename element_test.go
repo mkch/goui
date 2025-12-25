@@ -24,7 +24,7 @@ func (w *mockWidget) CreateElement(ctx *Context) (Element, error) {
 }
 
 func TestBuildElementTree_CreateElementError(t *testing.T) {
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	expectedErr := errors.New("create element error")
 	widget := &mockWidget{
 		createError: expectedErr,
@@ -44,7 +44,7 @@ func TestBuildElementTree_CreateElementError(t *testing.T) {
 }
 
 func TestBuildElementTree_SimpleWidget(t *testing.T) {
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	widget := &mockWidget{ID: ValueID("test"), element: &ElementBase{}}
 
 	elem, layouter, err := buildElementTree(ctx, widget)
@@ -79,7 +79,7 @@ func (l *mockLayouter) PositionAt(x, y int) error {
 }
 
 func TestBuildElementTree_WidgetWithLayouter(t *testing.T) {
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	mockLayouter := &mockLayouter{}
 	mockElement := &ElementBase{
 		ElementLayouter: mockLayouter,
@@ -106,7 +106,7 @@ func TestBuildElementTree_WidgetWithLayouter(t *testing.T) {
 }
 
 func TestBuildElementTree_StatefulWidget(t *testing.T) {
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	mockLayouter := &mockLayouter{}
 	mockElement := &ElementBase{
 		ElementLayouter: mockLayouter,
@@ -140,7 +140,7 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 }
 
 func TestBuildElementTree_StatelessWidget(t *testing.T) {
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	mockLayouter := &mockLayouter{}
 	mockElement := &ElementBase{
 		ElementLayouter: mockLayouter,
@@ -197,7 +197,7 @@ func (c *mockContainer) Child(n int) Widget {
 func (c *mockContainer) Exclusive(Container) { /*Nop*/ }
 
 func TestBuildElementTree_Container(t *testing.T) {
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	layouter1 := &mockLayouter{}
 	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{ElementLayouter: layouter1}}
 	layouter2 := &mockLayouter{}
@@ -244,7 +244,7 @@ func TestBuildElementTree_Container(t *testing.T) {
 }
 
 func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	childWidget := &mockWidget{ID: ValueID("child"), element: &ElementBase{}}
 	container := &mockContainer{
 		ID: ValueID("container"),
@@ -281,7 +281,7 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 		Children: []Widget{child1, child2},
 	}
 
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	elem, layouter, err := buildElementTree(ctx, container1)
 	if err != nil {
 		t.Fatalf("unexpected error during build: %v", err)
@@ -390,7 +390,7 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		},
 	}
 
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	elem, layouter, err := buildElementTree(ctx, container1)
 	if err != nil {
 		t.Fatalf("unexpected error during build: %v", err)
@@ -455,7 +455,7 @@ func TestUpdateElementTree_Append(t *testing.T) {
 		Children: []Widget{child1, child2},
 	}
 
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	elem, layouter, err := buildElementTree(ctx, container1)
 	if err != nil {
 		t.Fatalf("unexpected error during build: %v", err)
@@ -504,7 +504,7 @@ func TestUpdateElementTree_Remove(t *testing.T) {
 		Children: []Widget{child1, child2, child3},
 	}
 
-	ctx := newMockContext()
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	elem, layouter, err := buildElementTree(ctx, container1)
 	if err != nil {
 		t.Fatalf("unexpected error during build: %v", err)

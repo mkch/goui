@@ -7,15 +7,19 @@ import (
 	"github.com/mkch/goui/widgets"
 )
 
-var app = goui.NewApp()
+var enabled = true
+var app = goui.NewApp(&goui.AppConfig{
+	Debug: &goui.Debug{
+		Layout: &enabled,
+	},
+})
 
 func main() {
 	app.CreateWindow(goui.Window{
-		OnClose:     func() { app.Exit(0) },
-		DebugLayout: true,
-		Title:       "goui demo",
-		Width:       600,
-		Height:      400,
+		OnClose: func() { app.Exit(0) },
+		Title:   "goui demo",
+		Width:   600,
+		Height:  400,
 		Root: &widgets.Column{Widgets: []goui.Widget{
 			&widgets.Center{
 				HeightFactor: 120,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/debug"
 	"github.com/mkch/goui/layoututil"
 )
 
@@ -81,7 +82,7 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 			return goui.Size{}, err
 		}
 
-		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, constraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, constraints); err != nil {
 			return
 		}
 
