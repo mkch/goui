@@ -10,7 +10,7 @@ type Button struct {
 	ID      goui.ID
 	Label   string
 	Padding *goui.Size // Padding around the label text. If nil, default padding is used.
-	OnClick func()
+	OnClick func(*goui.Context)
 }
 
 func (btn *Button) WidgetID() goui.ID {
@@ -34,7 +34,7 @@ func (btn *Button) CreateElement(ctx *goui.Context) (goui.Element, error) {
 	}
 	native.SetButtonOnClickListener(handle, func() {
 		if btn.OnClick != nil {
-			btn.OnClick()
+			btn.OnClick(ctx)
 		}
 	})
 	return elem, nil
@@ -44,7 +44,7 @@ type buttonElement struct {
 	goui.NativeElement
 }
 
-func (e *buttonElement) SetWidget(widget goui.Widget) {
+func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 	newBtn := widget.(*Button)
 	if oldWidget := e.Widget(); oldWidget != nil {
 		oldBtn := oldWidget.(*Button)
@@ -55,11 +55,11 @@ func (e *buttonElement) SetWidget(widget goui.Widget) {
 	// func type are not comparable, so we always reset the OnClick listener.
 	native.SetButtonOnClickListener(e.Handle, func() {
 		if newBtn.OnClick != nil {
-			newBtn.OnClick()
+			newBtn.OnClick(ctx)
 		}
 	})
 
-	e.NativeElement.SetWidget(widget)
+	e.NativeElement.SetWidget(ctx, widget)
 }
 
 type buttonLayouter struct {

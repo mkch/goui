@@ -28,6 +28,12 @@ func (ctx *Context) NativeWindow() native.Handle {
 	return ctx.window.Handle
 }
 
+// MessageBox shows a message box with the given title, message and icon
+// associated with this context's window.
+func (ctx *Context) MessageBox(title, message string, icon MessageBoxIcon) {
+	native.MessageBox(ctx.NativeWindow(), title, message, native.MessageBoxIcon(icon))
+}
+
 type Widget interface {
 	WidgetID() ID
 	CreateElement(ctx *Context) (Element, error)
@@ -109,7 +115,8 @@ const (
 	MessageBoxIconError   = MessageBoxIcon(native.MessageBoxIconError)
 )
 
-func (app *App) MessageBox(title, message string, icon MessageBoxIcon) {
+// MessageBox shows a message box with the given title, message and icon.
+func MessageBox(title, message string, icon MessageBoxIcon) {
 	native.MessageBox(nil, title, message, native.MessageBoxIcon(icon))
 }
 

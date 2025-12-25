@@ -54,7 +54,7 @@ type centerElement struct {
 	goui.ElementBase
 }
 
-func (e *centerElement) SetWidget(widget goui.Widget) {
+func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 	center := widget.(*Center)
 	if center.WidthFactor < 100 && center.WidthFactor != 0 {
 		panic("Center.WidthFactor must be either 0 or greater than 100")
@@ -62,7 +62,7 @@ func (e *centerElement) SetWidget(widget goui.Widget) {
 	if center.HeightFactor < 100 && center.HeightFactor != 0 {
 		panic("Center.HeightFactor must be either 0 or greater than 100")
 	}
-	e.ElementBase.SetWidget(widget)
+	e.ElementBase.SetWidget(ctx, widget)
 }
 
 type centerLayouter struct {

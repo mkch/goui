@@ -60,7 +60,7 @@ func Root() goui.StatefulWidget {
 							Top: 20,
 							Widget: &widgets.Button{
 								Label: "Sort by name",
-								OnClick: func() {
+								OnClick: func(ctx *goui.Context) {
 									// Sort personList by Name
 									slices.SortStableFunc(personList, func(a, b Person) int {
 										return strings.Compare(a.Name, b.Name)
@@ -75,7 +75,7 @@ func Root() goui.StatefulWidget {
 							Top: 20,
 							Widget: &widgets.Button{
 								Label: "Sort by age",
-								OnClick: func() {
+								OnClick: func(ctx *goui.Context) {
 									// Sort personList by Age
 									slices.SortStableFunc(personList, func(a, b Person) int {
 										return a.Age - b.Age
@@ -103,7 +103,7 @@ func NewPersonWidget(n int) goui.StatefulWidget {
 					return &widgets.Button{
 						ID:    goui.ValueID(p.ID),
 						Label: fmt.Sprintf("%s (%d years old) - Clicked %d times", p.Name, p.Age, clicked),
-						OnClick: func() {
+						OnClick: func(ctx *goui.Context) {
 							state.Update(func() {
 								clicked++
 							})

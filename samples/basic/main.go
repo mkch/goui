@@ -27,7 +27,7 @@ func main() {
 					Width: 80, Height: 30,
 					Widget: &widgets.Button{
 						Label: "Click me!",
-						OnClick: func() {
+						OnClick: func(*goui.Context) {
 							fmt.Println("Button clicked!")
 						},
 					},
@@ -39,7 +39,7 @@ func main() {
 					Width: 300, Height: 30,
 					Widget: &widgets.Button{
 						Label: "Click\r\nme!",
-						OnClick: func() {
+						OnClick: func(*goui.Context) {
 							fmt.Println("Button clicked~~~!")
 						},
 					},
@@ -64,7 +64,7 @@ var CounterButton = goui.StatefulWidgetFunc(
 			Build: func() goui.Widget {
 				return &widgets.Button{
 					Label: fmt.Sprintf("Clicked %d times", data),
-					OnClick: func() {
+					OnClick: func(ctx *goui.Context) {
 						state.Update(func() {
 							data++
 						})

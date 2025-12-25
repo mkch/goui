@@ -40,14 +40,14 @@ type textFieldElement struct {
 	goui.NativeElement
 }
 
-func (e *textFieldElement) SetWidget(widget goui.Widget) {
+func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 	oldWidget := e.Widget()
 	if oldWidget != widget {
 		if newTextField := widget.(*TextField); newTextField.Controller != nil {
 			newTextField.Controller.setElement(e)
 		}
 	}
-	e.NativeElement.SetWidget(widget)
+	e.NativeElement.SetWidget(ctx, widget)
 }
 
 type textFieldLayouter struct {

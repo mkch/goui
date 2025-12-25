@@ -42,8 +42,8 @@ func rootWidget() goui.Widget {
 						&widgets.Button{
 							Label:   "Login",
 							Padding: &goui.Size{Width: 60, Height: 10},
-							OnClick: func() {
-								doLogin(&userNameCtrl, &passwordCtrl)
+							OnClick: func(ctx *goui.Context) {
+								doLogin(ctx, &userNameCtrl, &passwordCtrl)
 							},
 						},
 						&widgets.Padding{
@@ -59,13 +59,13 @@ func rootWidget() goui.Widget {
 	}
 }
 
-func doLogin(userNameCtrl, passwordCtrl *widgets.TextFieldController) {
+func doLogin(ctx *goui.Context, userNameCtrl, passwordCtrl *widgets.TextFieldController) {
 	user := gg.Must(userNameCtrl.Text())
 	pass := gg.Must(passwordCtrl.Text())
 	if user == "admin" && pass == "password" {
-		app.MessageBox("Login", "Logged in successfully!", goui.MessageBoxIconInfo)
+		ctx.MessageBox("Login", "Logged in successfully!", goui.MessageBoxIconInfo)
 	} else {
-		app.MessageBox("Login", "Invalid username or password.", goui.MessageBoxIconError)
+		ctx.MessageBox("Login", "Invalid username or password.", goui.MessageBoxIconError)
 		userNameCtrl.SetText("")
 		passwordCtrl.SetText("")
 	}

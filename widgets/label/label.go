@@ -39,7 +39,7 @@ type labelElement struct {
 	goui.NativeElement
 }
 
-func (e *labelElement) SetWidget(widget goui.Widget) {
+func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 	newLabel := widget.(*Label)
 	if oldWidget := e.Widget(); oldWidget != nil {
 		oldLabel := oldWidget.(*Label)
@@ -49,7 +49,7 @@ func (e *labelElement) SetWidget(widget goui.Widget) {
 			}
 		}
 	}
-	e.NativeElement.SetWidget(widget)
+	e.NativeElement.SetWidget(ctx, widget)
 }
 
 type labelLayouter struct {
