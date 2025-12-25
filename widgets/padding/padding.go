@@ -70,8 +70,8 @@ func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints
 }
 
 func (l *paddingLayouter) PositionAt(x, y int) (err error) {
+	padding := l.Element().Widget().(*Padding)
 	for child := range l.Children() {
-		padding := l.Element().Widget().(*Padding)
 		return child.PositionAt(x+padding.Left, y+padding.Top)
 	}
 	return

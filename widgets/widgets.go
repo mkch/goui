@@ -4,6 +4,7 @@ import (
 	"github.com/mkch/goui/widgets/button"
 	"github.com/mkch/goui/widgets/center"
 	"github.com/mkch/goui/widgets/column"
+	"github.com/mkch/goui/widgets/expanded"
 	"github.com/mkch/goui/widgets/label"
 	"github.com/mkch/goui/widgets/padding"
 	"github.com/mkch/goui/widgets/row"
@@ -27,3 +28,5 @@ type Label = label.Label
 
 type TextField = textfield.TextField
 type TextFieldController = textfield.Controller
+
+type Expanded = expanded.Expanded

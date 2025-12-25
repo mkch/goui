@@ -10,6 +10,7 @@ import (
 )
 
 // OverflowParentError is returned when a widget's size exceeds its parent's constraints.
+// Widget can be nil and if it is not nil, it is included in the error message for better debugging.
 type OverflowParentError struct {
 	Widget      Widget
 	Size        Size
@@ -17,7 +18,10 @@ type OverflowParentError struct {
 }
 
 func (e *OverflowParentError) Error() string {
-	return fmt.Sprintf("widget %T (ID = %v) with size %s overflows its parent constraints %s",
+	if e.Widget == nil {
+		return fmt.Sprintf("size %s overflows constraints %s", &e.Size, &e.Constraints)
+	}
+	return fmt.Sprintf("widget %T (ID = %v) with size %s overflows constraints %s",
 		e.Widget, e.Widget.WidgetID(), &e.Size, &e.Constraints)
 }
 

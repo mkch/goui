@@ -1,10 +1,9 @@
 package column
 
 import (
-	"github.com/mkch/gg"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/layoututil"
 	"github.com/mkch/goui/widgets/axes"
+	"github.com/mkch/goui/widgets/internal/rowcol"
 )
 
 // Column is a [Container] [Widget] that arranges its children in a vertical column.
@@ -25,7 +24,16 @@ func (c *Column) WidgetID() goui.ID {
 
 func (c *Column) CreateElement(ctx *goui.Context) (goui.Element, error) {
 	return &goui.ElementBase{
-		ElementLayouter: &columnLayouter{},
+		ElementLayouter: &rowcol.Layouter{
+			Main:               func(s *goui.Size) *int { return &s.Height },
+			Cross:              func(s *goui.Size) *int { return &s.Width },
+			MaxMain:            func(c *goui.Constraints) *int { return &c.MaxHeight },
+			MinMain:            func(c *goui.Constraints) *int { return &c.MinHeight },
+			MaxCross:           func(c *goui.Constraints) *int { return &c.MaxWidth },
+			MinCross:           func(c *goui.Constraints) *int { return &c.MinWidth },
+			MainAxisSize:       func() axes.Size { return c.MainAxisSize },
+			CrossAxisAlignment: func() axes.Alignment { return c.CrossAxisAlignment },
+		},
 	}, nil
 }
 
@@ -38,69 +46,3 @@ func (c *Column) Child(n int) goui.Widget {
 }
 
 func (c *Column) Exclusive(goui.Container) { /*Nop*/ }
-
-type columnLayouter struct {
-	goui.LayouterBase
-	childOffsets []goui.Point
-}
-
-func (l *columnLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
-	l.childOffsets = l.childOffsets[:0]
-	var childrenHeight = 0
-	var childrenWidths []int
-	size.Width = constraints.MinWidth
-	for child := range l.Children() {
-		childConstraints := goui.Constraints{
-			MinWidth:  0,
-			MinHeight: 0,
-			MaxWidth:  constraints.MaxWidth,
-			MaxHeight: gg.If(constraints.MaxHeight == goui.Infinity, goui.Infinity, constraints.MaxHeight-childrenHeight),
-		}
-		var childSize goui.Size
-		childSize, err = child.Layout(ctx, childConstraints)
-		if err != nil {
-			return
-		}
-		if err = layoututil.CheckOverflow(child.Element().Widget(), childSize, childConstraints); err != nil {
-			return
-		}
-		childrenWidths = append(childrenWidths, childSize.Width)
-		l.childOffsets = append(l.childOffsets, goui.Point{X: 0, Y: childrenHeight})
-		childrenHeight += childSize.Height
-		// calculate cross axis size
-		size.Width = max(size.Width, childSize.Width)
-	}
-	col := l.Element().Widget().(*Column)
-	// determine main axis size
-	switch col.MainAxisSize {
-	case axes.Min:
-		size.Height = childrenHeight
-	case axes.Max:
-		size.Height = constraints.MaxHeight
-	}
-	// apply cross axis alignment
-	switch col.CrossAxisAlignment {
-	case axes.Start:
-		// do nothing
-	case axes.Center:
-		for i := range l.childOffsets {
-			l.childOffsets[i].X = (size.Width - childrenWidths[i]) / 2
-		}
-	case axes.End:
-		for i := range l.childOffsets {
-			l.childOffsets[i].X = size.Width - childrenWidths[i]
-		}
-	}
-	return
-}
-
-func (l *columnLayouter) PositionAt(x, y int) (err error) {
-	var i = 0
-	for child := range l.Children() {
-		if err = child.PositionAt(x+l.childOffsets[i].X, y+l.childOffsets[i].Y); err != nil {
-			return
-		}
-		i++
-	}
-	return nil
-}
