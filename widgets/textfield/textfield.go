@@ -9,6 +9,7 @@ type TextField struct {
 	ID           goui.ID
 	Controller   *Controller
 	InitialValue string
+	Obscure      bool // If true, the text field will obscure the input (e.g., for passwords).
 }
 
 func (txt *TextField) WidgetID() goui.ID {
@@ -16,7 +17,7 @@ func (txt *TextField) WidgetID() goui.ID {
 }
 
 func (txt *TextField) CreateElement(ctx *goui.Context) (goui.Element, error) {
-	handle, err := native.CreateTextField(ctx.NativeWindow(), txt.InitialValue)
+	handle, err := native.CreateTextField(ctx.NativeWindow(), txt.InitialValue, txt.Obscure)
 	if err != nil {
 		return nil, err
 	}

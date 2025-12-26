@@ -128,6 +128,7 @@ func userPass(userNameCtrl, passwordCtrl *widgets.TextFieldController) goui.Widg
 							Width:  100,
 							Height: 25,
 							Widget: &widgets.TextField{
+								Obscure:      true,
 								InitialValue: password,
 								Controller:   passwordCtrl,
 							},

@@ -97,10 +97,17 @@ func SetLabelText(handle Handle, text string) error {
 	return errortrace.WithStack(err)
 }
 
-func CreateTextField(parent Handle, initialValue string) (handle Handle, err error) {
+func CreateTextField(parent Handle, initialValue string, password bool) (handle Handle, err error) {
+	style := win32.WS_CHILD | win32.WS_VISIBLE | win32.WS_BORDER | edit.ES_LEFT
+	if password {
+		// Password EDIT control must be single line.
+		// Remove ES_MULTILINE for safety.
+		style &^= edit.ES_MULTILINE
+		style |= edit.ES_PASSWORD
+	}
 	handle, err = edit.New(parent.(winBase).HWND(), &edit.Spec{
 		Text:   initialValue,
-		Style:  win32.WS_CHILD | win32.WS_VISIBLE | win32.WS_BORDER | edit.ES_LEFT,
+		Style:  style,
 		Width:  metrics.Px(200),
 		Height: metrics.Px(30),
 	})
