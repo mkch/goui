@@ -10,6 +10,7 @@ import (
 	"github.com/mkch/goui/widgets/row"
 	"github.com/mkch/goui/widgets/sizedbox"
 	"github.com/mkch/goui/widgets/textfield"
+	"github.com/mkch/goui/widgets/visibility"
 )
 
 type Button = button.Button
@@ -30,3 +31,5 @@ type TextField = textfield.TextField
 type TextFieldController = textfield.Controller
 
 type Expanded = expanded.Expanded
+
+type Visibility = visibility.Visibility

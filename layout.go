@@ -61,6 +61,16 @@ func (c *Constraints) UnboundHeight() bool {
 	return c.MaxHeight == Infinity
 }
 
+// MinSize returns the minimum size allowed by the constraints.
+func (c *Constraints) MinSize() Size {
+	return Size{Width: c.MinWidth, Height: c.MinHeight}
+}
+
+// MaxSize returns the maximum size allowed by the constraints.
+func (c *Constraints) MaxSize() Size {
+	return Size{Width: c.MaxWidth, Height: c.MaxHeight}
+}
+
 type Size struct {
 	Width  int
 	Height int
