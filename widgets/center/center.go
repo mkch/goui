@@ -67,7 +67,7 @@ func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 
 type centerLayouter struct {
 	goui.LayouterBase
-	lastConstraints *goui.Constraints
+	lastConstraints *goui.Constraints // For replaying
 	childOffset     goui.Point
 	pos             goui.Point
 }
@@ -116,10 +116,12 @@ func (l *centerLayouter) PositionAt(x, y int) (err error) {
 
 func (l *centerLayouter) Replayer() func(ctx *goui.Context) error {
 	if l.lastConstraints == nil {
+		// No previous layout info.
 		return nil
 	}
 	center := l.Element().(*centerElement).Widget().(*Center)
 	if center.WidthFactor != 0 || center.HeightFactor != 0 {
+		// Cannot replay if size depends on child size.
 		return nil
 	}
 	return func(ctx *goui.Context) error {
