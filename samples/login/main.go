@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/widgets"
@@ -25,6 +27,9 @@ func main() {
 	app.Run()
 }
 
+const username = "admin"
+const password = "password"
+
 func rootWidget() goui.Widget {
 	var userNameCtrl widgets.TextFieldController
 	var passwordCtrl widgets.TextFieldController
@@ -48,7 +53,7 @@ func rootWidget() goui.Widget {
 						&widgets.Padding{
 							Top: 50,
 							Widget: &widgets.Label{
-								Text: "Note: Use 'admin' as username and 'password' as password.",
+								Text: fmt.Sprintf("Note: Use '%s' as username and '%s' as password.", username, password),
 							},
 						},
 					},
@@ -61,7 +66,7 @@ func rootWidget() goui.Widget {
 func doLogin(ctx *goui.Context, userNameCtrl, passwordCtrl *widgets.TextFieldController) {
 	user := gg.Must(userNameCtrl.Text())
 	pass := gg.Must(passwordCtrl.Text())
-	if user == "admin" && pass == "password" {
+	if user == username && pass == password {
 		ctx.MessageBox("Login", "Logged in successfully!", goui.MessageBoxIconInfo)
 	} else {
 		ctx.MessageBox("Login", "Invalid username or password.", goui.MessageBoxIconError)
@@ -71,16 +76,16 @@ func doLogin(ctx *goui.Context, userNameCtrl, passwordCtrl *widgets.TextFieldCon
 }
 
 func userPass(userNameCtrl, passwordCtrl *widgets.TextFieldController) goui.Widget {
-	const ROW_WIDTH = 170
-	const ROW_HEIGHT = 30
+	const rowWidth = 170
+	const rowHeight = 30
 	return &widgets.Column{
 		MainAxisSize:       axes.Min,
 		CrossAxisAlignment: axes.Center,
 		Widgets: []goui.Widget{
 			&widgets.SizedBox{Height: 10},
 			&widgets.SizedBox{
-				Width:  ROW_WIDTH,
-				Height: ROW_HEIGHT,
+				Width:  rowWidth,
+				Height: rowHeight,
 				Widget: &widgets.Row{
 					CrossAxisAlignment: axes.Center,
 					Widgets: []goui.Widget{
@@ -98,7 +103,8 @@ func userPass(userNameCtrl, passwordCtrl *widgets.TextFieldController) goui.Widg
 							Width:  100,
 							Height: 25,
 							Widget: &widgets.TextField{
-								Controller: userNameCtrl,
+								InitialValue: username,
+								Controller:   userNameCtrl,
 							},
 						},
 					},
@@ -106,8 +112,8 @@ func userPass(userNameCtrl, passwordCtrl *widgets.TextFieldController) goui.Widg
 			},
 			&widgets.SizedBox{Height: 10},
 			&widgets.SizedBox{
-				Width:  ROW_WIDTH,
-				Height: ROW_HEIGHT,
+				Width:  rowWidth,
+				Height: rowHeight,
 				Widget: &widgets.Row{
 					CrossAxisAlignment: axes.Center,
 					Widgets: []goui.Widget{
@@ -118,13 +124,12 @@ func userPass(userNameCtrl, passwordCtrl *widgets.TextFieldController) goui.Widg
 							},
 						},
 						&widgets.SizedBox{Width: 10},
-						&widgets.Padding{
-							Widget: &widgets.SizedBox{
-								Width:  100,
-								Height: 25,
-								Widget: &widgets.TextField{
-									Controller: passwordCtrl,
-								},
+						&widgets.SizedBox{
+							Width:  100,
+							Height: 25,
+							Widget: &widgets.TextField{
+								InitialValue: password,
+								Controller:   passwordCtrl,
 							},
 						},
 					},
