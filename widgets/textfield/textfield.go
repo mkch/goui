@@ -7,8 +7,9 @@ import (
 )
 
 type TextField struct {
-	ID         goui.ID
-	Controller *Controller
+	ID           goui.ID
+	Controller   *Controller
+	InitialValue string
 }
 
 func (txt *TextField) WidgetID() goui.ID {
@@ -16,18 +17,24 @@ func (txt *TextField) WidgetID() goui.ID {
 }
 
 func (txt *TextField) CreateElement(ctx *goui.Context) (goui.Element, error) {
-	handle, err := native.CreateTextField(ctx.NativeWindow())
+	handle, err := native.CreateTextField(ctx.NativeWindow(), txt.InitialValue)
 	if err != nil {
 		return nil, err
 	}
+
 	layouter := &textFieldLayouter{}
 	elem := &textFieldElement{
 		goui.NativeElement{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: layouter,
 			},
-			Handle:      handle,
-			DestroyFunc: native.DestroyWindow,
+			Handle: handle,
+			DestroyFunc: func(h native.Handle) error {
+				if txt.Controller != nil {
+					txt.Controller.setElement(nil)
+				}
+				return native.DestroyWindow(h)
+			},
 		},
 	}
 	if txt.Controller != nil {

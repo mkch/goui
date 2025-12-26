@@ -97,8 +97,9 @@ func SetLabelText(handle Handle, text string) error {
 	return errortrace.WithStack(err)
 }
 
-func CreateTextField(parent Handle) (handle Handle, err error) {
+func CreateTextField(parent Handle, initialValue string) (handle Handle, err error) {
 	handle, err = edit.New(parent.(winBase).HWND(), &edit.Spec{
+		Text:   initialValue,
 		Style:  win32.WS_CHILD | win32.WS_VISIBLE | win32.WS_BORDER | edit.ES_LEFT,
 		Width:  metrics.Px(200),
 		Height: metrics.Px(30),
