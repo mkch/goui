@@ -3,7 +3,6 @@ package label
 import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/layoututil"
 	"github.com/mkch/goui/native"
 )
 
@@ -76,10 +75,7 @@ func (l *labelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) 
 	if err != nil {
 		return
 	}
-	size = goui.Size{
-		Width:  layoututil.Clamp(intrinsicWidth+padding.Width, constraints.MinWidth, constraints.MaxWidth),
-		Height: layoututil.Clamp(intrinsicHeight+padding.Height, constraints.MinHeight, constraints.MaxHeight),
-	}
+	size = constraints.Clamp(goui.Size{Width: intrinsicWidth + padding.Width, Height: intrinsicHeight + padding.Height})
 	l.layoutSize = size
 	return
 }

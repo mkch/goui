@@ -6,7 +6,6 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
-	"github.com/mkch/goui/layoututil"
 )
 
 // Center is a [Container] [Widget] that centers its single child within itself.
@@ -90,19 +89,19 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		if center.WidthFactor == 0 {
 			size.Width = constraints.MaxWidth
 		} else {
-			size.Width = layoututil.Clamp(childSize.Width*center.WidthFactor/100, constraints.MinWidth, constraints.MaxWidth)
+			size.Width = constraints.ClampWidth(childSize.Width * center.WidthFactor / 100)
 		}
 		if center.HeightFactor == 0 {
 			size.Height = constraints.MaxHeight
 		} else {
-			size.Height = layoututil.Clamp(childSize.Height*center.HeightFactor/100, constraints.MinHeight, constraints.MaxHeight)
+			size.Height = constraints.ClampHeight(childSize.Height * center.HeightFactor / 100)
 		}
 
 		l.childOffset.X = (size.Width - childSize.Width) / 2
 		l.childOffset.Y = (size.Height - childSize.Height) / 2
 		return
 	}
-	return goui.Size{Width: constraints.MinWidth, Height: constraints.MinHeight}, nil
+	return constraints.MinSize(), nil
 }
 
 func (l *centerLayouter) PositionAt(x, y int) (err error) {

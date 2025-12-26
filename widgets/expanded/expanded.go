@@ -46,12 +46,10 @@ func (l *expandedLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 		if err != nil {
 			return
 		}
-		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), size, constraints); err != nil {
-			return
-		}
+		err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), size, constraints)
 		return // Only one child
 	}
-	return
+	return constraints.MaxSize(), nil
 }
 
 func (l *expandedLayouter) PositionAt(x, y int) (err error) {

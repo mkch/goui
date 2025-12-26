@@ -4,7 +4,6 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
-	"github.com/mkch/goui/layoututil"
 )
 
 // SizedBox is a widget that imposes fixed width and height constraints on its child widget.
@@ -44,10 +43,7 @@ type sizedBoxLayouter struct {
 func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	l.lastConstraints = &constraints
 	sizedBox := l.Element().Widget().(*SizedBox)
-	size = goui.Size{
-		Width:  layoututil.Clamp(sizedBox.Width, constraints.MinWidth, constraints.MaxWidth),
-		Height: layoututil.Clamp(sizedBox.Height, constraints.MinHeight, constraints.MaxHeight),
-	}
+	size = constraints.Clamp(goui.Size{Width: sizedBox.Width, Height: sizedBox.Height})
 	for child := range l.Children() {
 		childConstraints := goui.Constraints{
 			MinWidth:  size.Width,
@@ -60,9 +56,8 @@ func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 		if err != nil {
 			return
 		}
-		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, childConstraints); err != nil {
-			return
-		}
+		err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, childConstraints)
+		return // Only one child
 	}
 	return
 }

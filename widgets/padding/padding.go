@@ -4,7 +4,6 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
-	"github.com/mkch/goui/layoututil"
 )
 
 type Padding struct {
@@ -40,16 +39,16 @@ type paddingLayouter struct {
 func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	padding := l.Element().Widget().(*Padding)
 
+	var childSize goui.Size
 	for child := range l.Children() {
-		childMaxWidth := layoututil.Clamp(constraints.MaxWidth-padding.Left-padding.Right, constraints.MinWidth, constraints.MaxWidth)
-		childMaxHeight := layoututil.Clamp(constraints.MaxHeight-padding.Top-padding.Bottom, constraints.MinHeight, constraints.MaxHeight)
+		childMaxWidth := constraints.ClampWidth(constraints.MaxWidth - padding.Left - padding.Right)
+		childMaxHeight := constraints.ClampHeight(constraints.MaxHeight - padding.Top - padding.Bottom)
 		childConstraints := goui.Constraints{
 			MinWidth:  constraints.MinWidth,
 			MaxWidth:  childMaxWidth,
 			MinHeight: constraints.MinHeight,
 			MaxHeight: childMaxHeight,
 		}
-		var childSize goui.Size
 		childSize, err = child.Layout(ctx, childConstraints)
 		if err != nil {
 			return
@@ -57,17 +56,12 @@ func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints
 		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, childConstraints); err != nil {
 			return
 		}
-
-		size = goui.Size{
-			Width:  layoututil.Clamp(childSize.Width+padding.Left+padding.Right, constraints.MinWidth, constraints.MaxWidth),
-			Height: layoututil.Clamp(childSize.Height+padding.Top+padding.Bottom, constraints.MinHeight, constraints.MaxHeight),
-		}
-		return // only one child
+		break // only one child
 	}
-	return goui.Size{
-		Width:  padding.Left + padding.Right,
-		Height: padding.Top + padding.Bottom,
-	}, nil
+	size = constraints.Clamp(goui.Size{
+		Width:  childSize.Width + padding.Left + padding.Right,
+		Height: childSize.Height + padding.Top + padding.Bottom})
+	return
 }
 
 func (l *paddingLayouter) PositionAt(x, y int) (err error) {

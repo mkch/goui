@@ -2,7 +2,6 @@ package textfield
 
 import (
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/layoututil"
 	"github.com/mkch/goui/native"
 )
 
@@ -64,18 +63,12 @@ type textFieldLayouter struct {
 
 func (l *textFieldLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	if constraints.TightWidth() && constraints.TightHeight() {
-		size = goui.Size{
-			Width:  constraints.MinWidth,
-			Height: constraints.MinHeight,
-		}
+		size = constraints.MinSize()
 		l.layoutSize = size
 		return
 	}
 	intrinsicWidth, intrinsicHeight := 200, 30 // Default size for text field
-	size = goui.Size{
-		Width:  layoututil.Clamp(intrinsicWidth, constraints.MinWidth, constraints.MaxWidth),
-		Height: layoututil.Clamp(intrinsicHeight, constraints.MinHeight, constraints.MaxHeight),
-	}
+	size = constraints.Clamp(goui.Size{Width: intrinsicWidth, Height: intrinsicHeight})
 	l.layoutSize = size
 	return
 }

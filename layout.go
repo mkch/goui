@@ -71,6 +71,35 @@ func (c *Constraints) MaxSize() Size {
 	return Size{Width: c.MaxWidth, Height: c.MaxHeight}
 }
 
+// Clamp clamps the given size between the constraints.
+func (c *Constraints) Clamp(size Size) Size {
+	return Size{
+		Width:  clamp(size.Width, c.MinWidth, c.MaxWidth),
+		Height: clamp(size.Height, c.MinHeight, c.MaxHeight),
+	}
+}
+
+// ClampHeight clamps height between the constraints.
+func (c *Constraints) ClampWidth(width int) int {
+	return clamp(width, c.MinWidth, c.MaxWidth)
+}
+
+// ClampHeight clamps height between the constraints.
+func (c *Constraints) ClampHeight(height int) int {
+	return clamp(height, c.MinHeight, c.MaxHeight)
+}
+
+// clamp clamps value between min and max.
+func clamp(value, min, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
+
 type Size struct {
 	Width  int
 	Height int

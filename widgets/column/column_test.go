@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/layoututil"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/widgetstest"
 )
@@ -33,7 +32,7 @@ type mockLayouter struct {
 }
 
 func (l *mockLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
-	return layoututil.ClampSize(l.IntrinsicSize, constraints), nil
+	return constraints.Clamp(l.IntrinsicSize), nil
 }
 
 func (l *mockLayouter) PositionAt(x, y int) error {
