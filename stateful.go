@@ -6,7 +6,7 @@ import (
 
 type StatefulWidget interface {
 	Widget
-	CreateState(*Context) *WidgetState
+	CreateState(*Context, UpdateStateFunc) *WidgetState
 	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
 	Exclusive(StatefulWidget)
 }
@@ -22,7 +22,7 @@ func (StatefulWidgetImpl) CreateElement(ctx *Context) (Element, error) {
 	return createStatefulElement(ctx), nil
 }
 
-type StatefulWidgetFunc func(*Context) *WidgetState
+type StatefulWidgetFunc func(*Context, UpdateStateFunc) *WidgetState
 
 func (f StatefulWidgetFunc) WidgetID() ID {
 	return nil
@@ -32,8 +32,8 @@ func (f StatefulWidgetFunc) CreateElement(ctx *Context) (Element, error) {
 	return createStatefulElement(ctx), nil
 }
 
-func (f StatefulWidgetFunc) CreateState(ctx *Context) *WidgetState {
-	return f(ctx)
+func (f StatefulWidgetFunc) CreateState(ctx *Context, updateState UpdateStateFunc) *WidgetState {
+	return f(ctx, updateState)
 }
 
 func (f StatefulWidgetFunc) Exclusive(StatefulWidget) { /*Nop*/ }
@@ -53,17 +53,23 @@ func createStatefulElement(*Context) Element {
 	return &statefulElement{}
 }
 
+// Note: Parameter f in [UpdateStateFunc] has little chance to yield an error,
+// because it typically just mutates a few simple fields in practice.
+// Having f return an error would add unnecessary noise for callers.
+
+// UpdateStateFunc is a function type for updating the state of a widget.
+// Parameter f is a function that performs the state update.
+// UpdateStateFunc calls f and updates the widget accordingly.
+type UpdateStateFunc func(f func()) error
+
 type WidgetState struct {
 	// Build builds the widget tree for this state.
 	// It is called during the initial creation of the state
-	// and whenever the state is updated via WidgetState.Update.
+	// and whenever the state is updated via [UpdateStateFunc].
 	Build func() Widget
 	// DestroyData is called when the state is destroyed, if not nil.
 	// It can be used to clean up any resources associated with the state.
 	DestroyData func() // Can be nil
-
-	ctx     *Context
-	element Element
 }
 
 func (ws *WidgetState) destroyData() {
@@ -72,28 +78,30 @@ func (ws *WidgetState) destroyData() {
 	}
 }
 
-func (ws *WidgetState) Update(updater func()) error {
-	updater()
-
-	elem, layouter, err := reconcileElementTree(ws.ctx, ws.element, ws.element.Widget())
+// updateWidgetState calls f and updates its widget tree.
+// f can't be nil.
+func updateWidgetState(f func(), ctx *Context, elem *statefulElement) error {
+	f()
+	// Rebuild the child widget and reconcile.
+	newWidget := elem.state.Build()
+	reconciled, layouter, err := reconcileElementTree(ctx, elem.children[0], newWidget)
 	if err != nil {
 		return err
 	}
-	if ws.element == ws.ctx.window.Root {
-		ws.ctx.window.Root = elem
-		ws.ctx.window.Layouter = layouter
+	if reconciled != elem.children[0] {
+		element_SetChild(elem, 0, reconciled)
 	}
 
 	if layouter == nil {
 		return nil
 	}
 
-	if err = replayParentLayouter(ws.ctx, layouter); err == nil {
+	if err = replayParentLayouter(ctx, layouter); err == nil {
 		return nil
 	}
 
 	if err == errNotReplayable {
-		return layoutWindow(ws.ctx)
+		return layoutWindow(ctx)
 	}
 	return err
 }
@@ -120,7 +128,7 @@ func replayParentLayouter(ctx *Context, root Layouter) error {
 // statelessWidget is an implementation of StatelessWidget.
 type statefulWidget struct {
 	id          ID
-	createState func(ctx *Context) *WidgetState
+	createState func(ctx *Context, updateState UpdateStateFunc) *WidgetState
 }
 
 func (w *statefulWidget) WidgetID() ID {
@@ -131,15 +139,15 @@ func (w *statefulWidget) CreateElement(ctx *Context) (Element, error) {
 	return createStatefulElement(ctx), nil
 }
 
-func (w *statefulWidget) CreateState(ctx *Context) *WidgetState {
-	return w.createState(ctx)
+func (w *statefulWidget) CreateState(ctx *Context, updateState UpdateStateFunc) *WidgetState {
+	return w.createState(ctx, updateState)
 }
 
 func (w *statefulWidget) Exclusive(StatefulWidget) { /*Nop*/ }
 
 // NewStatefulWidget creates a new StatefulWidget with the given ID and createState function.
 // The createState function is called in StatefulWidget.CreateState method.
-func NewStatefulWidget(id ID, createState func(ctx *Context) *WidgetState) StatefulWidget {
+func NewStatefulWidget(id ID, createState func(ctx *Context, updateState UpdateStateFunc) *WidgetState) StatefulWidget {
 	return &statefulWidget{
 		id:          id,
 		createState: createState,

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/widgets"
 )
@@ -40,7 +41,7 @@ var personList = []Person{
 }
 
 func Root() goui.StatefulWidget {
-	return goui.StatefulWidgetFunc(func(ctx *goui.Context) (state *goui.WidgetState) {
+	return goui.StatefulWidgetFunc(func(ctx *goui.Context, updateState goui.UpdateStateFunc) *goui.WidgetState {
 		return &goui.WidgetState{
 			Build: func() goui.Widget {
 				return &widgets.Column{
@@ -60,12 +61,13 @@ func Root() goui.StatefulWidget {
 							Widget: &widgets.Button{
 								Label: "Sort by name",
 								OnClick: func(ctx *goui.Context) {
-									// Sort personList by Name
-									slices.SortStableFunc(personList, func(a, b Person) int {
-										return strings.Compare(a.Name, b.Name)
-									})
 									// Update the whole Root widget to rebuild children
-									state.Update(func() {})
+									gg.MustOK(updateState(func() {
+										// Sort personList by Name
+										slices.SortStableFunc(personList, func(a, b Person) int {
+											return strings.Compare(a.Name, b.Name)
+										})
+									}))
 								},
 							},
 						},
@@ -75,12 +77,13 @@ func Root() goui.StatefulWidget {
 							Widget: &widgets.Button{
 								Label: "Sort by age",
 								OnClick: func(ctx *goui.Context) {
-									// Sort personList by Age
-									slices.SortStableFunc(personList, func(a, b Person) int {
-										return a.Age - b.Age
-									})
 									// Update the whole Root widget to rebuild children
-									state.Update(func() {})
+									gg.MustOK(updateState(func() {
+										// Sort personList by Age
+										slices.SortStableFunc(personList, func(a, b Person) int {
+											return a.Age - b.Age
+										})
+									}))
 								},
 							},
 						},
@@ -96,16 +99,14 @@ func NewPersonWidget(n int) goui.StatefulWidget {
 	var clicked = 0
 	return goui.NewStatefulWidget(
 		goui.ValueID(p.ID),
-		func(ctx *goui.Context) (state *goui.WidgetState) {
+		func(ctx *goui.Context, updateState goui.UpdateStateFunc) *goui.WidgetState {
 			return &goui.WidgetState{
 				Build: func() goui.Widget {
 					return &widgets.Button{
 						ID:    goui.ValueID(p.ID),
 						Label: fmt.Sprintf("%s (%d years old) - Clicked %d times", p.Name, p.Age, clicked),
 						OnClick: func(ctx *goui.Context) {
-							state.Update(func() {
-								clicked++
-							})
+							gg.MustOK(updateState(func() { clicked++ }))
 						},
 					}
 				},

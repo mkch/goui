@@ -113,7 +113,7 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
 
-	widget := NewStatefulWidget(ValueID("stateful"), func(ctx *Context) *WidgetState {
+	widget := NewStatefulWidget(ValueID("stateful"), func(ctx *Context, updateState UpdateStateFunc) *WidgetState {
 		return &WidgetState{Build: func() Widget { return childWidget }}
 	})
 
@@ -379,11 +379,11 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child1,
-			NewStatefulWidget(nil, func(ctx *Context) *WidgetState {
+			NewStatefulWidget(nil, func(ctx *Context, updateState UpdateStateFunc) *WidgetState {
 				return &WidgetState{
 					Build: func() Widget { return child2 }}
 			}),
-			NewStatefulWidget(ValueID("no-change"), func(ctx *Context) *WidgetState {
+			NewStatefulWidget(ValueID("no-change"), func(ctx *Context, updateState UpdateStateFunc) *WidgetState {
 				return &WidgetState{
 					Build: func() Widget { return child3 }}
 			}),
@@ -406,11 +406,11 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child4, // Match old #0, update in-place.
-			NewStatefulWidget(ValueID("parent-of-child5"), func(ctx *Context) *WidgetState { // No match, recrated
+			NewStatefulWidget(ValueID("parent-of-child5"), func(ctx *Context, updateState UpdateStateFunc) *WidgetState { // No match, recrated
 				return &WidgetState{
 					Build: func() Widget { return child5 }}
 			}),
-			NewStatefulWidget(ValueID("no-change"), func(ctx *Context) *WidgetState { // Match old #2, update in-place and createState will not be called.
+			NewStatefulWidget(ValueID("no-change"), func(ctx *Context, updateState UpdateStateFunc) *WidgetState { // Match old #2, update in-place and createState will not be called.
 				return &WidgetState{
 					Build: func() Widget { panic("should not be called") }}
 			}),

@@ -219,11 +219,9 @@ func buildStatelessElement(ctx *Context, elem Element, statelessWidget Stateless
 }
 
 func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulWidget) (Element, error) {
-	statefulElem := elem.(*statefulElement)
-	statefulElem.state = statefulWidget.CreateState(ctx)
-	statefulElem.state.ctx = ctx
-	statefulElem.state.element = elem
-	childElem, err := buildElementTreeImpl(ctx, statefulElem.state.Build())
+	statefulElement := elem.(*statefulElement)
+	statefulElement.state = statefulWidget.CreateState(ctx, func(f func()) error { return updateWidgetState(f, ctx, statefulElement) })
+	childElem, err := buildElementTreeImpl(ctx, statefulElement.state.Build())
 	if err != nil {
 		return nil, err
 	}
@@ -251,8 +249,7 @@ func updateElementTree(ctx *Context, elem Element, widget Widget) (err error) {
 
 // updateStatelessWidget updates the stateless element elem to hold the new stateless widget.
 func updateStatelessWidget(ctx *Context, elem Element, statelessWidget StatelessWidget) error {
-	childElem, err := reconcileElementTreeImpl(ctx,
-		elem.child(0), statelessWidget.Build(ctx))
+	childElem, err := reconcileElementTreeImpl(ctx, elem.child(0), statelessWidget.Build(ctx))
 	if err != nil {
 		return err
 	}
@@ -264,8 +261,11 @@ func updateStatelessWidget(ctx *Context, elem Element, statelessWidget Stateless
 func updateStatefulWidget(ctx *Context, elem Element) error {
 	statefulElement := elem.(*statefulElement)
 	// rebuild the child widget and reconcile.
-	childElem, err := reconcileElementTreeImpl(ctx,
-		statefulElement.child(0), statefulElement.state.Build())
+	childElem, err := reconcileElementTreeImpl(
+		ctx,
+		statefulElement.child(0),
+		statefulElement.state.Build(),
+	)
 	if err != nil {
 		return err
 	}
@@ -281,6 +281,7 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 	numWidget := container.NumChildren()
 
 	// Phase 1: Top-down match
+
 	var topDownCount = 0 // number of matched elements(widgets) from the top
 	for i := 0; i < min(numElem, numWidget); i++ {
 		widget := container.Child(i)
@@ -297,6 +298,7 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 	}
 
 	// Phase 2: Bottom-up match
+
 	var bottomUpCount = 0 // number of matched elements(widgets) from the bottom
 	for i := 0; numElem-i > topDownCount && numWidget-i > topDownCount; i++ {
 		widgetIndex := numWidget - 1 - i
@@ -314,7 +316,11 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 		bottomUpCount++
 	}
 
-	// Phase 3: Handle the middle part
+	// Phase 3: Handle the middle part:
+	//   Widgets and elements with IDs are matched by ID.
+	//   Widgets without IDs and unmatched widgets are treated as new, and new elements are created for them.
+	//   Elements without IDs and unmatched elements are destroyed.
+
 	var unmatchedKeyedElements map[ID]Element // old elements with ID in the middle
 	var unusedElements []Element              // old elements without ID in the middle
 	if topDownCount+bottomUpCount < numElem { // if there are old elements left
@@ -330,7 +336,7 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 			}
 		}
 	}
-	// process widgets in the middle part
+	// Process widgets in the middle part
 	for i := topDownCount; i <= numWidget-1-bottomUpCount; i++ {
 		widget := container.Child(i)
 		widgetID := widget.WidgetID()

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/widgets"
 )
@@ -57,18 +58,15 @@ func main() {
 }
 
 var CounterButton = goui.StatefulWidgetFunc(
-	func(ctx *goui.Context) (state *goui.WidgetState) {
+	func(ctx *goui.Context, updateState goui.UpdateStateFunc) *goui.WidgetState {
 		var data int
-		state = &goui.WidgetState{
+		return &goui.WidgetState{
 			Build: func() goui.Widget {
 				return &widgets.Button{
 					Label: fmt.Sprintf("Clicked %d times", data),
 					OnClick: func(ctx *goui.Context) {
-						state.Update(func() {
-							data++
-						})
+						gg.MustOK(updateState(func() { data++ }))
 					},
 				}
 			}}
-		return
 	})
