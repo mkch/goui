@@ -35,7 +35,7 @@ func (s *SizedBox) Child(n int) goui.Widget {
 func (s *SizedBox) Exclusive(goui.Container) { /*Nop*/ }
 
 type sizedBoxLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 	lastConstraints *goui.Constraints
 	pos             goui.Point
 }

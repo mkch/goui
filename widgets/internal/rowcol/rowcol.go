@@ -11,7 +11,7 @@ import (
 
 // Layouter is a layouter for Row and Column widgets.
 type Layouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 	childrenOffsets []goui.Size
 
 	// Main returns the main axis value (Width for [Row], Height for [Column]) of the given [Size].

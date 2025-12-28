@@ -67,7 +67,7 @@ func TestBuildElementTree_SimpleWidget(t *testing.T) {
 }
 
 type mockLayouter struct {
-	LayouterBase
+	LayouterHelper
 }
 
 func (l *mockLayouter) Layout(ctx *Context, constraints Constraints) (Size, error) {
@@ -113,8 +113,8 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
 
-	widget := NewStatefulWidget(ValueID("stateful"), func(ctx *Context, updateState UpdateStateFunc) *WidgetState {
-		return &WidgetState{Build: func() Widget { return childWidget }}
+	widget := NewStatefulWidget(ValueID("stateful"), func(ctx *StateContext) State {
+		return NewState(ctx, func() Widget { return childWidget }, nil)
 	})
 
 	elem, layouter, err := buildElementTree(ctx, widget)
@@ -379,13 +379,11 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child1,
-			NewStatefulWidget(nil, func(ctx *Context, updateState UpdateStateFunc) *WidgetState {
-				return &WidgetState{
-					Build: func() Widget { return child2 }}
+			NewStatefulWidget(nil, func(ctx *StateContext) State {
+				return NewState(ctx, func() Widget { return child2 }, nil)
 			}),
-			NewStatefulWidget(ValueID("no-change"), func(ctx *Context, updateState UpdateStateFunc) *WidgetState {
-				return &WidgetState{
-					Build: func() Widget { return child3 }}
+			NewStatefulWidget(ValueID("no-change"), func(ctx *StateContext) State {
+				return NewState(ctx, func() Widget { return child3 }, nil)
 			}),
 		},
 	}
@@ -406,13 +404,11 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child4, // Match old #0, update in-place.
-			NewStatefulWidget(ValueID("parent-of-child5"), func(ctx *Context, updateState UpdateStateFunc) *WidgetState { // No match, recrated
-				return &WidgetState{
-					Build: func() Widget { return child5 }}
+			NewStatefulWidget(ValueID("parent-of-child5"), func(ctx *StateContext) State { // No match, recrated
+				return NewState(ctx, func() Widget { return child5 }, nil)
 			}),
-			NewStatefulWidget(ValueID("no-change"), func(ctx *Context, updateState UpdateStateFunc) *WidgetState { // Match old #2, update in-place and createState will not be called.
-				return &WidgetState{
-					Build: func() Widget { panic("should not be called") }}
+			NewStatefulWidget(ValueID("no-change"), func(ctx *StateContext) State { // Match old #2, update in-place and createState will not be called.
+				return NewState(ctx, func() Widget { return child3 }, nil)
 			}),
 		},
 	}

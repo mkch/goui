@@ -26,7 +26,7 @@ type mockElement struct {
 }
 
 type mockLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 	IntrinsicSize goui.Size
 	Position      goui.Point
 }

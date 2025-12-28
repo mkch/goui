@@ -37,7 +37,7 @@ func (p *Expanded) Child(n int) goui.Widget {
 func (p *Expanded) Exclusive(goui.Container) { /*Nop*/ }
 
 type expandedLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 }
 
 func (l *expandedLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {

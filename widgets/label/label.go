@@ -52,7 +52,7 @@ func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 }
 
 type labelLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 	layoutSize goui.Size
 }
 

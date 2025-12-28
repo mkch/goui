@@ -49,7 +49,7 @@ func main() {
 				Widget: &widgets.Padding{
 					Left:   50,
 					Right:  100,
-					Widget: CounterButton,
+					Widget: counterButton,
 				},
 			},
 		}},
@@ -57,16 +57,16 @@ func main() {
 	app.Run()
 }
 
-var CounterButton = goui.StatefulWidgetFunc(
-	func(ctx *goui.Context, updateState goui.UpdateStateFunc) *goui.WidgetState {
-		var data int
-		return &goui.WidgetState{
-			Build: func() goui.Widget {
-				return &widgets.Button{
-					Label: fmt.Sprintf("Clicked %d times", data),
-					OnClick: func(ctx *goui.Context) {
-						gg.MustOK(updateState(func() { data++ }))
-					},
-				}
-			}}
-	})
+var counterButton goui.StatefulWidgetFunc = func(ctx *goui.StateContext) (state goui.State) {
+	// Click count, the real state.
+	var count int
+	state = goui.NewState(ctx, func() goui.Widget {
+		return &widgets.Button{
+			Label: fmt.Sprintf("Clicked %d times", count),
+			OnClick: func(ctx *goui.Context) {
+				gg.MustOK(state.Update(func() { count++ }))
+			},
+		}
+	}, nil)
+	return
+}

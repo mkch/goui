@@ -154,22 +154,22 @@ type Layouter interface {
 	setElement(element Element)
 }
 
-// LayouterBase is a helper struct for implementing Layouter.
-// Embedding LayouterBase in a struct and implementing
+// LayouterHelper is a helper struct for implementing Layouter.
+// Embedding LayouterHelper in a struct and implementing
 // Layout and PositionAt methods implements the Layouter interface.
-type LayouterBase struct {
+type LayouterHelper struct {
 	element Element
 }
 
-func (l *LayouterBase) Element() Element {
+func (l *LayouterHelper) Element() Element {
 	return l.element
 }
 
-func (l *LayouterBase) setElement(element Element) {
+func (l *LayouterHelper) setElement(element Element) {
 	l.element = element
 }
 
-func (l *LayouterBase) Children() iter.Seq[Layouter] {
+func (l *LayouterHelper) Children() iter.Seq[Layouter] {
 	return func(yield func(Layouter) bool) {
 		for i := 0; i < l.element.numChildren(); i++ {
 			childLayouter := layouterTree(l.element.child(i))
@@ -183,7 +183,7 @@ func (l *LayouterBase) Children() iter.Seq[Layouter] {
 	}
 }
 
-func (l *LayouterBase) Parent() (parent Layouter) {
+func (l *LayouterHelper) Parent() (parent Layouter) {
 	for element := l.element.parent(); element != nil; element = element.parent() {
 		parent = element.Layouter()
 		if parent != nil {
@@ -193,7 +193,7 @@ func (l *LayouterBase) Parent() (parent Layouter) {
 	return nil
 }
 
-func (l *LayouterBase) Replayer() func(*Context) error {
+func (l *LayouterHelper) Replayer() func(*Context) error {
 	return nil
 }
 

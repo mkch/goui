@@ -33,7 +33,7 @@ func (p *Padding) Child(n int) goui.Widget {
 func (p *Padding) Exclusive(goui.Container) { /*Nop*/ }
 
 type paddingLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 }
 
 func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {

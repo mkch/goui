@@ -62,7 +62,7 @@ func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 }
 
 type buttonLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 	layoutSize goui.Size
 }
 

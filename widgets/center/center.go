@@ -65,7 +65,7 @@ func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 }
 
 type centerLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 	lastConstraints *goui.Constraints // For replaying
 	childOffset     goui.Point
 	pos             goui.Point

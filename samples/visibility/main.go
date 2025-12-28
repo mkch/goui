@@ -29,57 +29,69 @@ func rootWidget() goui.Widget {
 	return &widgets.Center{Widget: demoWidget()}
 }
 
-func demoWidget() goui.StatefulWidget {
-	return goui.StatefulWidgetFunc(func(ctx *goui.Context, updateState goui.UpdateStateFunc) *goui.WidgetState {
-		var visible bool = true
-		var maintainSize bool
-		return &goui.WidgetState{
-			Build: func() goui.Widget {
-				return &widgets.Column{
-					CrossAxisAlignment: axes.Center,
-					Widgets: []goui.Widget{
-						&widgets.SizedBox{Height: 10},
+type state struct {
+	*goui.StateUpdater
+	goui.NopDestroyer
+	visible      bool
+	maintainSize bool
+}
 
-						&widgets.Visibility{
-							Visible:      visible,
-							MaintainSize: maintainSize,
-							Widget: &widgets.Padding{
-								Left: 5, Right: 5,
-								Widget: &widgets.Label{
-									Text: "The quick brown fox jumps over the lazy dog.",
-								},
-							},
-						},
+func NewState(ctx *goui.StateContext) *state {
+	return &state{
+		StateUpdater: goui.NewStateUpdater(ctx),
+		visible:      true,
+	}
+}
 
-						&widgets.SizedBox{Height: 20},
+func (s *state) Build() goui.Widget {
+	return &widgets.Column{
+		CrossAxisAlignment: axes.Center,
+		Widgets: []goui.Widget{
+			&widgets.SizedBox{Height: 10},
 
-						&widgets.Button{
-							Label: "Show",
-							OnClick: func(ctx *goui.Context) {
-								if !visible {
-									gg.MustOK(updateState(func() { visible = true }))
-								}
-							},
-						},
-						&widgets.Button{
-							Label: "Hide",
-							OnClick: func(ctx *goui.Context) {
-								if visible || maintainSize {
-									gg.MustOK(updateState(func() { visible = false; maintainSize = false }))
-								}
-							},
-						},
-						&widgets.Button{
-							Label: "Hide, maintain size",
-							OnClick: func(ctx *goui.Context) {
-								if visible || !maintainSize {
-									gg.MustOK(updateState(func() { visible = false; maintainSize = true }))
-								}
-							},
-						},
+			&widgets.Visibility{
+				Visible:      s.visible,
+				MaintainSize: s.maintainSize,
+				Widget: &widgets.Padding{
+					Left: 5, Right: 5,
+					Widget: &widgets.Label{
+						Text: "The quick brown fox jumps over the lazy dog.",
 					},
-				}
+				},
 			},
-		}
+
+			&widgets.SizedBox{Height: 20},
+
+			&widgets.Button{
+				Label: "Show",
+				OnClick: func(ctx *goui.Context) {
+					if !s.visible {
+						gg.MustOK(s.Update(func() { s.visible = true }))
+					}
+				},
+			},
+			&widgets.Button{
+				Label: "Hide",
+				OnClick: func(ctx *goui.Context) {
+					if s.visible || s.maintainSize {
+						gg.MustOK(s.Update(func() { s.visible = false; s.maintainSize = false }))
+					}
+				},
+			},
+			&widgets.Button{
+				Label: "Hide, maintain size",
+				OnClick: func(ctx *goui.Context) {
+					if s.visible || !s.maintainSize {
+						gg.MustOK(s.Update(func() { s.visible = false; s.maintainSize = true }))
+					}
+				},
+			},
+		},
+	}
+}
+
+func demoWidget() goui.StatefulWidget {
+	return goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
+		return NewState(ctx)
 	})
 }

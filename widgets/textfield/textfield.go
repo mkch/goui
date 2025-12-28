@@ -58,7 +58,7 @@ func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 }
 
 type textFieldLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 	layoutSize goui.Size
 }
 

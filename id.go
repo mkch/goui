@@ -1,6 +1,6 @@
 package goui
 
-// ID uniquely identifies a GUI element in its parent container.
+// ID is the identifier of a [Widget].
 type ID interface {
 	privateImplementsID() // unexported to prevent external implementations
 }

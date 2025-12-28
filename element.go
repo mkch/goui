@@ -220,7 +220,7 @@ func buildStatelessElement(ctx *Context, elem Element, statelessWidget Stateless
 
 func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulWidget) (Element, error) {
 	statefulElement := elem.(*statefulElement)
-	statefulElement.state = statefulWidget.CreateState(ctx, func(f func()) error { return updateWidgetState(f, ctx, statefulElement) })
+	statefulElement.state = statefulWidget.CreateState(&StateContext{ctx, statefulElement})
 	childElem, err := buildElementTreeImpl(ctx, statefulElement.state.Build())
 	if err != nil {
 		return nil, err

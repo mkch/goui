@@ -38,7 +38,7 @@ func (p *Visibility) Child(n int) goui.Widget {
 func (p *Visibility) Exclusive(goui.Container) { /*Nop*/ }
 
 type visibilityLayouter struct {
-	goui.LayouterBase
+	goui.LayouterHelper
 	// X offset of child.
 	// 0 if visible. Beyond right edge of window if not visible.
 	childXOffset int

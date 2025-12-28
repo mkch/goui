@@ -33,10 +33,8 @@ func main() {
 					},
 					&widgets.SizedBox{Height: 10},
 					&widgets.Button{
-						Label: "Increase State (Even: Label, Odd: Button)",
-						OnClick: func(ctx *goui.Context) {
-							gg.MustOK(updateNumber(func() { number++ }))
-						},
+						Label:   "Increase State (Even: Label, Odd: Button)",
+						OnClick: func(ctx *goui.Context) { state.Inc() },
 					},
 				},
 			},
@@ -45,17 +43,33 @@ func main() {
 	app.Run()
 }
 
-var number = 0
-var updateNumber goui.UpdateStateFunc
+type numberState struct {
+	*goui.StateUpdater
+	goui.NopDestroyer
+	number int
+}
 
-var stateful = goui.StatefulWidgetFunc(
-	func(ctx *goui.Context, updateState goui.UpdateStateFunc) *goui.WidgetState {
-		return &goui.WidgetState{
-			Build: func() goui.Widget {
-				updateNumber = updateState
-				return gg.IfFunc(number%2 == 0,
-					func() goui.Widget { return &widgets.Label{Text: fmt.Sprintf("Label: %v", number)} },
-					func() goui.Widget { return &widgets.Button{Label: fmt.Sprintf("Button: %v", number)} },
-				)
-			}}
-	})
+func NewState(ctx *goui.StateContext) *numberState {
+	return &numberState{
+		StateUpdater: goui.NewStateUpdater(ctx),
+		number:       0,
+	}
+}
+
+func (s *numberState) Build() goui.Widget {
+	return gg.IfFunc(s.number%2 == 0,
+		func() goui.Widget { return &widgets.Label{Text: fmt.Sprintf("Label: %v", s.number)} },
+		func() goui.Widget { return &widgets.Button{Label: fmt.Sprintf("Button: %v", s.number)} },
+	)
+}
+
+func (s *numberState) Inc() {
+	gg.MustOK(s.Update(func() { s.number++ }))
+}
+
+var state *numberState
+
+var stateful = goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
+	state = NewState(ctx)
+	return state
+})
