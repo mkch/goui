@@ -9,8 +9,8 @@ import (
 
 // CountState is a [goui.State] that holds the click count.
 type CountState struct {
-	*goui.StateUpdater // Implements Update method.
-	goui.NopDestroyer  // No cleanup needed.
+	goui.StateUpdater // Implements Update method.
+	goui.NopDestroyer // No cleanup needed.
 
 	count int // The actual state.
 }

@@ -35,7 +35,7 @@ type Person struct {
 }
 
 type State struct {
-	*goui.StateUpdater
+	goui.StateUpdater
 	goui.NopDestroyer
 	PersonList []Person
 }
@@ -106,7 +106,7 @@ func Root() goui.StatefulWidget {
 }
 
 type PersonState struct {
-	*goui.StateUpdater
+	goui.StateUpdater
 	goui.NopDestroyer
 	person  *Person
 	clicked int

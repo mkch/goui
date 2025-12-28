@@ -30,7 +30,7 @@ func rootWidget() goui.Widget {
 }
 
 type state struct {
-	*goui.StateUpdater
+	goui.StateUpdater
 	goui.NopDestroyer
 	visible      bool
 	maintainSize bool

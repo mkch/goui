@@ -44,7 +44,7 @@ func main() {
 }
 
 type numberState struct {
-	*goui.StateUpdater
+	goui.StateUpdater
 	goui.NopDestroyer
 	number int
 }

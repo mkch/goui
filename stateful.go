@@ -80,7 +80,7 @@ type State interface {
 
 // simpleState is a simple implementation of State.
 type simpleState struct {
-	*StateUpdater
+	StateUpdater
 	destroy func()
 	build   func() Widget
 }
@@ -118,14 +118,13 @@ func (NopDestroyer) Destroy() { /*NOP*/ }
 // StateUpdater implements [State.Update].
 // Embedding StateUpdater in a struct and implementing other methods of [State]
 // allows the struct type to satisfy the [State] interface.
-type StateUpdater struct {
-	ctx  *Context
-	elem *statefulElement
-}
+type StateUpdater stateUpdater
+
+type stateUpdater func(updater func()) error
 
 // Update implements [State.Update].
-func (h *StateUpdater) Update(updater func()) error {
-	return updateWidgetState(updater, h.ctx, h.elem)
+func (h StateUpdater) Update(updater func()) error {
+	return h(updater)
 }
 
 // StateContext is the context used by [NewStateUpdater].
@@ -135,10 +134,9 @@ type StateContext struct {
 }
 
 // NewStateUpdater creates a new StateUpdater with the given context.
-func NewStateUpdater(ctx *StateContext) *StateUpdater {
-	return &StateUpdater{
-		ctx:  ctx.Context,
-		elem: ctx.elem,
+func NewStateUpdater(ctx *StateContext) StateUpdater {
+	return func(updater func()) error {
+		return updateWidgetState(updater, ctx.Context, ctx.elem)
 	}
 }
 
