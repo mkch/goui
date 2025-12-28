@@ -16,10 +16,10 @@ var app = goui.NewApp(&goui.AppConfig{
 
 func main() {
 	app.CreateWindow(goui.Window{
-		OnClose: func() { app.Exit(0) },
-		Title:   "goui demo",
-		Width:   600,
-		Height:  400,
+		OnDestroy: func(*goui.Context) { app.Exit(0) },
+		Title:     "goui demo",
+		Width:     600,
+		Height:    400,
 		Root: &widgets.Column{Widgets: []goui.Widget{
 			&widgets.Center{
 				HeightFactor: 120,

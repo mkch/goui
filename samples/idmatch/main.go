@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
@@ -19,11 +18,11 @@ var app = goui.NewApp(&goui.AppConfig{
 
 func main() {
 	app.CreateWindow(goui.Window{
-		OnClose: func() { app.Exit(0) },
-		Title:   "goui idmatch demo",
-		Width:   600,
-		Height:  400,
-		Root:    Root(),
+		OnDestroy: func(*goui.Context) { app.Exit(0) },
+		Title:     "goui idmatch demo",
+		Width:     600,
+		Height:    400,
+		Root:      Root(),
 	})
 	app.Run()
 }
@@ -57,7 +56,7 @@ func (s *State) Build() goui.Widget {
 
 			&widgets.Button{
 				Label: "--HEADER-- (ID changes on every build)",
-				ID:    goui.ValueID(time.Now()),
+				ID:    goui.UniqueID(),
 			},
 
 			NewPersonWidget(&s.PersonList[0]),

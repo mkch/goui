@@ -46,6 +46,11 @@ func CreateWindow(title string, width, height int) (handle Handle, err error) {
 	return
 }
 
+func CloseWindow(handle Handle) error {
+	_, err := win32.SendMessageW(handle.(*window.Window).HWND(), win32.WM_CLOSE, 0, 0)
+	return err
+}
+
 func InvalidWindow(handle Handle) error {
 	err := handle.(*window.Window).InvalidateRect(nil, true)
 	return errortrace.WithStack(err)
@@ -135,6 +140,14 @@ func SetWidgetDimensions(handle Handle, x, y, width, height int) error {
 	return errortrace.WithStack(err)
 }
 
+func SetWidgetEnabled(handle Handle, enabled bool) {
+	win32.EnableWindow(handle.(winBase).HWND(), enabled)
+}
+
+func GetWidgetEnabled(handle Handle) bool {
+	return win32.IsWindowEnabled(handle.(winBase).HWND())
+}
+
 func SetWidgetSize(handle Handle, width, height int) error {
 	err := win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
 		0, 0,
@@ -152,9 +165,12 @@ func SetWindowOnSizeChangedListener(handle Handle, onSizeChanged func(width, hei
 	})
 }
 
-func SetWindowOnCloseListener(handle Handle, onClose func()) {
-	win := handle.(*window.Window)
-	win.OnClose = onClose
+func SetWindowOnDestroyListener(handle Handle, onClose func()) {
+	handle.(*window.Window).OnDestroy = onClose
+}
+
+func SetWindowOnCloseListener(handle Handle, onClose func() bool) {
+	handle.(*window.Window).OnClose = onClose
 }
 
 func WindowClientRect(handle Handle) (x, y, width, height int, err error) {

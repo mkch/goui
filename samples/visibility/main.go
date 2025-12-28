@@ -15,11 +15,11 @@ var app = goui.NewApp(&goui.AppConfig{
 
 func main() {
 	app.CreateWindow(goui.Window{
-		OnClose: func() { app.Exit(0) },
-		Title:   "goui visibility sample",
-		Width:   400,
-		Height:  300,
-		Root:    rootWidget(),
+		OnDestroy: func(*goui.Context) { app.Exit(0) },
+		Title:     "goui visibility sample",
+		Width:     400,
+		Height:    300,
+		Root:      rootWidget(),
 	})
 
 	app.Run()

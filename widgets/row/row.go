@@ -9,8 +9,8 @@ import (
 // Row is a [Container] [Widget] that arranges its children in a horizontal row.
 // The height of Row is the maximum height of its children.
 // The width of Row is calculated based on its MainAxisSize property:
-// - If MainAxisSize is Min, the width of Row is the sum of widths of its children.
-// - If MainAxisSize is Max, the width of Row is the maximum width allowed by its parent.
+//   - If MainAxisSize is Min, the width of Row is the sum of widths of its children.
+//   - If MainAxisSize is Max, the width of Row is the maximum width allowed by its parent.
 type Row struct {
 	ID                 goui.ID
 	Widgets            []goui.Widget

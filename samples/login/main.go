@@ -5,6 +5,7 @@ import (
 
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/messagebox"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 )
@@ -17,11 +18,11 @@ var app = goui.NewApp(&goui.AppConfig{
 
 func main() {
 	app.CreateWindow(goui.Window{
-		OnClose: func() { app.Exit(0) },
-		Title:   "goui login sample",
-		Width:   400,
-		Height:  300,
-		Root:    rootWidget(),
+		OnDestroy: func(*goui.Context) { app.Exit(0) },
+		Title:     "goui login sample",
+		Width:     400,
+		Height:    300,
+		Root:      rootWidget(),
 	})
 
 	app.Run()
@@ -67,9 +68,9 @@ func doLogin(ctx *goui.Context, userNameCtrl, passwordCtrl *widgets.TextFieldCon
 	user := gg.Must(userNameCtrl.Text())
 	pass := gg.Must(passwordCtrl.Text())
 	if user == username && pass == password {
-		ctx.MessageBox("Login", "Logged in successfully!", goui.MessageBoxIconInfo)
+		messagebox.Show(ctx, "Login", "Logged in successfully!", messagebox.IconInfo, messagebox.ButtonOK)
 	} else {
-		ctx.MessageBox("Login", "Invalid username or password.", goui.MessageBoxIconError)
+		messagebox.Show(ctx, "Login", "Invalid username or password.", messagebox.IconError, messagebox.ButtonOK)
 		userNameCtrl.SetText("")
 		passwordCtrl.SetText("")
 	}

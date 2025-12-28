@@ -1,6 +1,7 @@
 package goui
 
 import (
+	"errors"
 	"fmt"
 	"iter"
 
@@ -26,12 +27,6 @@ func newMockContext(config *AppConfig) *Context {
 // NativeWindow returns the native window handle associated with this context.
 func (ctx *Context) NativeWindow() native.Handle {
 	return ctx.window.Handle
-}
-
-// MessageBox shows a message box with the given title, message and icon
-// associated with this context's window.
-func (ctx *Context) MessageBox(title, message string, icon MessageBoxIcon) {
-	native.MessageBox(ctx.NativeWindow(), title, message, native.MessageBoxIcon(icon))
 }
 
 type Widget interface {
@@ -90,20 +85,6 @@ func (app *App) Exit(exitCode int) {
 	app.app.Quit(exitCode)
 }
 
-type MessageBoxIcon native.MessageBoxIcon
-
-const (
-	MessageBoxNone        = MessageBoxIcon(native.MessageBoxNone)
-	MessageBoxIconInfo    = MessageBoxIcon(native.MessageBoxIconInfo)
-	MessageBoxIconWarning = MessageBoxIcon(native.MessageBoxIconWarning)
-	MessageBoxIconError   = MessageBoxIcon(native.MessageBoxIconError)
-)
-
-// MessageBox shows a message box with the given title, message and icon.
-func MessageBox(title, message string, icon MessageBoxIcon) {
-	native.MessageBox(nil, title, message, native.MessageBoxIcon(icon))
-}
-
 func layoutWindow(ctx *Context) error {
 	_, _, width, height, err := native.WindowClientRect(ctx.window.Handle)
 	if err != nil {
@@ -154,7 +135,18 @@ func (app *App) CreateWindow(config Window) error {
 			panic(err)
 		}
 	})
-	native.SetWindowOnCloseListener(handle, config.OnClose)
+	native.SetWindowOnCloseListener(handle, func() bool {
+		if config.OnClose == nil {
+			return true
+		}
+		return config.OnClose(ctx)
+	})
+	native.SetWindowOnDestroyListener(handle, func() {
+		if config.OnDestroy != nil {
+			config.OnDestroy(ctx)
+		}
+		delete(app.windows, config.ID)
+	})
 	if app.debug.LayoutOutlineEnabled() {
 		native.EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {
@@ -179,4 +171,16 @@ func (app *App) CreateWindow(config Window) error {
 
 	app.windows[config.ID] = window
 	return nil
+}
+
+var ErrNoSuchWindow = errors.New("no such window exists")
+
+// CloseWindow closes the window with the given ID.
+// If no such window exists, it returns [ErrNoSuchWindow].
+func (app *App) CloseWindow(windowID ID) error {
+	win := app.windows[windowID]
+	if win == nil {
+		return ErrNoSuchWindow
+	}
+	return native.CloseWindow(app.windows[windowID].Handle)
 }

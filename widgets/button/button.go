@@ -6,9 +6,11 @@ import (
 )
 
 type Button struct {
-	ID      goui.ID
-	Label   string
-	Padding *goui.Size // Padding around the label text. If nil, default padding is used.
+	ID       goui.ID
+	Label    string
+	Padding  *goui.Size // Padding around the label text. If nil, default padding is used.
+	Disabled bool
+
 	OnClick func(*goui.Context)
 }
 
@@ -21,6 +23,7 @@ func (btn *Button) CreateElement(ctx *goui.Context) (goui.Element, error) {
 	if err != nil {
 		return nil, err
 	}
+	native.SetWidgetEnabled(handle, !btn.Disabled)
 	layouter := &buttonLayouter{}
 	elem := &buttonElement{
 		goui.NativeElement{
@@ -49,6 +52,9 @@ func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 		oldBtn := oldWidget.(*Button)
 		if oldBtn.Label != newBtn.Label {
 			native.SetButtonLabel(e.Handle, newBtn.Label)
+		}
+		if native.GetWidgetEnabled(e.Handle) == newBtn.Disabled {
+			native.SetWidgetEnabled(e.Handle, !newBtn.Disabled)
 		}
 	}
 	// func type are not comparable, so we always reset the OnClick listener.

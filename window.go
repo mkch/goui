@@ -3,12 +3,13 @@ package goui
 import "github.com/mkch/goui/native"
 
 type Window struct {
-	ID      ID
-	Title   string
-	Width   int
-	Height  int
-	Root    Widget
-	OnClose func()
+	ID        ID
+	Title     string
+	Width     int
+	Height    int
+	Root      Widget
+	OnClose   func(ctx *Context) bool // Return true to allow closing, false to prevent.
+	OnDestroy func(ctx *Context)
 }
 
 type window struct {
