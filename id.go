@@ -1,13 +1,7 @@
 package goui
 
-import "fmt"
-
 // ID is the identifier of a [Widget].
 type ID interface {
-	// String returns the string representation of the ID.
-	// The format of the string is not guaranteed to be stable.
-	// Use for debugging purposes only.
-	String() string
 	privateImplementsID() // unexported to prevent external implementations
 }
 
@@ -17,9 +11,6 @@ type valueID[T comparable] struct {
 }
 
 func (valueID[T]) privateImplementsID() {}
-func (v valueID[T]) String() string {
-	return fmt.Sprintf("%[1]T(%#[1]v)", v.value)
-}
 
 // ValueID returns an ID backed by a comparable value.
 // Two IDs created with ValueID are equal when their underlying values are equal; otherwise they are not.
