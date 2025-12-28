@@ -83,7 +83,8 @@ func SetButtonLabel(handle Handle, label string) {
 
 func CreateLabel(parent Handle, title string) (handle Handle, err error) {
 	handle, err = static.New(parent.(winBase).HWND(), &static.Spec{
-		Style:  win32.WS_CHILD | win32.WS_VISIBLE,
+		Style: win32.WS_CHILD | win32.WS_VISIBLE |
+			static.SS_CENTER | static.SS_CENTERIMAGE, // SS_CENTERIMAGE vertically centers the single line of text.
 		Text:   title,
 		Width:  metrics.Px(100),
 		Height: metrics.Px(30),
