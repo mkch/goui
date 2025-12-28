@@ -1,7 +1,13 @@
 package goui
 
+import "fmt"
+
 // ID is the identifier of a [Widget].
 type ID interface {
+	// String returns the string representation of the ID.
+	// The format of the string is not guaranteed to be stable.
+	// Use for debugging purposes only.
+	String() string
 	privateImplementsID() // unexported to prevent external implementations
 }
 
@@ -11,8 +17,22 @@ type valueID[T comparable] struct {
 }
 
 func (valueID[T]) privateImplementsID() {}
+func (v valueID[T]) String() string {
+	return fmt.Sprintf("%[1]T(%#[1]v)", v.value)
+}
 
-// ValueID creates an ID from a comparable value.
+// ValueID returns an ID backed by a comparable value.
+// Two IDs created with ValueID are equal when their underlying values are equal; otherwise they are not.
+// Do not use pointers to zero-sized types for T, as their equality is undefined according to Go spec.
 func ValueID[T comparable](value T) ID {
 	return valueID[T]{value: value}
+}
+
+// UniqueID creates and returns a global unique ID.
+func UniqueID() ID {
+	// Uniqueness guarantees:
+	// #1. Type unique is local and unexported, only this function can create a value of this type.
+	// #2. As long as a unique value's address is still in use, new(unique) will not return the same address.
+	type unique int
+	return ValueID(new(unique))
 }

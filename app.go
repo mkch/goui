@@ -134,7 +134,7 @@ func performLayoutWindow(ctx *Context, width, height int) (err error) {
 
 func (app *App) CreateWindow(config Window) error {
 	if config.ID == nil {
-		config.ID = ValueID(&config) // unique key is required to insert into the map
+		config.ID = UniqueID() // unique key is required to insert into the map
 	}
 	if app.windows[config.ID] != nil {
 		return fmt.Errorf("window with ID %v already exists", config.ID)
