@@ -71,7 +71,9 @@ type Debug struct {
 // The app is setup with the given config. If config is nil, default configuration is used.
 func NewApp(config *AppConfig) *App {
 	return &App{
-		debug:   gg.If(config == nil, nil, (*tricks.Debug)(config.Debug).Clone()),
+		debug: gg.IfFunc(config == nil,
+			func() *tricks.Debug { return nil },
+			func() *tricks.Debug { return (*tricks.Debug)(config.Debug).Clone() }),
 		app:     native.NewApp(),
 		windows: make(map[ID]*window),
 	}
