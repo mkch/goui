@@ -1,6 +1,6 @@
 package goui
 
-// ID is the identifier of a [Widget].
+// ID is an opaque identifier only comparable for equality.
 type ID interface {
 	privateImplementsID() // unexported to prevent external implementations
 }
