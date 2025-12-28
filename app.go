@@ -83,22 +83,6 @@ func NewApp(config *AppConfig) *App {
 }
 
 func (app *App) Run() int {
-	ctx := &Context{app: app}
-	for _, window := range app.windows {
-		if window.Window.Root != nil {
-			ctx.window = window
-			elem, layouter, err := buildElementTree(ctx, window.Window.Root)
-			if err != nil {
-				errortrace.Panic(err)
-			}
-			window.Root = elem
-			window.Layouter = layouter
-			if err := layoutWindow(&Context{app, window}); err != nil {
-				errortrace.Panic(err)
-			}
-		}
-	}
-
 	return app.app.Run()
 }
 
@@ -164,8 +148,9 @@ func (app *App) CreateWindow(config Window) error {
 		ID:     config.ID,
 		Handle: handle,
 	}
+	ctx := &Context{app, window}
 	native.SetWindowOnSizeChangedListener(handle, func(width, height int) {
-		if err := performLayoutWindow(&Context{app, window}, width, height); err != nil {
+		if err := performLayoutWindow(ctx, width, height); err != nil {
 			panic(err)
 		}
 	})
@@ -178,6 +163,20 @@ func (app *App) CreateWindow(config Window) error {
 			return allLayouterDebugOutlines(window.Layouter)
 		})
 	}
+
+	if window.Window.Root != nil {
+		ctx.window = window
+		elem, layouter, err := buildElementTree(ctx, window.Window.Root)
+		if err != nil {
+			errortrace.Panic(err)
+		}
+		window.Root = elem
+		window.Layouter = layouter
+		if err := layoutWindow(ctx); err != nil {
+			errortrace.Panic(err)
+		}
+	}
+
 	app.windows[config.ID] = window
 	return nil
 }
