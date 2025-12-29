@@ -1,6 +1,7 @@
 package goui
 
 // ID is an opaque identifier only comparable for equality.
+// IDs are process-local and must not be serialized or passed across process boundaries.
 type ID interface {
 	privateImplementsID() // unexported to prevent external implementations
 }
@@ -19,7 +20,7 @@ func ValueID[T comparable](value T) ID {
 	return valueID[T]{value: value}
 }
 
-// UniqueID creates and returns a global unique ID.
+// UniqueID creates and returns a process-wide unique ID.
 func UniqueID() ID {
 	// Uniqueness guarantees:
 	// #1. Type unique is local and unexported, only this function can create a value of this type.
