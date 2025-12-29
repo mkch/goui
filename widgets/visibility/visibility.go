@@ -45,11 +45,12 @@ type visibilityLayouter struct {
 }
 
 func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
-	visibility := l.Element().Widget().(*Visibility)
+	elem := l.Element()
+	visibility := elem.Widget().(*Visibility)
 	for child := range l.Children() {
 		if !visibility.Visible {
 			// Set the offset beyond the right edge of the window.
-			if _, _, l.childXOffset, _, err = native.WindowClientRect(ctx.NativeWindow()); err != nil {
+			if _, _, l.childXOffset, _, err = native.WindowClientRect(elem.NativeParent(ctx)); err != nil {
 				return
 			}
 			if visibility.MaintainSize {

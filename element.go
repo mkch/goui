@@ -13,6 +13,10 @@ type Element interface {
 	SetWidget(ctx *Context, widget Widget)
 	// Layouter returns the layouter of the element. Can be nil.
 	Layouter() Layouter
+	// NativeParent returns the handle of nearest recursive native parent.
+	// Always non-nil.
+	NativeParent(*Context) native.Handle
+
 	parent() Element
 	numChildren() int
 	child(n int) Element
@@ -56,6 +60,21 @@ func (e *ElementBase) SetWidget(ctx *Context, widget Widget) {
 
 func (e *ElementBase) Layouter() Layouter {
 	return e.ElementLayouter
+}
+
+func (e *ElementBase) NativeParent(ctx *Context) native.Handle {
+	var farthestParent Element
+	for p := e.theParent; p != nil; p = p.parent() {
+		farthestParent = p
+		if nativeElem, ok := p.(*NativeElement); ok {
+			return nativeElem.Handle
+		}
+	}
+	// farthestParent should not be nil
+	if farthestParent != ctx.window.Root {
+		panic("wrong context")
+	}
+	return ctx.window.Handle
 }
 
 func (e *ElementBase) setLayouter(layouter Layouter) {
@@ -143,10 +162,6 @@ type NativeElement struct {
 	// DestroyFunc is called to destroy the native handle.
 	// A nil value means no special destruction is needed.
 	DestroyFunc func(native.Handle) error
-}
-
-func (e *NativeElement) NativeHandle(*Context) native.Handle {
-	return e.Handle
 }
 
 func (e *NativeElement) destroy() {
