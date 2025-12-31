@@ -66,9 +66,24 @@ func EnableDrawDebugRect(winHandle Handle, rects func() iter.Seq[DebugRect]) (la
 	layeredPanel, err := panel.New(win.HWND(), &panel.Spec{
 		ExStyle: win32.WS_EX_LAYERED | win32.WS_EX_TRANSPARENT,
 	})
-	if err != nil {
-		err = errortrace.WithStack(err)
-		return
+	if layeredPanel == nil {
+		// Layered child windows are only supported on Windows 8 or greater.
+		// CreateWindowEx fails silently and returns NULL handle with a 0 last error code if
+		// the application is not marked as Windows 8 or greater aware in its manifest.
+		panic(
+			`debug.LayoutOutline is not supported. Missing or wrong manifest? Please make sure your application manifest includes the following snippet:
+
+<!--
+https://learn.microsoft.com/en-us/windows/win32/winmsg/using-windows#using-layered-windows
+In order to use layered child windows, the application has to declare itself Windows 8-aware in the manifest.
+For windows 10/11, one can include this compatibility snippet in its app.manifest to make it Windows 10-aware :
+-->
+<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+	<application>
+		<!-- Windows 10 GUID -->
+		<supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+	</application>
+</compatibility>`)
 	}
 	layer = layeredPanel
 

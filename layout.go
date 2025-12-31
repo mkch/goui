@@ -211,22 +211,22 @@ type debugLayouter struct {
 	Size                 Size                // Last computed size
 	Pos                  Point               // Last computed position
 	Highlight            bool                // Whether to highlight the outline of this layouter
-	HighlightVer         uintptr             // Version of the highlight, used to avoid redundant redraws
-	CancelHighlightBatch *[]debugLayouterVer // Batch of layouters to cancel highlight together
+	highlightVer         uintptr             // Version of the highlight, used to avoid redundant redraws
+	cancelHighlightBatch *[]debugLayouterVer // Batch of layouters to cancel highlight together
 }
 
 func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size, err error) {
 	l.Highlight = true // Mark to highlight
-	l.HighlightVer++
+	l.highlightVer++
 
 	if debugParent, ok := l.Parent().(*debugLayouter); ok && // parent is debug layouter but can be nil
-		debugParent.CancelHighlightBatch != nil && *debugParent.CancelHighlightBatch != nil {
+		debugParent.cancelHighlightBatch != nil && *debugParent.cancelHighlightBatch != nil {
 		// Inherit and join the cancel highlight batch from parent
-		l.CancelHighlightBatch = debugParent.CancelHighlightBatch
-		*l.CancelHighlightBatch = append(*l.CancelHighlightBatch, debugLayouterVer{Layouter: l, Version: l.HighlightVer})
+		l.cancelHighlightBatch = debugParent.cancelHighlightBatch
+		*l.cancelHighlightBatch = append(*l.cancelHighlightBatch, debugLayouterVer{Layouter: l, Version: l.highlightVer})
 	} else {
 		// This is the root of laying out
-		l.CancelHighlightBatch = &[]debugLayouterVer{{Layouter: l, Version: l.HighlightVer}}
+		l.cancelHighlightBatch = &[]debugLayouterVer{{Layouter: l, Version: l.highlightVer}}
 		defer func() {
 			if err != nil {
 				return // do not show highlight if layout fails
@@ -235,18 +235,18 @@ func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size
 			native.InvalidateWindow(ctx.window.DebugLayer)
 			// Schedule canceling all highlights in the batch after a delay
 			const delay = 100 * time.Millisecond
-			batch := *l.CancelHighlightBatch
-			*l.CancelHighlightBatch = nil
+			batch := *l.cancelHighlightBatch
+			*l.cancelHighlightBatch = nil
 			time.AfterFunc(delay, func() {
 				ctx.app.Post(func() {
 					// Cancel all highlights in a batch
 					var cancelled bool
 					for _, record := range batch {
-						if record.Version < record.Layouter.HighlightVer {
+						if record.Version < record.Layouter.highlightVer {
 							continue // too late, already updated
 						}
 						record.Layouter.Highlight = false
-						record.Layouter.HighlightVer = 0
+						record.Layouter.highlightVer = 0
 						cancelled = true
 					}
 					// Request a redraw to remove the highlights
