@@ -18,7 +18,7 @@ func (s *SizedBox) WidgetID() goui.ID {
 	return s.ID
 }
 
-func (s *SizedBox) CreateElement(ctx *goui.Context) (goui.Element, error) {
+func (s *SizedBox) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &goui.ElementBase{
 		ElementLayouter: &sizedBoxLayouter{},
 	}, nil

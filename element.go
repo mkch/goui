@@ -13,11 +13,9 @@ type Element interface {
 	SetWidget(ctx *Context, widget Widget)
 	// Layouter returns the layouter of the element. Can be nil.
 	Layouter() Layouter
-	// NativeParent returns the handle of nearest recursive native parent.
-	// Always non-nil.
-	NativeParent(*Context) native.Handle
+	// Parent returns the parent element, or nil if this is the root element of a window.
+	Parent() Element
 
-	parent() Element
 	numChildren() int
 	child(n int) Element
 	indexChild(child Element) int
@@ -62,26 +60,24 @@ func (e *ElementBase) Layouter() Layouter {
 	return e.ElementLayouter
 }
 
-func (e *ElementBase) NativeParent(ctx *Context) native.Handle {
-	var farthestParent Element
-	for p := e.theParent; p != nil; p = p.parent() {
-		farthestParent = p
-		if nativeElem, ok := p.(*NativeElement); ok {
-			return nativeElem.Handle
+// NativeHandle returns the native handle associated with the given element
+// or its nearest ancestor that is a native element.
+// If element is nil or there is no such ancestor, ctx.NativeWindow()
+// is returned.
+func NativeHandle(ctx *Context, element Element) native.Handle {
+	for elem := element; elem != nil; elem = elem.Parent() {
+		if nativeElem, ok := elem.(nativeElement); ok {
+			return nativeElem.NativeHandle()
 		}
 	}
-	// farthestParent should not be nil
-	if farthestParent != ctx.window.Root {
-		panic("wrong context")
-	}
-	return ctx.window.Handle
+	return ctx.NativeWindow()
 }
 
 func (e *ElementBase) setLayouter(layouter Layouter) {
 	e.ElementLayouter = layouter
 }
 
-func (e *ElementBase) parent() Element {
+func (e *ElementBase) Parent() Element {
 	return e.theParent
 }
 
@@ -155,6 +151,13 @@ func element_SetChild(parent Element, n int, child Element) {
 	child.setParent(parent)
 }
 
+// nativeElement is the interface all native elements implement.
+// Currently all native elements embed [NativeElement].
+type nativeElement interface {
+	NativeHandle() native.Handle
+	destroy()
+}
+
 // NativeElement is an [Element] that represents a native GUI widget.
 type NativeElement struct {
 	ElementBase
@@ -162,6 +165,12 @@ type NativeElement struct {
 	// DestroyFunc is called to destroy the native handle.
 	// A nil value means no special destruction is needed.
 	DestroyFunc func(native.Handle) error
+}
+
+// NativeElement returns e.Handle.
+func (e *NativeElement) NativeHandle() native.Handle {
+	// This method implements the nativeElement interface.
+	return e.Handle
 }
 
 func (e *NativeElement) destroy() {
@@ -173,7 +182,7 @@ func (e *NativeElement) destroy() {
 // buildElementTree builds the element tree for the given widget.
 // The returned layouter is the layouter of the returned element or its nearest child.
 func buildElementTree(ctx *Context, widget Widget) (element Element, layouter Layouter, err error) {
-	element, err = buildElementTreeImpl(ctx, widget)
+	element, err = buildElementTreeImpl(ctx, nil, widget)
 	if err != nil {
 		return
 	}
@@ -182,10 +191,20 @@ func buildElementTree(ctx *Context, widget Widget) (element Element, layouter La
 }
 
 // buildElementTreeImpl builds the element tree for the given widget.
-func buildElementTreeImpl(ctx *Context, widget Widget) (Element, error) {
-	elem, err := widget.CreateElement(ctx)
+// The parent element can be nil. If parent is not nil, the ancestor
+// tree of parent must already be established.
+// The returned element is the root element of the built tree.
+func buildElementTreeImpl(ctx *Context, parent Element, widget Widget) (Element, error) {
+	elem, err := widget.CreateElement(ctx, parent)
 	if err != nil {
 		return nil, err
+	}
+
+	if parent != nil {
+		// Appending elem to parent before elem is fully constructed because
+		// CreateElement method of native widget looks for its native parent
+		// handle up the element tree. See [NativeHandle] function.
+		element_AppendChild(parent, elem)
 	}
 
 	if layouter := elem.Layouter(); layouter != nil {
@@ -215,32 +234,32 @@ func buildElementTreeImpl(ctx *Context, widget Widget) (Element, error) {
 func buildContainerElement(ctx *Context, elem Element, container Container) (Element, error) {
 	numChildren := container.NumChildren()
 	for i := range numChildren {
-		childElem, err := buildElementTreeImpl(ctx, container.Child(i))
+		// The child element is already appended to elem in buildElementTreeImpl.
+		_, err := buildElementTreeImpl(ctx, elem, container.Child(i))
 		if err != nil {
 			return nil, err
 		}
-		element_AppendChild(elem, childElem)
 	}
 	return elem, nil
 }
 
 func buildStatelessElement(ctx *Context, elem Element, statelessWidget StatelessWidget) (Element, error) {
-	childElem, err := buildElementTreeImpl(ctx, statelessWidget.Build(ctx))
+	// The child element is already appended to elem in buildElementTreeImpl.
+	_, err := buildElementTreeImpl(ctx, elem, statelessWidget.Build(ctx))
 	if err != nil {
 		return nil, err
 	}
-	element_AppendChild(elem, childElem)
 	return elem, nil
 }
 
 func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulWidget) (Element, error) {
 	statefulElement := elem.(*statefulElement)
 	statefulElement.state = statefulWidget.CreateState(&StateContext{ctx, statefulElement})
-	childElem, err := buildElementTreeImpl(ctx, statefulElement.state.Build())
+	// The child element is already appended to elem in buildElementTreeImpl.
+	_, err := buildElementTreeImpl(ctx, elem, statefulElement.state.Build())
 	if err != nil {
 		return nil, err
 	}
-	element_AppendChild(elem, childElem)
 	return elem, nil
 }
 
@@ -359,7 +378,7 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 		var updatedElem Element
 		var err error
 		if matchedElem == nil {
-			updatedElem, err = buildElementTreeImpl(ctx, widget)
+			updatedElem, err = buildElementTreeImpl(ctx, element, widget)
 		} else {
 			updatedElem, err = reconcileElementTreeImpl(ctx, matchedElem, widget)
 			delete(unmatchedKeyedElements, widgetID)
@@ -391,7 +410,7 @@ func reconcileElementTreeImpl(ctx *Context, element Element, widget Widget) (rec
 	// Widgets do not match, recreate the entire element tree.
 	if !widgetMatch(element.Widget(), widget) {
 		element.destroy()
-		return buildElementTreeImpl(ctx, widget)
+		return buildElementTreeImpl(ctx, element.Parent(), widget)
 	}
 	// Widgets match, update the widget of the element.
 	err = updateElementTree(ctx, element, widget)

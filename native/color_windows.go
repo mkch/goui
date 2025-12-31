@@ -1,0 +1,11 @@
+package native
+
+import (
+	"image/color"
+
+	"github.com/mkch/gw/win32"
+)
+
+func toNativeColor(c *color.NRGBA) win32.COLORREF {
+	return win32.RGB(c.R, c.G, c.B)
+}

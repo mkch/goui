@@ -18,8 +18,8 @@ func (btn *Button) WidgetID() goui.ID {
 	return btn.ID
 }
 
-func (btn *Button) CreateElement(ctx *goui.Context) (goui.Element, error) {
-	handle, err := native.CreateButton(ctx.NativeWindow(), btn.Label)
+func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
+	handle, err := native.CreateButton(goui.NativeHandle(ctx, parent), btn.Label)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +53,11 @@ func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 		if oldBtn.Label != newBtn.Label {
 			native.SetButtonLabel(e.Handle, newBtn.Label)
 		}
-		if native.GetWidgetEnabled(e.Handle) == newBtn.Disabled {
+		if oldBtn.Disabled != newBtn.Disabled {
 			native.SetWidgetEnabled(e.Handle, !newBtn.Disabled)
 		}
+	} else {
+		native.SetWidgetEnabled(e.Handle, !newBtn.Disabled)
 	}
 	// func type are not comparable, so we always reset the OnClick listener.
 	native.SetButtonOnClickListener(e.Handle, func() {

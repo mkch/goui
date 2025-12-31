@@ -31,7 +31,7 @@ func (ctx *Context) NativeWindow() native.Handle {
 
 type Widget interface {
 	WidgetID() ID
-	CreateElement(ctx *Context) (Element, error)
+	CreateElement(ctx *Context, parent Element) (Element, error)
 }
 
 type Container interface {
@@ -150,12 +150,16 @@ func (app *App) CreateWindow(config Window) error {
 		delete(app.windows, config.ID)
 	})
 	if app.debug.LayoutOutlineEnabled() {
-		native.EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
+		layer, err := native.EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {
 				return func(yield func(native.DebugRect) bool) {}
 			}
 			return allLayouterDebugOutlines(window.Layouter)
 		})
+		if err != nil {
+			return err
+		}
+		window.DebugLayer = layer
 	}
 
 	if window.Window.Root != nil {

@@ -14,7 +14,7 @@ type StatelessWidgetImpl struct{}
 
 func (StatelessWidgetImpl) Exclusive(StatelessWidget) { /*Nop*/ }
 
-func (StatelessWidgetImpl) CreateElement(ctx *Context) (Element, error) {
+func (StatelessWidgetImpl) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatelessElement(ctx), nil
 }
 
@@ -24,7 +24,7 @@ func (f StatelessWidgetFunc) WidgetID() ID {
 	return nil
 }
 
-func (f StatelessWidgetFunc) CreateElement(ctx *Context) (Element, error) {
+func (f StatelessWidgetFunc) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatelessElement(ctx), nil
 }
 
@@ -49,7 +49,7 @@ func (w *statelessWidget) WidgetID() ID {
 	return w.id
 }
 
-func (w *statelessWidget) CreateElement(ctx *Context) (Element, error) {
+func (w *statelessWidget) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatelessElement(ctx), nil
 }
 

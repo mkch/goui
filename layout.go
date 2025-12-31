@@ -3,6 +3,7 @@ package goui
 import (
 	"fmt"
 	"iter"
+	"slices"
 	"time"
 	"unsafe"
 
@@ -138,6 +139,7 @@ type Layouter interface {
 	// Layout computes the size of the element given the constraints.
 	Layout(ctx *Context, constraints Constraints) (Size, error)
 	// PositionAt puts the element at the given position.
+	// The position is relative to the native parent element's top-left corner.
 	PositionAt(x, y int) error
 	// Replayer returns a function that can replay the last layout operations,
 	// or nil if replay is not supported (e.g., when the layout depends on children).
@@ -184,7 +186,7 @@ func (l *LayouterHelper) Children() iter.Seq[Layouter] {
 }
 
 func (l *LayouterHelper) Parent() (parent Layouter) {
-	for element := l.element.parent(); element != nil; element = element.parent() {
+	for element := l.element.Parent(); element != nil; element = element.Parent() {
 		parent = element.Layouter()
 		if parent != nil {
 			return
@@ -230,7 +232,7 @@ func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size
 				return // do not show highlight if layout fails
 			}
 			// Show highlight after laying out(include children) is done
-			native.InvalidWindow(ctx.window.Handle)
+			native.InvalidateWindow(ctx.window.DebugLayer)
 			// Schedule canceling all highlights in the batch after a delay
 			const delay = 100 * time.Millisecond
 			batch := *l.CancelHighlightBatch
@@ -249,7 +251,7 @@ func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size
 					}
 					// Request a redraw to remove the highlights
 					if cancelled {
-						native.InvalidWindow(ctx.window.Handle)
+						native.InvalidateWindow(ctx.window.DebugLayer)
 					}
 				})
 			})
@@ -274,29 +276,39 @@ func (l *debugLayouter) PositionAt(x, y int) (err error) {
 }
 
 // allLayouterDebugOutlines returns an iterator of debug rectangles for the given layouter tree.
-// The tree must be built with debugging([Window.DebugLayout]) on.
 func allLayouterDebugOutlines(root Layouter) iter.Seq[native.DebugRect] {
 	return func(yield func(native.DebugRect) bool) {
 		// Use a stack to avoid recursive iterator calls
-		stack := []Layouter{root}
+		type frame struct {
+			layouters []Layouter
+			offset    Point
+		}
+		stack := []frame{{layouters: []Layouter{root}, offset: Point{}}}
 		for len(stack) > 0 {
 			current := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
 
-			if debugLayouter, ok := current.(*debugLayouter); ok {
+			for _, layouter := range current.layouters {
+				debugLayouter, ok := layouter.(*debugLayouter)
+				if !ok {
+					continue
+				}
+				left := debugLayouter.Pos.X + current.offset.X
+				top := debugLayouter.Pos.Y + current.offset.Y
 				if !yield(native.DebugRect{
-					Left:      debugLayouter.Pos.X,
-					Top:       debugLayouter.Pos.Y,
-					Right:     debugLayouter.Pos.X + debugLayouter.Size.Width,
-					Bottom:    debugLayouter.Pos.Y + debugLayouter.Size.Height,
+					Left:      left,
+					Top:       top,
+					Right:     left + debugLayouter.Size.Width,
+					Bottom:    top + debugLayouter.Size.Height,
 					Highlight: debugLayouter.Highlight}) {
 					return
 				}
-				// The left-to-right traversal order for children is not maintained here.
-				// Reversing debugLayouter.Children() would be inefficient.
-				for child := range debugLayouter.Children() {
-					stack = append(stack, child)
+				offset := current.offset
+				if _, isNative := debugLayouter.Element().(nativeElement); isNative {
+					offset.X += debugLayouter.Pos.X
+					offset.Y += debugLayouter.Pos.Y
 				}
+				stack = append(stack, frame{layouters: slices.Collect(debugLayouter.Children()), offset: offset})
 			}
 		}
 	}

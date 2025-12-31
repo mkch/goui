@@ -28,7 +28,7 @@ func (c *Center) WidgetID() goui.ID {
 	return c.ID
 }
 
-func (c *Center) CreateElement(ctx *goui.Context) (goui.Element, error) {
+func (c *Center) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &centerElement{
 		ElementBase: goui.ElementBase{
 			ElementLayouter: &centerLayouter{},

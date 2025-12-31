@@ -22,7 +22,7 @@ func (c *Column) WidgetID() goui.ID {
 	return c.ID
 }
 
-func (c *Column) CreateElement(ctx *goui.Context) (goui.Element, error) {
+func (c *Column) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &goui.ElementBase{
 		ElementLayouter: &rowcol.Layouter{
 			Main:               func(s *goui.Size) *int { return &s.Height },

@@ -16,7 +16,7 @@ func (w *mockWidget) WidgetID() ID {
 	return w.ID
 }
 
-func (w *mockWidget) CreateElement(ctx *Context) (Element, error) {
+func (w *mockWidget) CreateElement(ctx *Context, parent Element) (Element, error) {
 	if w.createError != nil {
 		return nil, w.createError
 	}
@@ -182,7 +182,7 @@ func (c *mockContainer) WidgetID() ID {
 	return c.ID
 }
 
-func (c *mockContainer) CreateElement(ctx *Context) (Element, error) {
+func (c *mockContainer) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return &ElementBase{ElementLayouter: &mockLayouter{}}, nil
 }
 

@@ -16,7 +16,7 @@ func (txt *TextField) WidgetID() goui.ID {
 	return txt.ID
 }
 
-func (txt *TextField) CreateElement(ctx *goui.Context) (goui.Element, error) {
+func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	handle, err := native.CreateTextField(ctx.NativeWindow(), txt.InitialValue, txt.Obscure)
 	if err != nil {
 		return nil, err

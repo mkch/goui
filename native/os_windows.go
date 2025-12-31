@@ -1,18 +1,15 @@
 package native
 
 import (
-	"iter"
+	"image/color"
 	"unsafe"
 
-	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/gw/app/gwapp"
 	"github.com/mkch/gw/button"
 	"github.com/mkch/gw/edit"
 	"github.com/mkch/gw/metrics"
-	"github.com/mkch/gw/paint"
-	"github.com/mkch/gw/paint/brush"
-	"github.com/mkch/gw/paint/pen"
+	"github.com/mkch/gw/panel"
 	"github.com/mkch/gw/static"
 	"github.com/mkch/gw/win32"
 	"github.com/mkch/gw/win32/win32util"
@@ -51,13 +48,14 @@ func CloseWindow(handle Handle) error {
 	return err
 }
 
-func InvalidWindow(handle Handle) error {
-	err := handle.(*window.Window).InvalidateRect(nil, true)
+func InvalidateWindow(handle Handle) error {
+	err := handle.(winBase).InvalidateRect(nil, true)
 	return errortrace.WithStack(err)
 }
 
 type winBase interface {
 	HWND() win32.HWND
+	InvalidateRect(rect *win32.RECT, eraseBk bool) error
 }
 
 func DestroyWindow(handle Handle) error {
@@ -261,67 +259,11 @@ func GetButtonMinimumSize(handle Handle, label string) (width, height int, err e
 	return int(width + int(win32.LONG(getSystemMetricsXEdge())*2)), int(height + int(win32.LONG(getSystemMetricsYEdge())*2)), nil
 }
 
-var debugRectPen = func() func() *pen.Pen {
-	var p *pen.Pen
-	return func() *pen.Pen {
-		if p == nil {
-			p = gg.Must(pen.NewCosmetic(win32.PS_DOT, win32.RGB(255, 0, 0)))
-		}
-		return p
-	}
-}()
-
-var debugRectHollowBrush = func() func() *brush.Brush {
-	var b *brush.Brush
-	return func() *brush.Brush {
-		if b == nil {
-			b = gg.Must(brush.NewStock(win32.NULL_BRUSH))
-		}
-		return b
-	}
-}()
-
-var debugRectHighlightBrush = func() func() *brush.Brush {
-	var b *brush.Brush
-	return func() *brush.Brush {
-		if b == nil {
-			b = gg.Must(brush.New(&win32.LOGBRUSH{
-				Style: win32.BS_SOLID,
-				Color: win32.RGB(255, 0, 0),
-			}))
-		}
-		return b
-	}
-}()
-
-type DebugRect struct {
-	Left, Top, Right, Bottom int
-	Highlight                bool
+func CreatePanel(parent Handle) (handle Handle, err error) {
+	handle, err = panel.New(parent.(winBase).HWND(), &panel.Spec{})
+	return
 }
 
-func EnableDrawDebugRect(winHandle Handle, rects func() iter.Seq[DebugRect]) error {
-	win := winHandle.(*window.Window)
-	win.SetPaintCallback(func(dc *paint.PaintDC, prev func(*paint.PaintDC)) {
-		pen := debugRectPen()
-		oldPen, _ := win32.SelectObject(dc.HDC(), pen.HPEN())
-		defer win32.SelectObject(dc.HDC(), oldPen)
-
-		for rect := range rects() {
-			var oldBrush win32.HBRUSH
-			if rect.Highlight {
-				oldBrush, _ = win32.SelectObject(dc.HDC(), debugRectHighlightBrush().HBRUSH())
-			} else {
-				oldBrush, _ = win32.SelectObject(dc.HDC(), debugRectHollowBrush().HBRUSH())
-			}
-			win32.Rectangle(dc.HDC(),
-				rect.Left,
-				rect.Top,
-				rect.Right,
-				rect.Bottom)
-			win32.SelectObject(dc.HDC(), oldBrush)
-		}
-
-	})
-	return nil
-
+func SetPanelBackgroundColor(handle Handle, color *color.NRGBA) error {
+	return handle.(*panel.Panel).SetBackgroundColor(toNativeColor(color))
 }

@@ -20,7 +20,7 @@ type StatefulWidgetHelper struct{}
 
 func (StatefulWidgetHelper) Exclusive(StatefulWidget) { /*Nop*/ }
 
-func (StatefulWidgetHelper) CreateElement(ctx *Context) (Element, error) {
+func (StatefulWidgetHelper) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatefulElement(ctx), nil
 }
 
@@ -34,7 +34,7 @@ func (f StatefulWidgetFunc) WidgetID() ID {
 	return nil
 }
 
-func (f StatefulWidgetFunc) CreateElement(ctx *Context) (Element, error) {
+func (f StatefulWidgetFunc) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatefulElement(ctx), nil
 }
 
@@ -197,7 +197,7 @@ func (w *statefulWidget) WidgetID() ID {
 	return w.id
 }
 
-func (w *statefulWidget) CreateElement(ctx *Context) (Element, error) {
+func (w *statefulWidget) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatefulElement(ctx), nil
 }
 

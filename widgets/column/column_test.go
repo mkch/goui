@@ -17,7 +17,7 @@ func (w *mockWidget) WidgetID() goui.ID {
 	return w.ID
 }
 
-func (w *mockWidget) CreateElement(ctx *goui.Context) (goui.Element, error) {
+func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &w.Element, nil
 }
 

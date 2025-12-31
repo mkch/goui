@@ -14,8 +14,9 @@ type Window struct {
 
 type window struct {
 	Window
-	ID       ID
-	Handle   native.Handle
-	Root     Element  // Root element.
-	Layouter Layouter // Layouter for the root element.
+	ID         ID
+	Handle     native.Handle
+	Root       Element       // Root element.
+	Layouter   Layouter      // Layouter for the root element.
+	DebugLayer native.Handle // Layer for drawing debug outlines.
 }

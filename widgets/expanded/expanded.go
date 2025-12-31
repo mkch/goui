@@ -20,7 +20,7 @@ func (p *Expanded) WidgetID() goui.ID {
 	return p.ID
 }
 
-func (p *Expanded) CreateElement(ctx *goui.Context) (goui.Element, error) {
+func (p *Expanded) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &goui.ElementBase{
 		ElementLayouter: &expandedLayouter{},
 	}, nil

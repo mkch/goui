@@ -1,5 +1,8 @@
 package main
 
+//go:generate rsrc -arch amd64 -manifest manifest.xml
+//go:generate rsrc -arch 386 -manifest manifest.xml
+
 import (
 	"fmt"
 

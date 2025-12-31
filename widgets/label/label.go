@@ -16,8 +16,8 @@ func (btn *Label) WidgetID() goui.ID {
 	return btn.ID
 }
 
-func (btn *Label) CreateElement(ctx *goui.Context) (goui.Element, error) {
-	handle, err := native.CreateLabel(ctx.NativeWindow(), btn.Text)
+func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
+	handle, err := native.CreateLabel(goui.NativeHandle(ctx, parent), btn.Text)
 	if err != nil {
 		return nil, err
 	}

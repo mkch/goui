@@ -7,6 +7,7 @@ import (
 	"github.com/mkch/goui/widgets/expanded"
 	"github.com/mkch/goui/widgets/label"
 	"github.com/mkch/goui/widgets/padding"
+	"github.com/mkch/goui/widgets/panel"
 	"github.com/mkch/goui/widgets/row"
 	"github.com/mkch/goui/widgets/sizedbox"
 	"github.com/mkch/goui/widgets/textfield"
@@ -33,3 +34,5 @@ type TextFieldController = textfield.Controller
 type Expanded = expanded.Expanded
 
 type Visibility = visibility.Visibility
+
+type Panel = panel.Panel

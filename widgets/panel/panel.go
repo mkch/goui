@@ -1,0 +1,85 @@
+package panel
+
+import (
+	"image/color"
+
+	"github.com/mkch/gg"
+	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/native"
+)
+
+type Panel struct {
+	ID              goui.ID
+	Widget          goui.Widget
+	BackgroundColor *color.NRGBA
+}
+
+func (p *Panel) WidgetID() goui.ID {
+	return p.ID
+}
+
+func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
+	handle, err := native.CreatePanel(goui.NativeHandle(ctx, parent))
+	if err != nil {
+		return nil, err
+	}
+	elem := &panelElement{
+		goui.NativeElement{
+			ElementBase: goui.ElementBase{
+				ElementLayouter: &panelLayouter{},
+			},
+			Handle:      handle,
+			DestroyFunc: native.DestroyWindow,
+		},
+	}
+	return elem, nil
+}
+
+func (p *Panel) NumChildren() int {
+	return gg.If(p.Widget != nil, 1, 0)
+}
+
+func (p *Panel) Child(n int) goui.Widget {
+	return p.Widget
+}
+
+func (p *Panel) Exclusive(goui.Container) { /*Nop*/ }
+
+type panelElement struct {
+	goui.NativeElement
+}
+
+func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
+	newPanel := widget.(*Panel)
+	native.SetPanelBackgroundColor(elem.Handle, newPanel.BackgroundColor)
+
+	elem.ElementBase.SetWidget(ctx, widget)
+}
+
+type panelLayouter struct {
+	goui.LayouterHelper
+	layoutSize goui.Size
+}
+
+func (l *panelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+	defer func() { l.layoutSize = size }()
+	for child := range l.Children() {
+		size, err = child.Layout(ctx, constraints) // Use child's size as is.
+		if err != nil {
+			return
+		}
+		return size, debug.CheckLayoutOverflow(ctx, child.Element().Widget(), size, constraints)
+	}
+	return constraints.MinSize(), nil // Use min size when no child.
+}
+
+func (l *panelLayouter) PositionAt(x, y int) (err error) {
+	if err = native.SetWidgetDimensions(l.Element().(*panelElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height); err != nil {
+		return
+	}
+	for child := range l.Children() {
+		return child.PositionAt(0, 0) // Position child at (0,0) relative to panel.
+	}
+	return
+}

@@ -16,7 +16,7 @@ func (p *Padding) WidgetID() goui.ID {
 	return p.ID
 }
 
-func (p *Padding) CreateElement(ctx *goui.Context) (goui.Element, error) {
+func (p *Padding) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &goui.ElementBase{
 		ElementLayouter: &paddingLayouter{},
 	}, nil
