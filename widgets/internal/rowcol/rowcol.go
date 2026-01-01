@@ -5,6 +5,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/expanded"
 )
@@ -15,17 +16,17 @@ type Layouter struct {
 	childrenOffsets []goui.Size
 
 	// Main returns the main axis value (Width for [Row], Height for [Column]) of the given [Size].
-	Main func(*goui.Size) *int
+	Main func(*goui.Size) *metrics.DP
 	// Cross returns the cross axis value (Height for [Row], Width for [Column]) of the given [Size].
-	Cross func(*goui.Size) *int
+	Cross func(*goui.Size) *metrics.DP
 	// MaxMain returns the maximum value of the main axis (Width for [Row], Height for [Column]) from the given [Constraints].
-	MaxMain func(*goui.Constraints) *int
+	MaxMain func(*goui.Constraints) *metrics.DP
 	// MinMain returns the minimum value of the main axis (Width for [Row], Height for [Column]) from the given [Constraints].
-	MinMain func(*goui.Constraints) *int
+	MinMain func(*goui.Constraints) *metrics.DP
 	// MaxCross returns the maximum value of the cross axis (Height for [Row], Width for [Column]) from the given [Constraints].
-	MaxCross func(*goui.Constraints) *int
+	MaxCross func(*goui.Constraints) *metrics.DP
 	// MinCross returns the minimum value of the cross axis (Height for [Row], Width for [Column]) from the given [Constraints].
-	MinCross func(*goui.Constraints) *int
+	MinCross func(*goui.Constraints) *metrics.DP
 
 	MainAxisSize       func() axes.Size
 	CrossAxisAlignment func() axes.Alignment
@@ -33,7 +34,7 @@ type Layouter struct {
 
 func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	l.childrenOffsets = l.childrenOffsets[:0]
-	var notExpandableChildrenMain = 0
+	var notExpandableChildrenMain metrics.DP = 0
 	*l.Cross(&size) = *l.MinCross(&constraints)
 	var childrenSizes []goui.Size
 	var expandedChildren []goui.Layouter
@@ -49,8 +50,8 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 		var childConstraints goui.Constraints
 		*l.MaxCross(&childConstraints) = *l.MaxCross(&constraints)
 		*l.MaxMain(&childConstraints) = gg.IfFunc(*l.MaxMain(&constraints) == goui.Infinity,
-			func() int { return goui.Infinity },
-			func() int { return *l.MaxMain(&constraints) - notExpandableChildrenMain })
+			func() metrics.DP { return goui.Infinity },
+			func() metrics.DP { return *l.MaxMain(&constraints) - notExpandableChildrenMain })
 		var childSize goui.Size
 		childSize, err = child.Layout(ctx, childConstraints)
 		if err != nil {
@@ -68,7 +69,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 	if len(expandedChildren) > 0 {
 		availableSpace := *l.MaxMain(&constraints) - notExpandableChildrenMain
 		var sizes []goui.Size
-		sizes, err = expanded.Layout(ctx, availableSpace, expandedChildren, func(c *goui.Constraints, mainAxis int) {
+		sizes, err = expanded.Layout(ctx, availableSpace, expandedChildren, func(c *goui.Constraints, mainAxis metrics.DP) {
 			*l.MinMain(c) = mainAxis
 			*l.MaxMain(c) = mainAxis
 			*l.MinCross(c) = 0
@@ -96,7 +97,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 	}
 	*l.Cross(&size) = max(*l.Cross(&size), *l.MinCross(&constraints))
 	// calculate children offsets
-	var childMain = 0
+	var childMain metrics.DP = 0
 	for _, childSize := range childrenSizes {
 		var offset goui.Size
 		*l.Main(&offset) = childMain
@@ -126,7 +127,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 	return
 }
 
-func (l *Layouter) PositionAt(x, y int) (err error) {
+func (l *Layouter) PositionAt(x, y metrics.DP) (err error) {
 	var i = 0
 	for child := range l.Children() {
 		if err = child.PositionAt(x+l.childrenOffsets[i].Width, y+l.childrenOffsets[i].Height); err != nil {

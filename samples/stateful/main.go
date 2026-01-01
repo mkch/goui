@@ -1,5 +1,8 @@
 package main
 
+//go:generate rsrc -arch amd64 -manifest manifest.xml
+//go:generate rsrc -arch 386 -manifest manifest.xml
+
 import (
 	"fmt"
 
@@ -19,8 +22,8 @@ func main() {
 	app.CreateWindow(goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "goui demo",
-		Width:     600,
-		Height:    400,
+		Width:     800,
+		Height:    600,
 		Root: &widgets.Center{
 			Widget: &widgets.Column{
 				CrossAxisAlignment: axes.Center,

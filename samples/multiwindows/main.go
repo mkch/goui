@@ -27,8 +27,8 @@ func main() {
 	app.CreateWindow(goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "Window 1",
-		Width:     600,
-		Height:    400,
+		Width:     800,
+		Height:    600,
 		Root: &widgets.Center{
 			Widget: &widgets.Row{
 				MainAxisSize:       axes.Min,
@@ -76,8 +76,8 @@ func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidg
 func createWindow2() {
 	app.CreateWindow(goui.Window{
 		Title:  "Window 2",
-		Width:  400,
-		Height: 300,
+		Width:  700,
+		Height: 600,
 		Root:   &widgets.Center{Widget: newCountButton()},
 		OnClose: func(ctx *goui.Context) bool {
 			ret, _ := messagebox.Show(ctx, "Window2", "Are you sure you want to close this window?",
@@ -107,8 +107,8 @@ func createWindow3(id goui.ID, onDestroy func(*goui.Context)) {
 	app.CreateWindow(goui.Window{
 		ID:     id,
 		Title:  "Window 3",
-		Width:  400,
-		Height: 300,
+		Width:  600,
+		Height: 400,
 		Root: &widgets.Center{Widget: &widgets.Button{
 			Label: "Hello from Window3",
 			OnClick: func(ctx *goui.Context) {

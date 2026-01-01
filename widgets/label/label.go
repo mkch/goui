@@ -3,6 +3,7 @@ package label
 import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
@@ -80,6 +81,6 @@ func (l *labelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) 
 	return
 }
 
-func (l *labelLayouter) PositionAt(x, y int) (err error) {
+func (l *labelLayouter) PositionAt(x, y metrics.DP) (err error) {
 	return native.SetWidgetDimensions(l.Element().(*labelElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height)
 }

@@ -23,8 +23,8 @@ func main() {
 	app.CreateWindow(goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "goui idmatch demo",
-		Width:     600,
-		Height:    400,
+		Width:     1200,
+		Height:    800,
 		Root:      Root(),
 	})
 	app.Run()

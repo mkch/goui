@@ -3,6 +3,7 @@ package visibility
 import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
@@ -41,7 +42,7 @@ type visibilityLayouter struct {
 	goui.LayouterHelper
 	// X offset of child.
 	// 0 if visible. Beyond right edge of window if not visible.
-	childXOffset int
+	childXOffset metrics.DP
 }
 
 func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
@@ -69,7 +70,7 @@ func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints goui.Constrai
 	return constraints.MinSize(), nil
 }
 
-func (l *visibilityLayouter) PositionAt(x, y int) (err error) {
+func (l *visibilityLayouter) PositionAt(x, y metrics.DP) (err error) {
 	for child := range l.Children() {
 		// See Layout() for the offset logic.
 		return child.PositionAt(x+l.childXOffset, y)

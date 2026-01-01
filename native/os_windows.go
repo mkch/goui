@@ -5,10 +5,10 @@ import (
 	"unsafe"
 
 	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/gw/app/gwapp"
 	"github.com/mkch/gw/button"
 	"github.com/mkch/gw/edit"
-	"github.com/mkch/gw/metrics"
 	"github.com/mkch/gw/panel"
 	"github.com/mkch/gw/static"
 	"github.com/mkch/gw/win32"
@@ -26,18 +26,25 @@ func NewApp() App {
 type Handle any
 
 // CreateWindow creates a native window with the specified configuration.
-func CreateWindow(title string, width, height int) (handle Handle, err error) {
+func CreateWindow(title string, width, height metrics.DP) (handle Handle, err error) {
 	win, err := window.New(&window.Spec{
-		Text:   title,
-		Style:  win32.WS_OVERLAPPEDWINDOW | win32.WS_VISIBLE,
-		X:      metrics.Px(win32.CW_USEDEFAULT),
-		Width:  metrics.Px(win32.INT(width)),
-		Height: metrics.Px(win32.INT(height)),
+		Text:  title,
+		Style: win32.WS_OVERLAPPEDWINDOW | win32.WS_VISIBLE,
+		X:     window.CW_USEDEFAULT,
 	})
 	if err != nil {
 		err = errortrace.WithStack(err)
 		return
 	}
+	dpi, err := win32.GetDpiForWindow(win.HWND())
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	win32.SetWindowPos(win.HWND(), win32.HWND(0),
+		0, 0,
+		win32.INT(metrics.ToPx(width, uint(dpi))), win32.INT(metrics.ToPx(height, uint(dpi))),
+		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE|win32.SWP_NOMOVE)
 	win.Show(win32.SW_SHOWNORMAL)
 	handle = win
 	return
@@ -56,6 +63,8 @@ func InvalidateWindow(handle Handle) error {
 type winBase interface {
 	HWND() win32.HWND
 	InvalidateRect(rect *win32.RECT, eraseBk bool) error
+	GetClientRect() (*win32.RECT, error)
+	GetWindowRect() (*win32.RECT, error)
 }
 
 func DestroyWindow(handle Handle) error {
@@ -65,10 +74,8 @@ func DestroyWindow(handle Handle) error {
 
 func CreateButton(parent Handle, title string) (handle Handle, err error) {
 	handle, err = button.New(parent.(winBase).HWND(), &button.Spec{
-		Style:  win32.WS_CHILD | win32.WS_VISIBLE,
-		Text:   title,
-		Width:  metrics.Px(100),
-		Height: metrics.Px(30),
+		Style: win32.WS_CHILD | win32.WS_VISIBLE,
+		Text:  title,
 	})
 	err = errortrace.WithStack(err)
 	return
@@ -88,9 +95,7 @@ func CreateLabel(parent Handle, title string) (handle Handle, err error) {
 	handle, err = static.New(parent.(winBase).HWND(), &static.Spec{
 		Style: win32.WS_CHILD | win32.WS_VISIBLE |
 			static.SS_CENTER | static.SS_CENTERIMAGE, // SS_CENTERIMAGE vertically centers the single line of text.
-		Text:   title,
-		Width:  metrics.Px(100),
-		Height: metrics.Px(30),
+		Text: title,
 	})
 	err = errortrace.WithStack(err)
 	return
@@ -110,10 +115,8 @@ func CreateTextField(parent Handle, initialValue string, password bool) (handle 
 		style |= edit.ES_PASSWORD
 	}
 	handle, err = edit.New(parent.(winBase).HWND(), &edit.Spec{
-		Text:   initialValue,
-		Style:  style,
-		Width:  metrics.Px(200),
-		Height: metrics.Px(30),
+		Text:  initialValue,
+		Style: style,
 	})
 	err = errortrace.WithStack(err)
 	return
@@ -130,12 +133,56 @@ func SetTextFieldText(handle Handle, text string) error {
 	return errortrace.WithStack(err)
 }
 
-func SetWidgetDimensions(handle Handle, x, y, width, height int) error {
-	err := win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
-		win32.INT(x), win32.INT(y),
-		win32.INT(width), win32.INT(height),
+func SetWidgetDimensions(handle Handle, x, y, width, height metrics.DP) error {
+	win := handle.(winBase)
+
+	parent, err := win32.GetParent(win.HWND())
+	if err != nil {
+		return errortrace.WithStack(err)
+	}
+
+	// Get the rect in parent's client area before moving/resizing.
+	clientBefore, err := win.GetWindowRect()
+	if err != nil {
+		return errortrace.WithStack(err)
+	}
+	if err = win32util.ScreenToClient(parent, clientBefore); err != nil {
+		return errortrace.WithStack(err)
+	}
+
+	dpi, err := win32.GetDpiForWindow(win.HWND())
+	if err != nil {
+		return errortrace.WithStack(err)
+	}
+	err = win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
+		win32.INT(metrics.ToPx(x, uint(dpi))), win32.INT(metrics.ToPx(y, uint(dpi))),
+		win32.INT(metrics.ToPx(width, uint(dpi))), win32.INT(metrics.ToPx(height, uint(dpi))),
 		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE)
-	return errortrace.WithStack(err)
+	if err != nil {
+		return errortrace.WithStack(err)
+	}
+
+	// Get the rect in parent's client area after moving/resizing.
+	clientAfter, err := win.GetWindowRect()
+	if err != nil {
+		return errortrace.WithStack(err)
+	}
+	if err = win32util.ScreenToClient(parent, clientAfter); err != nil {
+		return errortrace.WithStack(err)
+	}
+
+	// Compute the union of the two rects.
+	clientToRedraw := &win32.RECT{
+		Left:   min(clientAfter.Left, clientBefore.Left),
+		Top:    min(clientAfter.Top, clientBefore.Top),
+		Right:  max(clientAfter.Right, clientBefore.Right),
+		Bottom: max(clientAfter.Bottom, clientBefore.Bottom),
+	}
+
+	// Invalidate the areas before and after resizing.
+	// This is necessary to avoid visual glitches of sibling controls
+	// if the resizing or moving causes overlapping.
+	return win32.InvalidateRect(parent, clientToRedraw, true)
 }
 
 func SetWidgetEnabled(handle Handle, enabled bool) {
@@ -154,12 +201,14 @@ func SetWidgetSize(handle Handle, width, height int) error {
 	return errortrace.WithStack(err)
 }
 
-func SetWindowOnSizeChangedListener(handle Handle, onSizeChanged func(width, height int)) {
+func SetWindowOnSizeChangedListener(handle Handle, onSizeChanged func(width, height metrics.DP)) {
 	win := handle.(*window.Window)
 	win.AddMsgListener(win32.WM_SIZE, func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM) {
-		width := win32.LOWORD(uintptr(lParam))
-		height := win32.HIWORD(uintptr(lParam))
-		onSizeChanged(int(width), int(height))
+		_, _, width, height, err := WindowClientRect(win)
+		if err != nil {
+			panic(err)
+		}
+		onSizeChanged(width, height)
 	})
 }
 
@@ -171,7 +220,7 @@ func SetWindowOnCloseListener(handle Handle, onClose func() bool) {
 	handle.(*window.Window).OnClose = onClose
 }
 
-func WindowClientRect(handle Handle) (x, y, width, height int, err error) {
+func WindowClientRect(handle Handle) (x, y, width, height metrics.DP, err error) {
 	win := handle.(*window.Window)
 	var rect win32.RECT
 	err = win32.GetClientRect(win.HWND(), &rect)
@@ -179,7 +228,16 @@ func WindowClientRect(handle Handle) (x, y, width, height int, err error) {
 		err = errortrace.WithStack(err)
 		return
 	}
-	return int(rect.Left), int(rect.Top), int(rect.Right - rect.Left), int(rect.Bottom - rect.Top), nil
+	dip, err := win32.GetDpiForWindow(win.HWND())
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	x = metrics.ToDP(int(rect.Left), uint(dip))
+	y = metrics.ToDP(int(rect.Top), uint(dip))
+	width = metrics.ToDP(int(rect.Right-rect.Left), uint(dip))
+	height = metrics.ToDP(int(rect.Bottom-rect.Top), uint(dip))
+	return
 }
 
 var getSystemMetricsXEdge = func() func() int {
@@ -205,7 +263,7 @@ var getSystemMetricsYEdge = func() func() int {
 // GetTextDrawingSize returns the size required to draw the specified text
 // in the given control.
 // If multiline is true, the line ending characters are considered as line breaks.
-func GetTextDrawingSize(control Handle, text string, multiline bool) (width, height int, err error) {
+func GetTextDrawingSize(control Handle, text string, multiline bool) (width, height metrics.DP, err error) {
 	win := control.(winBase)
 	hdc, err := win32.GetDC(win.HWND())
 	if err != nil {
@@ -241,10 +299,15 @@ func GetTextDrawingSize(control Handle, text string, multiline bool) (width, hei
 		err = errortrace.WithStack(err)
 		return
 	}
-	return int(rect.Width()), int(rect.Height()), nil
+	dpi, err := win32.GetDpiForWindow(win.HWND())
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	return metrics.ToDP(int(rect.Width()), uint(dpi)), metrics.ToDP(int(rect.Height()), uint(dpi)), nil
 }
 
-func GetButtonMinimumSize(handle Handle, label string) (width, height int, err error) {
+func GetButtonMinimumSize(handle Handle, label string) (width, height metrics.DP, err error) {
 	btn := handle.(*button.Button)
 	style, err := win32.GetWindowLongPtrW(btn.HWND(), win32.GWL_STYLE)
 	if err != nil {
@@ -256,7 +319,14 @@ func GetButtonMinimumSize(handle Handle, label string) (width, height int, err e
 		err = errortrace.WithStack(err)
 		return
 	}
-	return int(width + int(win32.LONG(getSystemMetricsXEdge())*2)), int(height + int(win32.LONG(getSystemMetricsYEdge())*2)), nil
+	dpi, err := win32.GetDpiForWindow(btn.HWND())
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	xEdge := metrics.ToDP(int(getSystemMetricsXEdge()), uint(dpi))
+	yEdge := metrics.ToDP(int(getSystemMetricsYEdge()), uint(dpi))
+	return width + xEdge*2, height + yEdge*2, nil
 }
 
 func CreatePanel(parent Handle) (handle Handle, err error) {

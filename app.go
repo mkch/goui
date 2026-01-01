@@ -8,6 +8,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/internal/tricks"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
@@ -17,16 +18,24 @@ type Context struct {
 }
 
 // newMockContext creates and returns a new mock goui.Context for testing.
-func newMockContext(config *AppConfig) *Context {
-	return &Context{
-		app:    NewApp(config),
+func newMockContext(config *AppConfig) (ctx *Context) {
+	ctx = &Context{
+		app: &App{
+			debug: configDebug(config),
+		},
 		window: &window{},
 	}
+	metricsSetDebug(ctx.App().debug != nil)
+	return
 }
 
 // NativeWindow returns the native window handle associated with this context.
 func (ctx *Context) NativeWindow() native.Handle {
 	return ctx.window.Handle
+}
+
+func (ctx *Context) App() *App {
+	return ctx.app
 }
 
 type Widget interface {
@@ -67,13 +76,29 @@ type Debug struct {
 	LayoutOutline bool
 }
 
+// appCreated indicates whether an App instance has been created.
+var appCreated bool
+
+// configDebug returns a cloned *tricks.Debug from the given AppConfig.
+// If config is nil, it returns nil.
+func configDebug(config *AppConfig) *tricks.Debug {
+	return gg.IfFunc(config == nil,
+		func() *tricks.Debug { return nil },
+		func() *tricks.Debug { return (*tricks.Debug)(config.Debug).Clone() })
+}
+
 // NewApp creates and returns a new App instance.
 // The app is setup with the given config. If config is nil, default configuration is used.
-func NewApp(config *AppConfig) *App {
+func NewApp(config *AppConfig) (app *App) {
+	if appCreated {
+		panic("only one App instance can be created")
+	}
+	defer func() {
+		appCreated = true
+		metricsSetDebug(app.debug != nil)
+	}()
 	return &App{
-		debug: gg.IfFunc(config == nil,
-			func() *tricks.Debug { return nil },
-			func() *tricks.Debug { return (*tricks.Debug)(config.Debug).Clone() }),
+		debug:   configDebug(config),
 		app:     native.NewApp(),
 		windows: make(map[ID]*window),
 	}
@@ -98,7 +123,7 @@ func layoutWindow(ctx *Context) error {
 	return nil
 }
 
-func performLayoutWindow(ctx *Context, width, height int) (err error) {
+func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 	if ctx.window.Layouter == nil {
 		return nil
 	}
@@ -132,7 +157,7 @@ func (app *App) CreateWindow(config Window) error {
 		Handle: handle,
 	}
 	ctx := &Context{app, window}
-	native.SetWindowOnSizeChangedListener(handle, func(width, height int) {
+	native.SetWindowOnSizeChangedListener(handle, func(width, height metrics.DP) {
 		if err := performLayoutWindow(ctx, width, height); err != nil {
 			panic(err)
 		}

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/widgetstest"
 )
@@ -35,7 +36,7 @@ func (l *mockLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (
 	return constraints.Clamp(l.IntrinsicSize), nil
 }
 
-func (l *mockLayouter) PositionAt(x, y int) error {
+func (l *mockLayouter) PositionAt(x, y metrics.DP) error {
 	l.Position = goui.Point{X: x, Y: y}
 	return nil
 }
@@ -149,10 +150,10 @@ func Test_ColumnAlign(t *testing.T) {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if x := widget1.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
-		t.Fatalf("Unexpected widget1 X position: got %d, want 0", x)
+		t.Fatalf("Unexpected widget1 X position: got %v, want 0", x)
 	}
 	if x := widget2.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
-		t.Fatalf("Unexpected widget2 X position: got %d, want 0", x)
+		t.Fatalf("Unexpected widget2 X position: got %v, want 0", x)
 	}
 
 	column = &Column{
@@ -178,10 +179,10 @@ func Test_ColumnAlign(t *testing.T) {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if x := widget1.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 50 {
-		t.Fatalf("Unexpected widget1 X position: got %d, want 50", x)
+		t.Fatalf("Unexpected widget1 X position: got %v, want 50", x)
 	}
 	if x := widget2.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
-		t.Fatalf("Unexpected widget2 X position: got %d, want 0", x)
+		t.Fatalf("Unexpected widget2 X position: got %v, want 0", x)
 	}
 
 	column.CrossAxisAlignment = axes.End
@@ -198,9 +199,9 @@ func Test_ColumnAlign(t *testing.T) {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if x := widget1.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 100 {
-		t.Fatalf("Unexpected widget1 X position: got %d, want 100", x)
+		t.Fatalf("Unexpected widget1 X position: got %v, want 100", x)
 	}
 	if x := widget2.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
-		t.Fatalf("Unexpected widget2 X position: got %d, want 0", x)
+		t.Fatalf("Unexpected widget2 X position: got %v, want 0", x)
 	}
 }

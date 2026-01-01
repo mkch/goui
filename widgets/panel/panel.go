@@ -6,6 +6,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
@@ -74,7 +75,7 @@ func (l *panelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) 
 	return constraints.MinSize(), nil // Use min size when no child.
 }
 
-func (l *panelLayouter) PositionAt(x, y int) (err error) {
+func (l *panelLayouter) PositionAt(x, y metrics.DP) (err error) {
 	if err = native.SetWidgetDimensions(l.Element().(*panelElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height); err != nil {
 		return
 	}

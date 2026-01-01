@@ -4,14 +4,15 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/metrics"
 )
 
 // SizedBox is a widget that imposes fixed width and height constraints on its child widget.
 type SizedBox struct {
 	ID     goui.ID
 	Widget goui.Widget
-	Width  int // Desired width.
-	Height int // Desired height.
+	Width  metrics.DP // Desired width.
+	Height metrics.DP // Desired height.
 }
 
 func (s *SizedBox) WidgetID() goui.ID {
@@ -62,7 +63,7 @@ func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 	return
 }
 
-func (l *sizedBoxLayouter) PositionAt(x, y int) (err error) {
+func (l *sizedBoxLayouter) PositionAt(x, y metrics.DP) (err error) {
 	l.pos = goui.Point{X: x, Y: y}
 	for child := range l.Children() {
 		return child.PositionAt(x, y)

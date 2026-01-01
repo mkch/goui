@@ -4,12 +4,13 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/metrics"
 )
 
 type Padding struct {
 	ID                       goui.ID
 	Widget                   goui.Widget
-	Left, Top, Right, Bottom int
+	Left, Top, Right, Bottom metrics.DP
 }
 
 func (p *Padding) WidgetID() goui.ID {
@@ -64,7 +65,7 @@ func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints
 	return
 }
 
-func (l *paddingLayouter) PositionAt(x, y int) (err error) {
+func (l *paddingLayouter) PositionAt(x, y metrics.DP) (err error) {
 	padding := l.Element().Widget().(*Padding)
 	for child := range l.Children() {
 		return child.PositionAt(x+padding.Left, y+padding.Top)

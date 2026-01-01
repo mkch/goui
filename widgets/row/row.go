@@ -2,6 +2,7 @@ package row
 
 import (
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/internal/rowcol"
 )
@@ -25,12 +26,12 @@ func (row *Row) WidgetID() goui.ID {
 func (row *Row) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &goui.ElementBase{
 		ElementLayouter: &rowcol.Layouter{
-			Main:               func(s *goui.Size) *int { return &s.Width },
-			Cross:              func(s *goui.Size) *int { return &s.Height },
-			MaxMain:            func(c *goui.Constraints) *int { return &c.MaxWidth },
-			MinMain:            func(c *goui.Constraints) *int { return &c.MinWidth },
-			MaxCross:           func(c *goui.Constraints) *int { return &c.MaxHeight },
-			MinCross:           func(c *goui.Constraints) *int { return &c.MinHeight },
+			Main:               func(s *goui.Size) *metrics.DP { return &s.Width },
+			Cross:              func(s *goui.Size) *metrics.DP { return &s.Height },
+			MaxMain:            func(c *goui.Constraints) *metrics.DP { return &c.MaxWidth },
+			MinMain:            func(c *goui.Constraints) *metrics.DP { return &c.MinWidth },
+			MaxCross:           func(c *goui.Constraints) *metrics.DP { return &c.MaxHeight },
+			MinCross:           func(c *goui.Constraints) *metrics.DP { return &c.MinHeight },
 			MainAxisSize:       func() axes.Size { return row.MainAxisSize },
 			CrossAxisAlignment: func() axes.Alignment { return row.CrossAxisAlignment },
 		},

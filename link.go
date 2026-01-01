@@ -6,6 +6,7 @@ import (
 	_ "unsafe" // for go:linkname
 
 	"github.com/mkch/goui/internal/tricks"
+	_ "github.com/mkch/goui/metrics" // for go:linkname
 )
 
 //go:linkname link_BuildElementTree github.com/mkch/goui/widgets/widgetstest.BuildElementTree
@@ -22,3 +23,6 @@ func link_NewMockContext() *Context {
 func link_Context_debug(ctx *Context) *tricks.Debug {
 	return ctx.app.debug
 }
+
+//go:linkname metricsSetDebug
+func metricsSetDebug(value bool)

@@ -1,12 +1,15 @@
 package goui
 
-import "github.com/mkch/goui/native"
+import (
+	"github.com/mkch/goui/metrics"
+	"github.com/mkch/goui/native"
+)
 
 type Window struct {
 	ID        ID
 	Title     string
-	Width     int
-	Height    int
+	Width     metrics.DP
+	Height    metrics.DP
 	Root      Widget
 	OnClose   func(ctx *Context) bool // Return true to allow closing, false to prevent.
 	OnDestroy func(ctx *Context)

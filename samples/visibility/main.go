@@ -1,5 +1,8 @@
 package main
 
+//go:generate rsrc -arch amd64 -manifest manifest.xml
+//go:generate rsrc -arch 386 -manifest manifest.xml
+
 import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
@@ -17,8 +20,8 @@ func main() {
 	app.CreateWindow(goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "goui visibility sample",
-		Width:     400,
-		Height:    300,
+		Width:     800,
+		Height:    600,
 		Root:      rootWidget(),
 	})
 
@@ -47,20 +50,20 @@ func (s *state) Build() goui.Widget {
 	return &widgets.Column{
 		CrossAxisAlignment: axes.Center,
 		Widgets: []goui.Widget{
-			&widgets.SizedBox{Height: 10},
+			&widgets.SizedBox{Height: 20},
 
 			&widgets.Visibility{
 				Visible:      s.visible,
 				MaintainSize: s.maintainSize,
 				Widget: &widgets.Padding{
-					Left: 5, Right: 5,
+					Left: 10, Right: 10,
 					Widget: &widgets.Label{
 						Text: "The quick brown fox jumps over the lazy dog.",
 					},
 				},
 			},
 
-			&widgets.SizedBox{Height: 20},
+			&widgets.SizedBox{Height: 40},
 
 			&widgets.Button{
 				Label: "Show",

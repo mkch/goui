@@ -21,13 +21,13 @@ func main() {
 	app.CreateWindow(goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "goui demo",
-		Width:     600,
-		Height:    400,
+		Width:     1200,
+		Height:    800,
 		Root: &widgets.Column{Widgets: []goui.Widget{
 			&widgets.Center{
-				HeightFactor: 120,
+				HeightFactor: 1.2,
 				Widget: &widgets.SizedBox{
-					Width: 80, Height: 30,
+					Width: 200, Height: 50,
 					Widget: &widgets.Button{
 						Label: "Click me!",
 						OnClick: func(*goui.Context) {
@@ -37,9 +37,9 @@ func main() {
 				},
 			},
 			&widgets.Center{
-				HeightFactor: 120,
+				HeightFactor: 1.2,
 				Widget: &widgets.SizedBox{
-					Width: 300, Height: 30,
+					Width: 600, Height: 50,
 					Widget: &widgets.Button{
 						Label: "Click\r\nme!",
 						OnClick: func(*goui.Context) {
@@ -50,8 +50,8 @@ func main() {
 			},
 			&widgets.Center{
 				Widget: &widgets.Padding{
-					Left:   50,
-					Right:  100,
+					Left:   100,
+					Right:  200,
 					Widget: counterButton,
 				},
 			},

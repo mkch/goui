@@ -4,6 +4,8 @@ import (
 	"errors"
 	"slices"
 	"testing"
+
+	"github.com/mkch/goui/metrics"
 )
 
 type mockWidget struct {
@@ -74,7 +76,7 @@ func (l *mockLayouter) Layout(ctx *Context, constraints Constraints) (Size, erro
 	return Size{Width: 100, Height: 100}, nil
 }
 
-func (l *mockLayouter) PositionAt(x, y int) error {
+func (l *mockLayouter) PositionAt(x, y metrics.DP) error {
 	return nil
 }
 

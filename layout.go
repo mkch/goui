@@ -3,10 +3,11 @@ package goui
 import (
 	"fmt"
 	"iter"
+	"math"
 	"slices"
 	"time"
-	"unsafe"
 
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
@@ -27,18 +28,18 @@ func (e *OverflowConstraintsError) Error() string {
 }
 
 // Infinity represents an infinite size(unbounded) constraint.
-const Infinity = 1<<(unsafe.Sizeof(int(0))*8-1) - 1
+const Infinity = math.MaxFloat64
 
 // Constraints represents layout constraints.
 type Constraints struct {
-	MinWidth  int
-	MinHeight int
-	MaxWidth  int
-	MaxHeight int
+	MinWidth  metrics.DP
+	MinHeight metrics.DP
+	MaxWidth  metrics.DP
+	MaxHeight metrics.DP
 }
 
 func (c *Constraints) String() string {
-	return fmt.Sprintf("{MinWidth: %d, MinHeight: %d, MaxWidth: %d, MaxHeight: %d}",
+	return fmt.Sprintf("{MinWidth: %v, MinHeight: %v, MaxWidth: %v, MaxHeight: %v}",
 		c.MinWidth, c.MinHeight, c.MaxWidth, c.MaxHeight)
 }
 
@@ -81,48 +82,42 @@ func (c *Constraints) Clamp(size Size) Size {
 }
 
 // ClampHeight clamps height between the constraints.
-func (c *Constraints) ClampWidth(width int) int {
+func (c *Constraints) ClampWidth(width metrics.DP) metrics.DP {
 	return clamp(width, c.MinWidth, c.MaxWidth)
 }
 
 // ClampHeight clamps height between the constraints.
-func (c *Constraints) ClampHeight(height int) int {
+func (c *Constraints) ClampHeight(height metrics.DP) metrics.DP {
 	return clamp(height, c.MinHeight, c.MaxHeight)
 }
 
 // clamp clamps value between min and max.
-func clamp(value, min, max int) int {
-	if value < min {
-		return min
-	}
-	if value > max {
-		return max
-	}
-	return value
+func clamp(value, minBound, maxBound metrics.DP) metrics.DP {
+	return min(max(value, minBound), maxBound)
 }
 
 type Size struct {
-	Width  int
-	Height int
+	Width  metrics.DP
+	Height metrics.DP
 }
 
 func (s *Size) String() string {
-	return fmt.Sprintf("{Width: %d, Height: %d}", s.Width, s.Height)
+	return fmt.Sprintf("{Width: %v, Height: %v}", s.Width, s.Height)
 }
 
 type Point struct {
-	X, Y int
+	X, Y metrics.DP
 }
 
 type Rect struct {
-	Left, Top, Right, Bottom int
+	Left, Top, Right, Bottom metrics.DP
 }
 
-func (r *Rect) Width() int {
+func (r *Rect) Width() metrics.DP {
 	return r.Right - r.Left
 }
 
-func (r *Rect) Height() int {
+func (r *Rect) Height() metrics.DP {
 	return r.Bottom - r.Top
 }
 
@@ -140,7 +135,7 @@ type Layouter interface {
 	Layout(ctx *Context, constraints Constraints) (Size, error)
 	// PositionAt puts the element at the given position.
 	// The position is relative to the native parent element's top-left corner.
-	PositionAt(x, y int) error
+	PositionAt(x, y metrics.DP) error
 	// Replayer returns a function that can replay the last layout operations,
 	// or nil if replay is not supported (e.g., when the layout depends on children).
 	Replayer() func(*Context) error
@@ -266,7 +261,7 @@ func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size
 	return
 }
 
-func (l *debugLayouter) PositionAt(x, y int) (err error) {
+func (l *debugLayouter) PositionAt(x, y metrics.DP) (err error) {
 	err = l.Layouter.PositionAt(x, y)
 	if err != nil {
 		return

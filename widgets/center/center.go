@@ -6,6 +6,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/metrics"
 )
 
 // Center is a [Container] [Widget] that centers its single child within itself.
@@ -13,15 +14,15 @@ type Center struct {
 	ID     goui.ID
 	Widget goui.Widget
 	// Width scaling factor. If not 0, the desired with of Center is calculated as
-	// child's width multiplied by WidthFactor%(i.e, 120 means 120%).
+	// child's width multiplied by WidthFactor.
 	// A 0 WidthFactor means to take all available width from parent.
 	// A non-zero WidthFactor must be greater than 100, or it panics.
-	WidthFactor int
+	WidthFactor float64
 	// Height scaling factor. If not 0, the desired height of Center is calculated as
-	// child's height multiplied by HeightFactor%(i.e, 120 means 120%).
+	// child's height multiplied by HeightFactor.
 	// A 0 HeightFactor means to take all available height from parent.
 	// A non-zero HeightFactor must be greater than 100, or it panics.
-	HeightFactor int
+	HeightFactor float64
 }
 
 func (c *Center) WidgetID() goui.ID {
@@ -55,11 +56,11 @@ type centerElement struct {
 
 func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 	center := widget.(*Center)
-	if center.WidthFactor < 100 && center.WidthFactor != 0 {
-		panic("Center.WidthFactor must be either 0 or greater than 100")
+	if center.WidthFactor < 0 {
+		panic("Center.WidthFactor must be greater than or equal to 0")
 	}
-	if center.HeightFactor < 100 && center.HeightFactor != 0 {
-		panic("Center.HeightFactor must be either 0 or greater than 100")
+	if center.HeightFactor < 0 {
+		panic("Center.HeightFactor must be greater than or equal to 0")
 	}
 	e.ElementBase.SetWidget(ctx, widget)
 }
@@ -89,12 +90,12 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		if center.WidthFactor == 0 {
 			size.Width = constraints.MaxWidth
 		} else {
-			size.Width = constraints.ClampWidth(childSize.Width * center.WidthFactor / 100)
+			size.Width = constraints.ClampWidth(childSize.Width * metrics.DP(center.WidthFactor))
 		}
 		if center.HeightFactor == 0 {
 			size.Height = constraints.MaxHeight
 		} else {
-			size.Height = constraints.ClampHeight(childSize.Height * center.HeightFactor / 100)
+			size.Height = constraints.ClampHeight(childSize.Height * metrics.DP(center.HeightFactor))
 		}
 
 		l.childOffset.X = (size.Width - childSize.Width) / 2
@@ -104,7 +105,7 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 	return constraints.MinSize(), nil
 }
 
-func (l *centerLayouter) PositionAt(x, y int) (err error) {
+func (l *centerLayouter) PositionAt(x, y metrics.DP) (err error) {
 	l.pos = goui.Point{X: x, Y: y}
 	children := slices.Collect(l.Children())
 	if children == nil {

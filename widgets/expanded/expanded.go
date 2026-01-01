@@ -5,6 +5,7 @@ import (
 	"github.com/mkch/gg/slices2"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/metrics"
 )
 
 // Expanded is a widget that expands to fill the available space in the parent container.
@@ -13,7 +14,7 @@ import (
 type Expanded struct {
 	ID     goui.ID
 	Widget goui.Widget
-	Flex   int // The Flex factor to use for this Expanded widget.
+	Flex   float64 // The Flex factor to use for this Expanded widget.
 }
 
 func (p *Expanded) WidgetID() goui.ID {
@@ -52,7 +53,7 @@ func (l *expandedLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 	return constraints.MaxSize(), nil
 }
 
-func (l *expandedLayouter) PositionAt(x, y int) (err error) {
+func (l *expandedLayouter) PositionAt(x, y metrics.DP) (err error) {
 	for child := range l.Children() {
 		return child.PositionAt(x, y)
 	}
@@ -60,11 +61,11 @@ func (l *expandedLayouter) PositionAt(x, y int) (err error) {
 }
 
 // Layout layouts the given Expanded widgets within the available space.
-func Layout(ctx *goui.Context, availableSpace int, expandedLayouters []goui.Layouter, setConstraints func(c *goui.Constraints, crossAxis int)) (sizes []goui.Size, err error) {
+func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []goui.Layouter, setConstraints func(c *goui.Constraints, crossAxis metrics.DP)) (sizes []goui.Size, err error) {
 	widgets := slices2.Map(expandedLayouters, func(l goui.Layouter) *Expanded {
 		return l.Element().Widget().(*Expanded)
 	})
-	totalFlex := slices2.Reduce(widgets, func(acc int, cur *Expanded, i int) int {
+	totalFlex := slices2.Reduce(widgets, func(acc float64, cur *Expanded, i int) float64 {
 		flex := max(0, cur.Flex)
 		return acc + flex
 	}, 0)
@@ -79,11 +80,13 @@ func Layout(ctx *goui.Context, availableSpace int, expandedLayouters []goui.Layo
 		return
 	}
 
+	totalFlexInv := 1 / totalFlex
+
 	// Call Layout on each Expanded widget with calculated tight constraints.
 	remainingSpace := availableSpace
 	for i, l := range expandedLayouters {
 		var constraints goui.Constraints
-		var size int
+		var size metrics.DP
 		if i == len(widgets)-1 {
 			// Give all remaining space to the last Expanded to avoid rounding errors.
 			size = remainingSpace
@@ -91,7 +94,7 @@ func Layout(ctx *goui.Context, availableSpace int, expandedLayouters []goui.Layo
 			// Ensure that the total allocated space does not exceed availableSpace
 			// due to rounding errors.
 			if widgets[i].Flex > 0 {
-				size = int(float32(max(0, widgets[i].Flex)) / float32(totalFlex) * float32(availableSpace))
+				size = metrics.DP(max(0, widgets[i].Flex) * totalFlexInv * float64(availableSpace))
 				remainingSpace -= size
 			}
 		}

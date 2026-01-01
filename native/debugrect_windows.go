@@ -5,6 +5,7 @@ import (
 
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/gw/paint"
 	"github.com/mkch/gw/paint/brush"
 	"github.com/mkch/gw/paint/pen"
@@ -52,7 +53,7 @@ var debugRectHighlightBrush = func() func() *brush.Brush {
 }()
 
 type DebugRect struct {
-	Left, Top, Right, Bottom int
+	Left, Top, Right, Bottom metrics.DP
 	Highlight                bool
 }
 
@@ -109,6 +110,8 @@ For windows 10/11, one can include this compatibility snippet in its app.manifes
 			Erase: paintData.Erase,
 		})
 
+		dpi := gg.Must(win32.GetDpiForWindow(layeredPanel.HWND()))
+
 		pen := debugRectPen()
 		defer gg.Must(paint.SelectObject(paintData.DC, pen.HPEN())).Restore()
 
@@ -119,11 +122,12 @@ For windows 10/11, one can include this compatibility snippet in its app.manifes
 			} else {
 				restore = gg.Must(paint.SelectObject(paintData.DC, debugRectHollowBrush().HBRUSH())).Restore
 			}
+			left := metrics.ToPx(rect.Left, uint(dpi))
+			right := metrics.ToPx(rect.Right, uint(dpi))
+			top := metrics.ToPx(rect.Top, uint(dpi))
+			bottom := metrics.ToPx(rect.Bottom, uint(dpi))
 			win32.Rectangle(paintData.DC,
-				rect.Left,
-				rect.Top,
-				rect.Right,
-				rect.Bottom)
+				left, top, right, bottom)
 			restore()
 		}
 	})

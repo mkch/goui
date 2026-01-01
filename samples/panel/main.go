@@ -21,8 +21,8 @@ func main() {
 	err := app.CreateWindow(goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "panel sample",
-		Width:     400,
-		Height:    300,
+		Width:     800,
+		Height:    600,
 		Root:      rootWidget(),
 	})
 
@@ -40,7 +40,7 @@ func rootWidget() goui.Widget {
 			Widget: &widgets.Panel{
 				BackgroundColor: &color.NRGBA{R: 200, G: 200},
 				Widget: &widgets.Padding{
-					Left: 20, Right: 20, Top: 10, Bottom: 10,
+					Left: 40, Right: 80, Top: 30, Bottom: 60,
 					Widget: &widgets.Button{Label: "Click Me"},
 				},
 			},

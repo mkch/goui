@@ -2,6 +2,7 @@ package button
 
 import (
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
@@ -74,7 +75,7 @@ type buttonLayouter struct {
 	layoutSize goui.Size
 }
 
-var defaultButtonPadding = goui.Size{Width: 15, Height: 10}
+var defaultButtonPadding = goui.Size{Width: 30, Height: 20}
 
 func (l *buttonLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	elem := l.Element().(*buttonElement)
@@ -100,6 +101,6 @@ func (l *buttonLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 	return
 }
 
-func (l *buttonLayouter) PositionAt(x, y int) (err error) {
+func (l *buttonLayouter) PositionAt(x, y metrics.DP) (err error) {
 	return native.SetWidgetDimensions(l.Element().(*buttonElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height)
 }

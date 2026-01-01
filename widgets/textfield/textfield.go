@@ -2,6 +2,7 @@ package textfield
 
 import (
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
@@ -68,12 +69,12 @@ func (l *textFieldLayouter) Layout(ctx *goui.Context, constraints goui.Constrain
 		l.layoutSize = size
 		return
 	}
-	intrinsicWidth, intrinsicHeight := 200, 30 // Default size for text field
+	intrinsicWidth, intrinsicHeight := metrics.DP(330), metrics.DP(50) // Default size for text field
 	size = constraints.Clamp(goui.Size{Width: intrinsicWidth, Height: intrinsicHeight})
 	l.layoutSize = size
 	return
 }
 
-func (l *textFieldLayouter) PositionAt(x, y int) (err error) {
+func (l *textFieldLayouter) PositionAt(x, y metrics.DP) (err error) {
 	return native.SetWidgetDimensions(l.Element().(*textFieldElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height)
 }

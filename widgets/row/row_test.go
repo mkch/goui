@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/widgetstest"
 )
@@ -35,7 +36,7 @@ func (l *mockLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (
 	return constraints.Clamp(l.IntrinsicSize), nil
 }
 
-func (l *mockLayouter) PositionAt(x, y int) error {
+func (l *mockLayouter) PositionAt(x, y metrics.DP) error {
 	l.Position = goui.Point{X: x, Y: y}
 	return nil
 }
@@ -149,10 +150,10 @@ func Test_RowAlign(t *testing.T) {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if y := widget1.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 0 {
-		t.Fatalf("Unexpected widget1 Y position: got %d, want 0", y)
+		t.Fatalf("Unexpected widget1 Y position: got %v, want 0", y)
 	}
 	if y := widget2.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 0 {
-		t.Fatalf("Unexpected widget2 Y position: got %d, want 0", y)
+		t.Fatalf("Unexpected widget2 Y position: got %v, want 0", y)
 	}
 
 	column = &Row{
@@ -178,10 +179,10 @@ func Test_RowAlign(t *testing.T) {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if y := widget1.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 0 {
-		t.Fatalf("Unexpected widget1 Y position: got %d, want 0", y)
+		t.Fatalf("Unexpected widget1 Y position: got %v, want 0", y)
 	}
 	if y := widget2.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 10 {
-		t.Fatalf("Unexpected widget2 Y position: got %d, want 10", y)
+		t.Fatalf("Unexpected widget2 Y position: got %v, want 10", y)
 	}
 
 	column.CrossAxisAlignment = axes.End
@@ -198,9 +199,9 @@ func Test_RowAlign(t *testing.T) {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if y := widget1.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 0 {
-		t.Fatalf("Unexpected widget1 Y position: got %d, want 0", y)
+		t.Fatalf("Unexpected widget1 Y position: got %v, want 0", y)
 	}
 	if y := widget2.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 20 {
-		t.Fatalf("Unexpected widget2 Y position: got %d, want 20", y)
+		t.Fatalf("Unexpected widget2 Y position: got %v, want 20", y)
 	}
 }
