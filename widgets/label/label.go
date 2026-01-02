@@ -9,9 +9,22 @@ import (
 	"github.com/mkch/goui/native"
 )
 
+type TextAlignment int
+
+// Sync with native.TextAlignment
+
+const (
+	Left TextAlignment = iota
+	Right
+	Center
+)
+
+// Label is a widget that displays a text string.
 type Label struct {
 	ID              goui.ID
 	Text            string
+	Multiline       bool // If true, the label supports multiple lines of text.
+	TextAlignment   TextAlignment
 	Padding         *goui.Size   // Padding around the label text. If nil, no padding is applied.
 	BackgroundColor *color.NRGBA // Background color of the label. If nil, default is used.
 }
@@ -57,13 +70,33 @@ func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 				errortrace.Panic(err)
 			}
 		}
-	} else {
-		if newLabel.BackgroundColor != nil {
-			if err := native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
+		if oldLabel.Multiline != newLabel.Multiline {
+			if err := native.SetLabelMultiline(e.Handle, newLabel.Multiline); err != nil {
 				errortrace.Panic(err)
 			}
 		}
+		if oldLabel.TextAlignment != newLabel.TextAlignment {
+			if err := native.SetLabelTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment)); err != nil {
+				errortrace.Panic(err)
+			}
+		}
+		return
 	}
+
+	if newLabel.BackgroundColor != nil {
+		if err := native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
+			errortrace.Panic(err)
+		}
+	}
+
+	if err := native.SetLabelMultiline(e.Handle, newLabel.Multiline); err != nil {
+		errortrace.Panic(err)
+	}
+
+	if err := native.SetLabelTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment)); err != nil {
+		errortrace.Panic(err)
+	}
+
 	e.NativeElement.SetWidget(ctx, widget)
 }
 
@@ -87,7 +120,7 @@ func (l *labelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) 
 	if padding == nil {
 		padding = &goui.Size{Width: 0, Height: 0}
 	}
-	intrinsicWidth, intrinsicHeight, err := native.GetTextDrawingSize(elem.Handle, widget.Text, false)
+	intrinsicWidth, intrinsicHeight, err := native.GetTextDrawingSize(elem.Handle, widget.Text, widget.Multiline, constraints.MaxWidth-padding.Width)
 	if err != nil {
 		return
 	}

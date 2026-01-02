@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"unsafe"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/gw/app/gwapp"
@@ -94,10 +95,62 @@ func SetButtonLabel(handle Handle, label string) {
 func CreateLabel(parent Handle, title string) (handle Handle, err error) {
 	handle, err = static.New(parent.(winBase).HWND(), &static.Spec{
 		Style: win32.WS_CHILD | win32.WS_VISIBLE |
-			static.SS_CENTER | static.SS_CENTERIMAGE, // SS_CENTERIMAGE vertically centers the single line of text.
+			static.SS_NOPREFIX | static.SS_CENTER | static.SS_CENTERIMAGE, // SS_CENTERIMAGE vertically centers the single line of text.
 		Text: title,
 	})
 	err = errortrace.WithStack(err)
+	return
+}
+
+func SetLabelMultiline(handle Handle, multiline bool) (err error) {
+	lbl := handle.(*static.Static)
+	if multiline {
+		err = win32util.ModifyWindowStyle(lbl.HWND(), win32util.ModifyStyleSpec{
+			Remove: static.SS_CENTERIMAGE,
+		})
+	} else {
+		err = win32util.ModifyWindowStyle(lbl.HWND(), win32util.ModifyStyleSpec{
+			Add: static.SS_CENTERIMAGE,
+		})
+	}
+	if err != nil {
+		err = errortrace.WithStack(err)
+	}
+	return
+}
+
+type TextAlignment int
+
+// Sync with native.TextAlignment
+
+const (
+	Left TextAlignment = iota
+	Right
+	Center
+)
+
+func SetLabelTextAlignment(handle Handle, alignment TextAlignment) (err error) {
+	lbl := handle.(*static.Static)
+	switch alignment {
+	case Left:
+		err = win32util.ModifyWindowStyle(lbl.HWND(), win32util.ModifyStyleSpec{
+			Add:    static.SS_LEFT,
+			Remove: static.SS_CENTER | static.SS_RIGHT,
+		})
+	case Right:
+		err = win32util.ModifyWindowStyle(lbl.HWND(), win32util.ModifyStyleSpec{
+			Add:    static.SS_RIGHT,
+			Remove: static.SS_CENTER | static.SS_LEFT,
+		})
+	case Center:
+		err = win32util.ModifyWindowStyle(lbl.HWND(), win32util.ModifyStyleSpec{
+			Add:    static.SS_CENTER,
+			Remove: static.SS_LEFT | static.SS_RIGHT,
+		})
+	}
+	if err != nil {
+		err = errortrace.WithStack(err)
+	}
 	return
 }
 
@@ -267,7 +320,8 @@ var getSystemMetricsYEdge = func() func() int {
 // GetTextDrawingSize returns the size required to draw the specified text
 // in the given control.
 // If multiline is true, the line ending characters are considered as line breaks.
-func GetTextDrawingSize(control Handle, text string, multiline bool) (width, height metrics.DP, err error) {
+// If maxWidth is greater than zero, the returned width will not exceed maxWidth.
+func GetTextDrawingSize(control Handle, text string, multiline bool, maxWidth metrics.DP) (width, height metrics.DP, err error) {
 	win := control.(winBase)
 	hdc, err := win32.GetDC(win.HWND())
 	if err != nil {
@@ -287,23 +341,29 @@ func GetTextDrawingSize(control Handle, text string, multiline bool) (width, hei
 	}
 	defer win32.SelectObject(hdc, oldFont)
 
-	format := win32.DT_CALCRECT
+	format := win32.DT_CALCRECT | win32.DT_NOPREFIX
 	if !multiline {
 		format |= win32.DT_SINGLELINE
+	} else {
+		format |= win32.DT_WORDBREAK
 	}
 
 	var buf []win32.WCHAR
 	win32util.CString(text, &buf)
-	const MAX_SIZE = 1<<(unsafe.Sizeof(win32.LONG(0))*8-1) - 1
-	rect := win32.RECT{Left: 0, Top: 0, Right: MAX_SIZE, Bottom: MAX_SIZE}
-	_, err = win32.DrawTextExW(hdc, &buf[0], -1,
-		&rect,
-		format, nil)
+
+	dpi, err := win32.GetDpiForWindow(win.HWND())
 	if err != nil {
 		err = errortrace.WithStack(err)
 		return
 	}
-	dpi, err := win32.GetDpiForWindow(win.HWND())
+
+	const MAX_SIZE = 1<<(unsafe.Sizeof(win32.LONG(0))*8-1) - 1
+	rect := win32.RECT{Left: 0, Top: 0,
+		Right:  gg.If(maxWidth > 0, win32.LONG(maxWidth.Px(uint(dpi))), MAX_SIZE),
+		Bottom: MAX_SIZE}
+	_, err = win32.DrawTextExW(hdc, &buf[0], -1,
+		&rect,
+		format, nil)
 	if err != nil {
 		err = errortrace.WithStack(err)
 		return
@@ -318,7 +378,7 @@ func GetButtonMinimumSize(handle Handle, label string) (width, height metrics.DP
 		err = errortrace.WithStack(err)
 		return
 	}
-	width, height, err = GetTextDrawingSize(handle, label, style&win32.BS_MULTILINE != 0)
+	width, height, err = GetTextDrawingSize(handle, label, style&win32.BS_MULTILINE != 0, 0)
 	if err != nil {
 		err = errortrace.WithStack(err)
 		return
