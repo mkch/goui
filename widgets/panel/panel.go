@@ -10,6 +10,7 @@ import (
 	"github.com/mkch/goui/native"
 )
 
+// Panel is a simple container widget that uses its child's size as its own size.
 type Panel struct {
 	ID              goui.ID
 	Widget          goui.Widget

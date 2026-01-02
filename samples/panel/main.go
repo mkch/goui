@@ -9,6 +9,7 @@ import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/widgets"
+	"github.com/mkch/goui/widgets/axes"
 )
 
 var app = goui.NewApp(&goui.AppConfig{
@@ -41,7 +42,13 @@ func rootWidget() goui.Widget {
 				BackgroundColor: &color.NRGBA{R: 200, G: 200},
 				Widget: &widgets.Padding{
 					Left: 40, Right: 80, Top: 30, Bottom: 60,
-					Widget: &widgets.Button{Label: "Click Me"},
+					Widget: &widgets.Row{
+						MainAxisSize: axes.Min,
+						Widgets: []goui.Widget{
+							&widgets.Button{Label: "Click Me"},
+							&widgets.Button{Label: "Click Me ~~~~"},
+						},
+					},
 				},
 			},
 		},
