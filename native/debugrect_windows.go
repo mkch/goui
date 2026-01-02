@@ -122,10 +122,10 @@ For windows 10/11, one can include this compatibility snippet in its app.manifes
 			} else {
 				restore = gg.Must(paint.SelectObject(paintData.DC, debugRectHollowBrush().HBRUSH())).Restore
 			}
-			left := metrics.ToPx(rect.Left, uint(dpi))
-			right := metrics.ToPx(rect.Right, uint(dpi))
-			top := metrics.ToPx(rect.Top, uint(dpi))
-			bottom := metrics.ToPx(rect.Bottom, uint(dpi))
+			left := rect.Left.Px(uint(dpi))
+			right := rect.Right.Px(uint(dpi))
+			top := rect.Top.Px(uint(dpi))
+			bottom := rect.Bottom.Px(uint(dpi))
 			win32.Rectangle(paintData.DC,
 				left, top, right, bottom)
 			restore()

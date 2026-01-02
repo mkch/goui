@@ -7,40 +7,39 @@ import (
 // DP is the measurement of device-independent pixel, based on 160 DPI reference.
 type DP float64
 
-// refDPI is reference DPI for DP unit.
-const refDPI uint = 160
+// ReferenceDPI is reference DPI for DP unit.
+const ReferenceDPI uint = 160
 
-// refDPIInv is the inverse (reciprocal) of refDPI.
-// Multiplying by refDPIInv is equivalent to dividing by refDPI.
-const refDPIInv = 1.0 / float64(refDPI)
-
+// referenceDPIInv is the inverse (reciprocal) of referenceDPI.
+// Multiplying by referenceDPIInv is equivalent to dividing by referenceDPI.
+const referenceDPIInv = 1.0 / float64(ReferenceDPI)
 const (
-	Millimeter = DP(1.0 / 25.4 * float64(refDPI)) // 1 millimeter in DP
-	Inch       = DP(refDPI)                       // 1 inch in DP
+	Millimeter = DP(1.0 / 25.4 * float64(ReferenceDPI)) // 1 millimeter in DP
+	Inch       = DP(ReferenceDPI)                       // 1 inch in DP
 )
 
-// ToPx converts dp to physical pixel measurement px.
+// Px converts dp to physical pixel measurement px.
 // The dpi parameter is the pixel density (DPI, dots per inch) of the target device
 // where px is measured.
-func ToPx(dp DP, dpi uint) (px int) {
-	return round(To(dp, dpi))
+func (dp DP) Px(dpi uint) (px int) {
+	return round(dp.To(dpi))
 }
 
-// ToDP converts physical pixel measurement px to dp.
+// To converts dp to a measurement in a device with given dpi (dots per inch, or pixel density).
+func (dp DP) To(dpi uint) float64 {
+	return float64(dp) * referenceDPIInv * float64(dpi)
+}
+
+// Px converts physical pixel measurement px to dp.
 // The dpi parameter is the pixel density (DPI, dots per inch) of the source device
 // where px is measured.
-func ToDP(px int, dpi uint) (dp DP) {
+func Px(px int, dpi uint) (dp DP) {
 	return From(float64(px), dpi)
 }
 
 // From converts p measured in a device with given dpi (dots per inch, or pixel density) to DP.
 func From(p float64, dpi uint) DP {
-	return DP(p / float64(dpi) * float64(refDPI))
-}
-
-// To converts dp to a measurement in a device with given dpi (dots per inch, or pixel density).
-func To(dp DP, dpi uint) float64 {
-	return float64(dp) * refDPIInv * float64(dpi)
+	return DP(p / float64(dpi) * float64(ReferenceDPI))
 }
 
 // debug indicates whether debug mode is enabled.

@@ -22,8 +22,8 @@ func TestFromAndTo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// From converts device measurement to DP
 			dp := From(tt.original, tt.dpi)
-			// To converts DP back to device measurement
-			result := To(dp, tt.dpi)
+			// DP.To converts DP back to device measurement
+			result := dp.To(tt.dpi)
 
 			// Should be round-trip equivalent
 			if math.Abs(result-tt.original) > 1e-10 {
@@ -50,9 +50,9 @@ func TestToPxAndToDP(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// ToDP converts physical pixels to DP
-			dp := ToDP(tt.original, tt.dpi)
-			// ToPx converts DP back to physical pixels
-			result := ToPx(dp, tt.dpi)
+			dp := Px(tt.original, tt.dpi)
+			// DP.Px converts DP back to physical pixels
+			result := dp.Px(tt.dpi)
 
 			// Should be approximately equal (may differ due to rounding)
 			if result != tt.original {
@@ -84,7 +84,7 @@ func TestToWithDifferentDPI(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result := To(tt.dp, tt.dpi)
+		result := tt.dp.To(tt.dpi)
 		if math.Abs(result-tt.expected) > 1e-10 {
 			t.Errorf("To(%v, %d): expected %v, got %v",
 				tt.dp, tt.dpi, tt.expected, result)
@@ -133,7 +133,7 @@ func TestToPx(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ToPx(tt.dp, tt.dpi)
+			result := tt.dp.Px(tt.dpi)
 			if result != tt.expected {
 				t.Errorf("ToPx(%v, %d): expected %d, got %d",
 					tt.dp, tt.dpi, tt.expected, result)

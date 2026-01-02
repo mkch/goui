@@ -43,7 +43,7 @@ func CreateWindow(title string, width, height metrics.DP) (handle Handle, err er
 	}
 	win32.SetWindowPos(win.HWND(), win32.HWND(0),
 		0, 0,
-		win32.INT(metrics.ToPx(width, uint(dpi))), win32.INT(metrics.ToPx(height, uint(dpi))),
+		win32.INT(width.Px(uint(dpi))), win32.INT(height.Px(uint(dpi))),
 		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE|win32.SWP_NOMOVE)
 	win.Show(win32.SW_SHOWNORMAL)
 	handle = win
@@ -159,8 +159,8 @@ func SetWidgetDimensions(handle Handle, x, y, width, height metrics.DP) error {
 		return errortrace.WithStack(err)
 	}
 	err = win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
-		win32.INT(metrics.ToPx(x, uint(dpi))), win32.INT(metrics.ToPx(y, uint(dpi))),
-		win32.INT(metrics.ToPx(width, uint(dpi))), win32.INT(metrics.ToPx(height, uint(dpi))),
+		win32.INT(x.Px(uint(dpi))), win32.INT(y.Px(uint(dpi))),
+		win32.INT(width.Px(uint(dpi))), win32.INT(height.Px(uint(dpi))),
 		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE)
 	if err != nil {
 		return errortrace.WithStack(err)
@@ -237,10 +237,10 @@ func WindowClientRect(handle Handle) (x, y, width, height metrics.DP, err error)
 		err = errortrace.WithStack(err)
 		return
 	}
-	x = metrics.ToDP(int(rect.Left), uint(dip))
-	y = metrics.ToDP(int(rect.Top), uint(dip))
-	width = metrics.ToDP(int(rect.Right-rect.Left), uint(dip))
-	height = metrics.ToDP(int(rect.Bottom-rect.Top), uint(dip))
+	x = metrics.Px(int(rect.Left), uint(dip))
+	y = metrics.Px(int(rect.Top), uint(dip))
+	width = metrics.Px(int(rect.Right-rect.Left), uint(dip))
+	height = metrics.Px(int(rect.Bottom-rect.Top), uint(dip))
 	return
 }
 
@@ -308,7 +308,7 @@ func GetTextDrawingSize(control Handle, text string, multiline bool) (width, hei
 		err = errortrace.WithStack(err)
 		return
 	}
-	return metrics.ToDP(int(rect.Width()), uint(dpi)), metrics.ToDP(int(rect.Height()), uint(dpi)), nil
+	return metrics.Px(int(rect.Width()), uint(dpi)), metrics.Px(int(rect.Height()), uint(dpi)), nil
 }
 
 func GetButtonMinimumSize(handle Handle, label string) (width, height metrics.DP, err error) {
@@ -328,8 +328,8 @@ func GetButtonMinimumSize(handle Handle, label string) (width, height metrics.DP
 		err = errortrace.WithStack(err)
 		return
 	}
-	xEdge := metrics.ToDP(int(getSystemMetricsXEdge()), uint(dpi))
-	yEdge := metrics.ToDP(int(getSystemMetricsYEdge()), uint(dpi))
+	xEdge := metrics.Px(int(getSystemMetricsXEdge()), uint(dpi))
+	yEdge := metrics.Px(int(getSystemMetricsYEdge()), uint(dpi))
 	return width + xEdge*2, height + yEdge*2, nil
 }
 
