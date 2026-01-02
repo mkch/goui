@@ -1,3 +1,4 @@
+// Package metrics provides types and functions for device-independent pixel (DP) measurements.
 package metrics
 
 import (
