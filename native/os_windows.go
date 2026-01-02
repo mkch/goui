@@ -106,6 +106,10 @@ func SetLabelText(handle Handle, text string) error {
 	return errortrace.WithStack(err)
 }
 
+func SetLabelBackgroundColor(handle Handle, color *color.NRGBA) error {
+	return handle.(*static.Static).SetBackgroundColor(nativeColor(color))
+}
+
 func CreateTextField(parent Handle, initialValue string, password bool) (handle Handle, err error) {
 	style := win32.WS_CHILD | win32.WS_VISIBLE | win32.WS_BORDER | edit.ES_LEFT
 	if password {
@@ -335,5 +339,5 @@ func CreatePanel(parent Handle) (handle Handle, err error) {
 }
 
 func SetPanelBackgroundColor(handle Handle, color *color.NRGBA) error {
-	return handle.(*panel.Panel).SetBackgroundColor(toNativeColor(color))
+	return handle.(*panel.Panel).SetBackgroundColor(nativeColor(color))
 }

@@ -1,6 +1,8 @@
 package label
 
 import (
+	"image/color"
+
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/metrics"
@@ -8,9 +10,10 @@ import (
 )
 
 type Label struct {
-	ID      goui.ID
-	Text    string
-	Padding *goui.Size // Padding around the label text. If nil, no padding is applied.
+	ID              goui.ID
+	Text            string
+	Padding         *goui.Size   // Padding around the label text. If nil, no padding is applied.
+	BackgroundColor *color.NRGBA // Background color of the label. If nil, default is used.
 }
 
 func (btn *Label) WidgetID() goui.ID {
@@ -45,6 +48,18 @@ func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 		oldLabel := oldWidget.(*Label)
 		if oldLabel.Text != newLabel.Text {
 			if err := native.SetLabelText(e.Handle, newLabel.Text); err != nil {
+				errortrace.Panic(err)
+			}
+		}
+		if oldLabel.BackgroundColor != newLabel.BackgroundColor ||
+			oldLabel.BackgroundColor != nil && *newLabel.BackgroundColor != *oldLabel.BackgroundColor {
+			if err := native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
+				errortrace.Panic(err)
+			}
+		}
+	} else {
+		if newLabel.BackgroundColor != nil {
+			if err := native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
 				errortrace.Panic(err)
 			}
 		}

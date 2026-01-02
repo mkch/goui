@@ -14,6 +14,11 @@ const refDPI uint = 160
 // Multiplying by refDPIInv is equivalent to dividing by refDPI.
 const refDPIInv = 1.0 / float64(refDPI)
 
+const (
+	Millimeter = DP(1.0 / 25.4 * float64(refDPI)) // 1 millimeter in DP
+	Inch       = DP(refDPI)                       // 1 inch in DP
+)
+
 // ToPx converts dp to physical pixel measurement px.
 // The dpi parameter is the pixel density (DPI, dots per inch) of the target device
 // where px is measured.
