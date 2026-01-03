@@ -50,6 +50,8 @@ type Container interface {
 	Exclusive(Container)
 }
 
+// App is the main application object that manages the GUI application's lifecycle and windows.
+// There should not be more than one App instance per goroutine.
 type App struct {
 	debug   *tricks.Debug
 	app     native.App
