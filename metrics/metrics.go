@@ -43,25 +43,13 @@ func From(p float64, dpi uint) DP {
 	return DP(p / float64(dpi) * float64(ReferenceDPI))
 }
 
-// debug indicates whether debug mode is enabled.
-// Set by link_link_setDebug function which is linked to goui.metricsSetDebug.
-var debug bool
-
 // round converts a float64 to int.
-// In debug mode, it panics if f is NaN, Inf or out of int bounds.
+// -1 is returned if f is NaN, Inf or out of int bounds.
 func round(f float64) int {
-	if debug {
-		if math.IsNaN(f) || math.IsInf(f, 0) {
-			panic("attempt to convert NaN or Inf to int")
-		}
-	}
+	f = math.Round(f)
 
-	rounded := math.Round(f)
-
-	if debug {
-		if rounded < float64(math.MinInt) || rounded > float64(math.MaxInt) {
-			panic("attempt to convert out-of-bounds float to int")
-		}
+	if math.IsNaN(f) || math.IsInf(f, 0) || f < float64(math.MinInt) || f > float64(math.MaxInt) {
+		return -1
 	}
-	return int(rounded)
+	return int(f)
 }

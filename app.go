@@ -25,7 +25,6 @@ func newMockContext(config *AppConfig) (ctx *Context) {
 		},
 		window: &window{},
 	}
-	metricsSetDebug(ctx.App().debug != nil)
 	return
 }
 
@@ -76,9 +75,6 @@ type Debug struct {
 	LayoutOutline bool
 }
 
-// appCreated indicates whether an App instance has been created.
-var appCreated bool
-
 // configDebug returns a cloned *tricks.Debug from the given AppConfig.
 // If config is nil, it returns nil.
 func configDebug(config *AppConfig) *tricks.Debug {
@@ -90,13 +86,6 @@ func configDebug(config *AppConfig) *tricks.Debug {
 // NewApp creates and returns a new App instance.
 // The app is setup with the given config. If config is nil, default configuration is used.
 func NewApp(config *AppConfig) (app *App) {
-	if appCreated {
-		panic("only one App instance can be created")
-	}
-	defer func() {
-		appCreated = true
-		metricsSetDebug(app.debug != nil)
-	}()
 	return &App{
 		debug:   configDebug(config),
 		app:     native.NewApp(),

@@ -164,47 +164,26 @@ func TestRoundWithDebugMode(t *testing.T) {
 	}
 }
 
-func TestRoundWithNaN(t *testing.T) {
-	// Test NaN panic in debug mode
-	debug = true
-	defer func() { debug = false }()
+func TestRoundWithInvalidValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		input float64
+	}{
+		{"NaN", math.NaN()},
+		{"Positive Inf", math.Inf(1)},
+		{"Negative Inf", math.Inf(-1)},
+		{"Out of bounds positive", float64(math.MaxInt) * 2},
+		{"Out of bounds negative", float64(math.MinInt) * 2},
+	}
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic for NaN but got none")
-		}
-	}()
-
-	round(math.NaN())
-}
-
-func TestRoundWithInf(t *testing.T) {
-	// Test Inf panic in debug mode
-	debug = true
-	defer func() { debug = false }()
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic for Inf but got none")
-		}
-	}()
-
-	round(math.Inf(1))
-}
-
-func TestRoundWithOutOfBounds(t *testing.T) {
-	// Test out-of-bounds panic in debug mode
-	debug = true
-	defer func() { debug = false }()
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic for out-of-bounds value but got none")
-		}
-	}()
-
-	// Create a value that rounds to something out of bounds
-	round(float64(math.MaxInt) * 2)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := round(tt.input)
+			if result != -1 {
+				t.Errorf("round(%v): expected -1, got %d", tt.input, result)
+			}
+		})
+	}
 }
 
 func abs(x int) int {
