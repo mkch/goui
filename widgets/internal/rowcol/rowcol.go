@@ -78,21 +78,10 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 		if err != nil {
 			return
 		}
-		var expandedTotalSize goui.Size // The overall size of all expanded children
 		for i, childSize := range sizes {
-			*l.Main(&expandedTotalSize) += *l.Main(&childSize)                                     // sum main axis sizes
-			*l.Cross(&expandedTotalSize) = max(*l.Cross(&expandedTotalSize), *l.Cross(&childSize)) // max cross axis size
 			childrenSizes[expandedChildrenIndexes[i]] = childSize
 			// calculate cross axis size
 			*l.Cross(&size) = max(*l.Cross(&size), *l.Cross(&childSize))
-		}
-		var expandedTotalConstraints goui.Constraints
-		*l.MinMain(&expandedTotalConstraints) = availableSpace
-		*l.MaxMain(&expandedTotalConstraints) = availableSpace
-		*l.MinCross(&expandedTotalConstraints) = 0
-		*l.MaxCross(&expandedTotalConstraints) = *l.MaxCross(&constraints)
-		if err = debug.CheckLayoutOverflow(ctx, nil, expandedTotalSize, expandedTotalConstraints); err != nil {
-			return
 		}
 	}
 	*l.Cross(&size) = max(*l.Cross(&size), *l.MinCross(&constraints))
@@ -107,7 +96,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 	// determine main axis size
 	switch l.MainAxisSize() {
 	case axes.Min:
-		*l.Main(&size) = max(childMain, *l.MinMain(&constraints))
+		*l.Main(&size) = childMain
 	case axes.Max:
 		*l.Main(&size) = *l.MaxMain(&constraints)
 	}
@@ -124,6 +113,8 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 			*l.Cross(&l.childrenOffsets[i]) = *l.Cross(&size) - *l.Cross(&childrenSizes[i])
 		}
 	}
+	// eliminate floating point error
+	size = constraints.Clamp(size)
 	return
 }
 

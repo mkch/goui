@@ -150,7 +150,7 @@ func (app *App) CreateWindow(config Window) error {
 	ctx := &Context{app, window}
 	native.SetWindowOnSizeChangedListener(handle, func(width, height metrics.DP) {
 		if err := performLayoutWindow(ctx, width, height); err != nil {
-			panic(err)
+			errortrace.Panic(err)
 		}
 	})
 	native.SetWindowOnCloseListener(handle, func() bool {
