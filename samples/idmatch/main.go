@@ -36,6 +36,10 @@ type Person struct {
 	Age  int
 }
 
+func (p *Person) String() string {
+	return fmt.Sprintf("Person{ID:%d, Name:%s, Age:%d}", p.ID, p.Name, p.Age)
+}
+
 type State struct {
 	goui.StateUpdater
 	goui.NopDestroyer
@@ -62,9 +66,9 @@ func (s *State) Build() goui.Widget {
 				ID:    goui.UniqueID(),
 			},
 
-			NewPersonWidget(&s.PersonList[0]),
-			NewPersonWidget(&s.PersonList[1]),
-			NewPersonWidget(&s.PersonList[2]),
+			NewPersonWidget(s.PersonList[0]),
+			NewPersonWidget(s.PersonList[1]),
+			NewPersonWidget(s.PersonList[2]),
 
 			&widgets.Padding{
 				Top: 20,
@@ -132,11 +136,11 @@ func NewPersonState(ctx *goui.StateContext, person *Person) goui.State {
 	}
 }
 
-func NewPersonWidget(person *Person) goui.StatefulWidget {
+func NewPersonWidget(person Person) goui.StatefulWidget {
 	return goui.NewStatefulWidget(
 		goui.ValueID(person.ID),
 		func(ctx *goui.StateContext) goui.State {
-			return NewPersonState(ctx, person)
+			return NewPersonState(ctx, &person)
 		})
 
 }
