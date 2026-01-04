@@ -10,7 +10,7 @@ import (
 // Element is the persistent representation of a [Widget] in the GUI tree.
 type Element interface {
 	Widget() Widget
-	SetWidget(ctx *Context, widget Widget)
+	SetWidget(ctx *Context, widget Widget) error
 	// Layouter returns the layouter of the element. Can be nil.
 	Layouter() Layouter
 	// Parent returns the parent element, or nil if this is the root element of a window.
@@ -52,8 +52,9 @@ func (e *ElementBase) Widget() Widget {
 	return e.theWidget
 }
 
-func (e *ElementBase) SetWidget(ctx *Context, widget Widget) {
+func (e *ElementBase) SetWidget(ctx *Context, widget Widget) error {
 	e.theWidget = widget
+	return nil
 }
 
 func (e *ElementBase) Layouter() Layouter {
@@ -225,7 +226,9 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Widget) (Element,
 		}
 	}
 
-	elem.SetWidget(ctx, widget)
+	if err := elem.SetWidget(ctx, widget); err != nil {
+		return nil, err
+	}
 
 	if statefulWidget, ok := widget.(StatefulWidget); ok {
 		return buildStatefulElement(ctx, elem, statefulWidget)
@@ -276,7 +279,9 @@ func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulWid
 // The elem will be updated to hold widget.
 // If any error occurs during the update, the error is returned.
 func updateElementTree(ctx *Context, elem Element, widget Widget) (err error) {
-	elem.SetWidget(ctx, widget)
+	if err = elem.SetWidget(ctx, widget); err != nil {
+		return
+	}
 	if container, ok := widget.(Container); ok {
 		return updateContainerElement(ctx, elem, container)
 	}

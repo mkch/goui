@@ -89,9 +89,12 @@ func SetButtonOnClickListener(handle Handle, onClick func()) {
 	btn.OnClick = onClick
 }
 
-func SetButtonLabel(handle Handle, label string) {
-	btn := handle.(*button.Button)
-	btn.SetText(label)
+func SetButtonLabel(handle Handle, label string) (err error) {
+	err = handle.(*button.Button).SetText(label)
+	if err != nil {
+		err = errortrace.WithStack(err)
+	}
+	return
 }
 
 func CreateLabel(parent Handle, title string) (handle Handle, err error) {
@@ -161,8 +164,16 @@ func SetLabelText(handle Handle, text string) error {
 	return errortrace.WithStack(err)
 }
 
+// SetLabelBackgroundColor sets the background color of the label.
+// If color is nil, the default color is used.
 func SetLabelBackgroundColor(handle Handle, color *color.NRGBA) error {
-	return handle.(*static.Static).SetBackgroundColor(nativeColor(color))
+	var clr win32.COLORREF
+	if color != nil {
+		clr = nativeColor(color)
+	} else {
+		clr = win32.COLORREF(win32.GetSysColor(win32.COLOR_WINDOW))
+	}
+	return handle.(*static.Static).SetBackgroundColor(clr)
 }
 
 func CreateTextField(parent Handle, initialValue string, password bool) (handle Handle, err error) {
@@ -244,8 +255,9 @@ func SetWidgetDimensions(handle Handle, x, y, width, height metrics.DP) error {
 	return win32.InvalidateRect(parent, clientToRedraw, true)
 }
 
-func SetWidgetEnabled(handle Handle, enabled bool) {
+func SetWidgetEnabled(handle Handle, enabled bool) (err error) {
 	win32.EnableWindow(handle.(winBase).HWND(), enabled)
+	return
 }
 
 func GetWidgetEnabled(handle Handle) bool {

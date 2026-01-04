@@ -38,9 +38,6 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 			},
 		},
 	}
-	if txt.Controller != nil {
-		txt.Controller.setElement(elem)
-	}
 	return elem, nil
 }
 
@@ -48,14 +45,17 @@ type textFieldElement struct {
 	goui.ControlElementBase
 }
 
-func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
-	oldWidget := e.Widget()
-	if oldWidget != widget {
-		if newTextField := widget.(*TextField); newTextField.Controller != nil {
-			newTextField.Controller.setElement(e)
-		}
+func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+	newWidget := widget.(*TextField)
+
+	if err = e.ControlElementBase.SetWidget(ctx, widget); err != nil {
+		return
 	}
-	e.ControlElementBase.SetWidget(ctx, widget)
+
+	if newWidget.Controller != nil {
+		newWidget.Controller.setElement(e)
+	}
+	return
 }
 
 type textFieldLayouter struct {

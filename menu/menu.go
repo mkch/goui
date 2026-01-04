@@ -173,19 +173,34 @@ func (e *nativeItemElement) Destroy() (err error) {
 }
 
 // SetWidget implements [goui.Element.SetWidget].
-func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.Widget) {
+func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.Widget) (err error) {
+	oldItem, _ := e.Widget().(*Item)
 	newItem := w.(*Item)
-	if oldItem, _ := e.Widget().(*Item); oldItem != nil {
+	if err = e.ElementBase.SetWidget(ctx, w); err != nil {
+		return
+	}
+
+	if oldItem != nil {
 		if oldItem.Title != newItem.Title {
-			gg.MustOK(native.SetMenuItemTitle(e.Handle, newItem.Title))
+			if err = native.SetMenuItemTitle(e.Handle, newItem.Title); err != nil {
+				return
+			}
 		}
 		if oldItem.Disabled != newItem.Disabled {
-			gg.MustOK(native.SetMenuItemDisabled(e.Handle, newItem.Disabled))
+			if err = native.SetMenuItemDisabled(e.Handle, newItem.Disabled); err != nil {
+				return
+			}
 		}
-	} else {
-		gg.MustOK(native.SetMenuItemTitle(e.Handle, newItem.Title))
-		gg.MustOK(native.SetMenuItemDisabled(e.Handle, newItem.Disabled))
+		return
 	}
+
+	if err = native.SetMenuItemTitle(e.Handle, newItem.Title); err != nil {
+		return
+	}
+	if err = native.SetMenuItemDisabled(e.Handle, newItem.Disabled); err != nil {
+		return
+	}
+
 	if newItem.OnSelect == nil {
 		native.SetMenuItemOnClickListener(e.Handle, nil)
 	} else {
@@ -193,7 +208,7 @@ func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.Widget) {
 			newItem.OnSelect(ctx)
 		})
 	}
-	e.ElementBase.SetWidget(ctx, w)
+	return
 }
 
 // Separator is a menu separator widget that can be added to a [Menu].

@@ -3,7 +3,6 @@ package label
 import (
 	"image/color"
 
-	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
@@ -55,49 +54,48 @@ type labelElement struct {
 	goui.ControlElementBase
 }
 
-func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
+func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+	oldLabel, _ := e.Widget().(*Label)
 	newLabel := widget.(*Label)
-	if oldWidget := e.Widget(); oldWidget != nil {
-		oldLabel := oldWidget.(*Label)
+
+	if err = e.ControlElementBase.SetWidget(ctx, widget); err != nil {
+		return
+	}
+
+	if oldLabel != nil {
 		if oldLabel.Text != newLabel.Text {
-			if err := native.SetLabelText(e.Handle, newLabel.Text); err != nil {
-				errortrace.Panic(err)
+			if err = native.SetLabelText(e.Handle, newLabel.Text); err != nil {
+				return
 			}
 		}
 		if oldLabel.BackgroundColor != newLabel.BackgroundColor ||
 			oldLabel.BackgroundColor != nil && *newLabel.BackgroundColor != *oldLabel.BackgroundColor {
-			if err := native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
-				errortrace.Panic(err)
+			if err = native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
+				return
 			}
 		}
 		if oldLabel.Multiline != newLabel.Multiline {
-			if err := native.SetLabelMultiline(e.Handle, newLabel.Multiline); err != nil {
-				errortrace.Panic(err)
+			if err = native.SetLabelMultiline(e.Handle, newLabel.Multiline); err != nil {
+				return
 			}
 		}
 		if oldLabel.TextAlignment != newLabel.TextAlignment {
-			if err := native.SetLabelTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment)); err != nil {
-				errortrace.Panic(err)
+			if err = native.SetLabelTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment)); err != nil {
+				return
 			}
 		}
 		return
 	}
 
-	if newLabel.BackgroundColor != nil {
-		if err := native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
-			errortrace.Panic(err)
-		}
+	if err = native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
+		return
 	}
 
-	if err := native.SetLabelMultiline(e.Handle, newLabel.Multiline); err != nil {
-		errortrace.Panic(err)
+	if err = native.SetLabelMultiline(e.Handle, newLabel.Multiline); err != nil {
+		return
 	}
 
-	if err := native.SetLabelTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment)); err != nil {
-		errortrace.Panic(err)
-	}
-
-	e.ControlElementBase.SetWidget(ctx, widget)
+	return native.SetLabelTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment))
 }
 
 type labelLayouter struct {

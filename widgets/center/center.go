@@ -1,6 +1,7 @@
 package center
 
 import (
+	"errors"
 	"slices"
 
 	"github.com/mkch/gg"
@@ -54,15 +55,15 @@ type centerElement struct {
 	goui.ElementBase
 }
 
-func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
+func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
 	center := widget.(*Center)
 	if center.WidthFactor < 0 {
-		panic("Center.WidthFactor must be greater than or equal to 0")
+		return errors.New("Center.WidthFactor must be greater than or equal to 0")
 	}
 	if center.HeightFactor < 0 {
-		panic("Center.HeightFactor must be greater than or equal to 0")
+		return errors.New("Center.HeightFactor must be greater than or equal to 0")
 	}
-	e.ElementBase.SetWidget(ctx, widget)
+	return e.ElementBase.SetWidget(ctx, widget)
 }
 
 type centerLayouter struct {

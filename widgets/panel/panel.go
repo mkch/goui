@@ -52,11 +52,23 @@ type panelElement struct {
 	goui.ControlElementBase
 }
 
-func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
+func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+	oldPanel, _ := elem.Widget().(*Panel)
 	newPanel := widget.(*Panel)
-	native.SetPanelBackgroundColor(elem.Handle, newPanel.BackgroundColor)
 
-	elem.ElementBase.SetWidget(ctx, widget)
+	if err = elem.ElementBase.SetWidget(ctx, widget); err != nil {
+		return
+	}
+
+	if oldPanel != nil {
+		if oldPanel.BackgroundColor != newPanel.BackgroundColor {
+			if err = native.SetPanelBackgroundColor(elem.Handle, newPanel.BackgroundColor); err != nil {
+				return
+			}
+		}
+		return
+	}
+	return native.SetPanelBackgroundColor(elem.Handle, newPanel.BackgroundColor)
 }
 
 type panelLayouter struct {

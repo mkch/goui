@@ -47,18 +47,29 @@ type buttonElement struct {
 	goui.ControlElementBase
 }
 
-func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
+func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+	oldBtn, _ := e.Widget().(*Button)
 	newBtn := widget.(*Button)
-	if oldWidget := e.Widget(); oldWidget != nil {
-		oldBtn := oldWidget.(*Button)
+
+	if err = e.ControlElementBase.SetWidget(ctx, widget); err != nil {
+		return
+	}
+
+	if oldBtn != nil {
 		if oldBtn.Label != newBtn.Label {
-			native.SetButtonLabel(e.Handle, newBtn.Label)
+			if err = native.SetButtonLabel(e.Handle, newBtn.Label); err != nil {
+				return
+			}
 		}
 		if oldBtn.Disabled != newBtn.Disabled {
-			native.SetWidgetEnabled(e.Handle, !newBtn.Disabled)
+			if err = native.SetWidgetEnabled(e.Handle, !newBtn.Disabled); err != nil {
+				return
+			}
 		}
 	} else {
-		native.SetWidgetEnabled(e.Handle, !newBtn.Disabled)
+		if err = native.SetWidgetEnabled(e.Handle, !newBtn.Disabled); err != nil {
+			return
+		}
 	}
 
 	if newBtn.OnClick != nil {
@@ -67,7 +78,7 @@ func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 		native.SetButtonOnClickListener(e.Handle, nil)
 	}
 
-	e.ControlElementBase.SetWidget(ctx, widget)
+	return
 }
 
 type buttonLayouter struct {
