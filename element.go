@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"slices"
 
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/native"
 )
 
@@ -19,10 +20,6 @@ type Element interface {
 	numChildren() int
 	child(n int) Element
 	indexChild(child Element) int
-	// updateChildren updates the children of the element to newChildren.
-	// newChildren is the new slice of children, which may not have their parent set correctly.
-	// unusedChildren contains the children that are no longer used and should be destroyed.
-	updateChildren(newChildren []Element, unusedChildren []Element)
 	destroy()
 
 	// setLayouter sets the layouter of the element. For debug purposes only.
@@ -36,6 +33,9 @@ type Element interface {
 	// setChildInSlice is a helper of [element_SetChild].
 	// The implementation should just set child at index n in the children slice or some equivalent.
 	setChildInSlice(n int, child Element)
+	// setChildrenSlice is a helper of [element_UpdateChildren].
+	// The implementation should just set the children slice to children or some equivalent.
+	setChildrenSlice(children []Element)
 }
 
 // ElementBase implements [Element], and is the building block for other Element types.
@@ -93,14 +93,8 @@ func (e *ElementBase) indexChild(child Element) int {
 	return slices.Index(e.children, child)
 }
 
-func (e *ElementBase) updateChildren(newChildren []Element, unusedChildren []Element) {
-	for _, unused := range unusedChildren {
-		unused.destroy()
-	}
-	for _, child := range newChildren {
-		child.setParent(e)
-	}
-	e.children = newChildren
+func (e *ElementBase) setChildrenSlice(children []Element) {
+	e.children = children
 }
 
 func (e *ElementBase) destroy() {
@@ -140,6 +134,8 @@ func element_AppendChild(parent, child Element) {
 }
 
 // element_SetChild sets the nth child of parent to child.
+// If the old child is different from child, the old child is destroyed.
+// Then child's parent is set to parent.
 //
 // See [element_AppendChild] for explanation why this is a package-level function.
 func element_SetChild(parent Element, n int, child Element) {
@@ -175,7 +171,10 @@ func (e *NativeElement) NativeHandle() native.Handle {
 
 func (e *NativeElement) destroy() {
 	if e.DestroyFunc != nil {
-		e.DestroyFunc(e.Handle)
+		err := e.DestroyFunc(e.Handle)
+		if err != nil {
+			errortrace.Panic(err)
+		}
 	}
 }
 
@@ -283,11 +282,10 @@ func updateElementTree(ctx *Context, elem Element, widget Widget) (err error) {
 
 // updateStatelessWidget updates the stateless element elem to hold the new stateless widget.
 func updateStatelessWidget(ctx *Context, elem Element, statelessWidget StatelessWidget) error {
-	childElem, err := reconcileElementTreeImpl(ctx, elem.child(0), statelessWidget.Build(ctx))
+	err := reconciledChildElement(ctx, elem, 0, statelessWidget.Build(ctx))
 	if err != nil {
 		return err
 	}
-	element_SetChild(elem, 0, childElem)
 	return nil
 }
 
@@ -295,15 +293,14 @@ func updateStatelessWidget(ctx *Context, elem Element, statelessWidget Stateless
 func updateStatefulWidget(ctx *Context, elem Element) error {
 	statefulElement := elem.(*statefulElement)
 	// rebuild the child widget and reconcile.
-	childElem, err := reconcileElementTreeImpl(
+	err := reconciledChildElement(
 		ctx,
-		statefulElement.child(0),
+		statefulElement, 0,
 		statefulElement.state.Build(),
 	)
 	if err != nil {
 		return err
 	}
-	element_SetChild(elem, 0, childElem)
 	return nil
 }
 
@@ -351,9 +348,9 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 	}
 
 	// Phase 3: Handle the middle part:
-	//   Widgets and elements with IDs are matched by ID.
-	//   Widgets without IDs and unmatched widgets are treated as new, and new elements are created for them.
-	//   Elements without IDs and unmatched elements are destroyed.
+	//   Widgets and elements with ID are matched by ID.
+	//   Widgets without ID and unmatched widgets are treated as new, and new elements are created for them.
+	//   Elements without ID and unmatched elements are destroyed.
 
 	var unmatchedKeyedElements map[ID]Element // old elements with ID in the middle
 	var unusedElements []Element              // old elements without ID in the middle
@@ -381,6 +378,9 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 			updatedElem, err = buildElementTreeImpl(ctx, element, widget)
 		} else {
 			updatedElem, err = reconcileElementTreeImpl(ctx, matchedElem, widget)
+			if updatedElem != matchedElem {
+				matchedElem.destroy()
+			}
 			delete(unmatchedKeyedElements, widgetID)
 		}
 		if err != nil {
@@ -388,12 +388,19 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 		}
 		newChildren[i] = updatedElem
 	}
-	// Collect unused old elements
-	for _, unusedElem := range unmatchedKeyedElements {
-		unusedElements = append(unusedElements, unusedElem)
+	// Destroy unmatched old elements
+	for _, unmatched := range unmatchedKeyedElements {
+		unmatched.destroy()
 	}
-	// Update the element
-	element.updateChildren(newChildren, unusedElements)
+	// Destroy unused old elements
+	for _, unusedElem := range unusedElements {
+		unusedElem.destroy()
+	}
+	// Update the children
+	for _, child := range newChildren {
+		child.setParent(element)
+	}
+	element.setChildrenSlice(newChildren)
 	return nil
 }
 
@@ -406,10 +413,10 @@ func widgetMatch(widget1, widget2 Widget) bool {
 // reconcileElementTreeImpl performs the actual reconciliation.
 // It recreates the element tree if the widgets do not match, or updates it in place if they match.
 // The reconciled element and any error occurred during the process are returned.
+// If a new element is created, it is returned as the reconciled and the old element is not destroyed.
 func reconcileElementTreeImpl(ctx *Context, element Element, widget Widget) (reconciled Element, err error) {
 	// Widgets do not match, recreate the entire element tree.
 	if !widgetMatch(element.Widget(), widget) {
-		element.destroy()
 		return buildElementTreeImpl(ctx, element.Parent(), widget)
 	}
 	// Widgets match, update the widget of the element.
@@ -420,14 +427,15 @@ func reconcileElementTreeImpl(ctx *Context, element Element, widget Widget) (rec
 	return element, nil
 }
 
-// reconcileElementTree updates or recreate the element tree to match the given widget.
-// The returned reconciled is the reconciled element(maybe the same as elem).
-// The returned layouter is the layouter of the updated element or its nearest child.
-func reconcileElementTree(ctx *Context, elem Element, widget Widget) (reconciled Element, layouter Layouter, err error) {
-	reconciled, err = reconcileElementTreeImpl(ctx, elem, widget)
+// reconciledChildElement reconciles the child element at childIndex of parent with widget.
+func reconciledChildElement(ctx *Context, parent Element, childIndex int, widget Widget) (err error) {
+	oldChild := parent.child(childIndex)
+	newChild, err := reconcileElementTreeImpl(ctx, parent.child(childIndex), widget)
 	if err != nil {
-		return
+		return err
 	}
-	layouter = layouterTree(reconciled)
+	if newChild != oldChild {
+		element_SetChild(parent, childIndex, newChild)
+	}
 	return
 }

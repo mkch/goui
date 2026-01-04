@@ -10,6 +10,7 @@ import (
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
+	"github.com/mkch/goui/widgets/label"
 )
 
 var app = goui.NewApp(&goui.AppConfig{
@@ -61,8 +62,15 @@ func NewState(ctx *goui.StateContext) *numberState {
 
 func (s *numberState) Build() goui.Widget {
 	return gg.IfFunc(s.number%2 == 0,
-		func() goui.Widget { return &widgets.Label{Text: fmt.Sprintf("Label: %v", s.number)} },
-		func() goui.Widget { return &widgets.Button{Label: fmt.Sprintf("Button: %v", s.number)} },
+		func() goui.Widget {
+			return &widgets.Label{
+				TextAlignment: label.Center,
+				Text:          fmt.Sprintf("Label: %v", s.number)}
+		},
+		func() goui.Widget {
+			return &widgets.Button{
+				Label: fmt.Sprintf("Button: %v", s.number)}
+		},
 	)
 }
 

@@ -68,9 +68,11 @@ type winBase interface {
 	GetWindowRect() (*win32.RECT, error)
 }
 
-func DestroyWindow(handle Handle) error {
-	err := win32.DestroyWindow(handle.(winBase).HWND())
-	return errortrace.WithStack(err)
+func DestroyWindow(handle Handle) (err error) {
+	if err = win32.DestroyWindow(handle.(winBase).HWND()); err != nil {
+		err = errortrace.WithStack(err)
+	}
+	return
 }
 
 func CreateButton(parent Handle, title string) (handle Handle, err error) {

@@ -81,8 +81,8 @@ type State interface {
 // simpleState is a simple implementation of State.
 type simpleState struct {
 	StateUpdater
-	destroy func()
-	build   func() Widget
+	destroy func()        // Can be nil
+	build   func() Widget // Can't be nil
 }
 
 func (s *simpleState) Build() Widget {
@@ -115,7 +115,7 @@ type NopDestroyer struct{}
 // Destroy does nothing.
 func (NopDestroyer) Destroy() { /*NOP*/ }
 
-// StateUpdater implements [State.Update].
+// StateUpdater implements State.Update method.
 // Embedding StateUpdater in a struct and implementing other methods of [State]
 // allows the struct type to satisfy the [State] interface.
 type StateUpdater stateUpdater
@@ -146,14 +146,11 @@ func updateWidgetState(f func(), ctx *Context, elem *statefulElement) error {
 	f()
 	// Rebuild the child widget and reconcile.
 	newWidget := elem.state.Build()
-	reconciled, layouter, err := reconcileElementTree(ctx, elem.children[0], newWidget)
+	err := reconciledChildElement(ctx, elem, 0, newWidget)
 	if err != nil {
 		return err
 	}
-	if reconciled != elem.children[0] {
-		element_SetChild(elem, 0, reconciled)
-	}
-
+	layouter := layouterTree(elem.child(0))
 	if layouter == nil {
 		return nil
 	}

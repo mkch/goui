@@ -296,10 +296,11 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 			child2},
 	}
 
-	newElem, newLayouter, err := reconcileElementTree(ctx, elem, container2)
+	newElem, err := reconcileElementTreeImpl(ctx, elem, container2)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
+	newLayouter := layouterTree(newElem)
 
 	// The root element and layouter should be the same.
 	if newElem != elem {
@@ -340,10 +341,12 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 			child2},
 	}
 
-	newElem2, newLayouter2, err := reconcileElementTree(ctx, newElem, container3)
+	newElem2, err := reconcileElementTreeImpl(ctx, newElem, container3)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
+	newLayouter2 := layouterTree(newElem2)
+
 	// The root element should be recreated.
 	if newElem2 == newElem {
 		t.Fatalf("expected root element to be recreated")
@@ -415,10 +418,11 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		},
 	}
 
-	newElem, newLayouter, err := reconcileElementTree(ctx, elem, container2)
+	newElem, err := reconcileElementTreeImpl(ctx, elem, container2)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
+	newLayouter := layouterTree(newElem)
 
 	// The root element and layouter should be the same.
 	if newElem != elem {
@@ -465,10 +469,11 @@ func TestUpdateElementTree_Append(t *testing.T) {
 			child1, child2, child3},
 	}
 
-	newElem, newLayouter, err := reconcileElementTree(ctx, elem, container2)
+	newElem, err := reconcileElementTreeImpl(ctx, elem, container2)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
+	newLayouter := layouterTree(newElem)
 
 	if newElem != elem {
 		t.Fatalf("expected root element to be the same")
@@ -513,10 +518,11 @@ func TestUpdateElementTree_Remove(t *testing.T) {
 		Children: []Widget{child1, child3},
 	}
 
-	newElem, newLayouter, err := reconcileElementTree(ctx, elem, container2)
+	newElem, err := reconcileElementTreeImpl(ctx, elem, container2)
 	if err != nil {
 		t.Fatalf("unexpected error during update: %v", err)
 	}
+	newLayouter := layouterTree(newElem)
 
 	if newElem != elem {
 		t.Fatalf("expected root element to be the same")

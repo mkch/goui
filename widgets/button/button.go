@@ -60,12 +60,12 @@ func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 	} else {
 		native.SetWidgetEnabled(e.Handle, !newBtn.Disabled)
 	}
-	// func type are not comparable, so we always reset the OnClick listener.
-	native.SetButtonOnClickListener(e.Handle, func() {
-		if newBtn.OnClick != nil {
-			newBtn.OnClick(ctx)
-		}
-	})
+
+	if newBtn.OnClick != nil {
+		native.SetButtonOnClickListener(e.Handle, func() { newBtn.OnClick(ctx) })
+	} else {
+		native.SetButtonOnClickListener(e.Handle, nil)
+	}
 
 	e.NativeElement.SetWidget(ctx, widget)
 }
