@@ -131,6 +131,10 @@ func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 
 }
 
+// ErrInvalidWindowRoot is returned when creating a window with an invalid root widget,
+// such as a Menu or MenuItem.
+var ErrInvalidWindowRoot = errors.New("invalid window root")
+
 func (app *App) CreateWindow(config Window) error {
 	if config.ID == nil {
 		config.ID = UniqueID() // unique key is required to insert into the map
@@ -179,10 +183,12 @@ func (app *App) CreateWindow(config Window) error {
 	}
 
 	if window.Window.Root != nil {
-		ctx.window = window
 		elem, layouter, err := buildElementTree(ctx, window.Window.Root)
 		if err != nil {
 			errortrace.Panic(err)
+		}
+		if unwrapNativeMenu(elem) != nil {
+			return ErrInvalidWindowRoot
 		}
 		window.Root = elem
 		window.Layouter = layouter
@@ -191,7 +197,36 @@ func (app *App) CreateWindow(config Window) error {
 		}
 	}
 
+	if window.Window.Menu != nil {
+		elem, _, err := buildElementTree(ctx, window.Window.Menu)
+		if err != nil {
+			errortrace.Panic(err)
+		}
+		if nm := unwrapNativeMenu(elem); nm != nil {
+			window.Menu = elem
+			err = native.SetWindowMenu(window.Handle, nm)
+			if err != nil {
+				errortrace.Panic(err)
+			}
+		}
+	}
+
 	app.windows[config.ID] = window
+	return nil
+}
+
+// unwrapNativeMenu unwraps the given Element to find the nearest underlying [NativeMenuElement].
+// Any container that is not a [NativeMenuElement] will be skipped.
+func unwrapNativeMenu(element Element) native.Handle {
+	for {
+		if nativeElem, ok := element.(NativeMenuElement); ok {
+			return nativeElem.NativeMenu()
+		}
+		if element.numChildren() != 1 {
+			break
+		}
+		element = element.child(0)
+	}
 	return nil
 }
 

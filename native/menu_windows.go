@@ -3,12 +3,21 @@ package native
 import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/gw/menu"
+	"github.com/mkch/gw/win32"
 	"github.com/mkch/gw/window"
 )
 
 func SetWindowMenu(win Handle, m Handle) (err error) {
 	//nativeMenu.SetPopup(false) // Window menu should not be popup
 	err = win.(*window.Window).SetMenu(m.(*menu.Menu))
+	if err != nil {
+		err = errortrace.WithStack(err)
+	}
+	return
+}
+
+func RefreshWindowMenu(win Handle) (err error) {
+	err = win32.DrawMenuBar(win.(*window.Window).HWND())
 	if err != nil {
 		err = errortrace.WithStack(err)
 	}
@@ -64,7 +73,11 @@ func SetMenuItemDisabled(item Handle, disabled bool) (err error) {
 }
 
 func SetMenuItemSubmenu(item Handle, submenu Handle) (err error) {
-	err = item.(*menu.Item).SetSubmenu(submenu.(*menu.Menu))
+	if submenu == nil {
+		err = item.(*menu.Item).SetSubmenu(nil)
+	} else {
+		err = item.(*menu.Item).SetSubmenu(submenu.(*menu.Menu))
+	}
 	if err != nil {
 		err = errortrace.WithStack(err)
 	}

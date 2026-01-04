@@ -2,6 +2,8 @@ package goui
 
 import (
 	"errors"
+
+	"github.com/mkch/goui/native"
 )
 
 type StatefulWidget interface {
@@ -143,15 +145,28 @@ func NewStateUpdater(ctx *StateContext) StateUpdater {
 
 // updateWidgetState calls f and updates its widget tree.
 // f can't be nil.
-func updateWidgetState(f func(), ctx *Context, elem *statefulElement) error {
+func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement) error {
 	f()
+
 	// Rebuild the child widget and reconcile.
-	newWidget := elem.state.Build()
-	err := reconciledChildElement(ctx, elem, 0, newWidget)
+	newWidget := statefulElement.state.Build()
+	err := reconciledChildElement(ctx, statefulElement, 0, newWidget)
 	if err != nil {
 		return err
 	}
-	layouter := layouterTree(elem.child(0))
+
+	// If the updated stateful element is part of a menu, refresh the menu.
+	for elem := Element(statefulElement); elem != nil; elem = elem.Parent() {
+		if elem == ctx.window.Menu {
+			if err := native.RefreshWindowMenu(ctx.NativeWindow()); err != nil {
+				return err
+			}
+			break
+		}
+	}
+
+	// Layout
+	layouter := layouterTree(statefulElement.child(0))
 	if layouter == nil {
 		return nil
 	}

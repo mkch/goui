@@ -22,3 +22,9 @@ func link_NewMockContext() *Context {
 func link_Context_debug(ctx *Context) *tricks.Debug {
 	return ctx.app.debug
 }
+
+//go:linkname link_buildMenuElementTree github.com/mkch/goui/menu.buildMenuElementTree
+func link_buildMenuElementTree(ctx *Context, w Widget) (elem Element, err error) {
+	elem, _, err = buildElementTree(ctx, w)
+	return
+}
