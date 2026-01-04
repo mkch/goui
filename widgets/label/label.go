@@ -34,13 +34,13 @@ func (btn *Label) WidgetID() goui.ID {
 }
 
 func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreateLabel(goui.NativeHandle(ctx, parent), btn.Text)
+	handle, err := native.CreateLabel(goui.NativeControl(ctx, parent), btn.Text)
 	if err != nil {
 		return nil, err
 	}
 	layouter := &labelLayouter{}
 	elem := &labelElement{
-		goui.NativeElement{
+		goui.ControlElementBase{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: layouter,
 			},
@@ -52,7 +52,7 @@ func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (goui.El
 }
 
 type labelElement struct {
-	goui.NativeElement
+	goui.ControlElementBase
 }
 
 func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
@@ -97,7 +97,7 @@ func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 		errortrace.Panic(err)
 	}
 
-	e.NativeElement.SetWidget(ctx, widget)
+	e.ControlElementBase.SetWidget(ctx, widget)
 }
 
 type labelLayouter struct {

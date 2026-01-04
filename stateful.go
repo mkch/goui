@@ -49,9 +49,10 @@ type statefulElement struct {
 	state State
 }
 
-func (e *statefulElement) destroy() {
+// Destroy implements [Element.Destroy].
+func (e *statefulElement) Destroy() error {
 	e.state.Destroy()
-	e.ElementBase.destroy()
+	return e.ElementBase.Destroy()
 }
 
 // createStatefulElement creates a new [Element] for a [StatefulWidget].

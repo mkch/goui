@@ -25,7 +25,7 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 
 	layouter := &textFieldLayouter{}
 	elem := &textFieldElement{
-		goui.NativeElement{
+		goui.ControlElementBase{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: layouter,
 			},
@@ -45,7 +45,7 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 }
 
 type textFieldElement struct {
-	goui.NativeElement
+	goui.ControlElementBase
 }
 
 func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
@@ -55,7 +55,7 @@ func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 			newTextField.Controller.setElement(e)
 		}
 	}
-	e.NativeElement.SetWidget(ctx, widget)
+	e.ControlElementBase.SetWidget(ctx, widget)
 }
 
 type textFieldLayouter struct {

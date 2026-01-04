@@ -299,7 +299,7 @@ func allLayouterDebugOutlines(root Layouter) iter.Seq[native.DebugRect] {
 					return
 				}
 				offset := current.offset
-				if _, isNative := debugLayouter.Element().(nativeElement); isNative {
+				if _, isNative := debugLayouter.Element().(ControlElement); isNative {
 					offset.X += debugLayouter.Pos.X
 					offset.Y += debugLayouter.Pos.Y
 				}

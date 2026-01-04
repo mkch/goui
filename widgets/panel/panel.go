@@ -22,12 +22,12 @@ func (p *Panel) WidgetID() goui.ID {
 }
 
 func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreatePanel(goui.NativeHandle(ctx, parent))
+	handle, err := native.CreatePanel(goui.NativeControl(ctx, parent))
 	if err != nil {
 		return nil, err
 	}
 	elem := &panelElement{
-		goui.NativeElement{
+		goui.ControlElementBase{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: &panelLayouter{},
 			},
@@ -49,7 +49,7 @@ func (p *Panel) Child(n int) goui.Widget {
 func (p *Panel) Exclusive(goui.Container) { /*Nop*/ }
 
 type panelElement struct {
-	goui.NativeElement
+	goui.ControlElementBase
 }
 
 func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Widget) {

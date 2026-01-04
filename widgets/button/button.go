@@ -20,14 +20,14 @@ func (btn *Button) WidgetID() goui.ID {
 }
 
 func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreateButton(goui.NativeHandle(ctx, parent), btn.Label)
+	handle, err := native.CreateButton(goui.NativeControl(ctx, parent), btn.Label)
 	if err != nil {
 		return nil, err
 	}
 	native.SetWidgetEnabled(handle, !btn.Disabled)
 	layouter := &buttonLayouter{}
 	elem := &buttonElement{
-		goui.NativeElement{
+		goui.ControlElementBase{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: layouter,
 			},
@@ -44,7 +44,7 @@ func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (goui.E
 }
 
 type buttonElement struct {
-	goui.NativeElement
+	goui.ControlElementBase
 }
 
 func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
@@ -67,7 +67,7 @@ func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) {
 		native.SetButtonOnClickListener(e.Handle, nil)
 	}
 
-	e.NativeElement.SetWidget(ctx, widget)
+	e.ControlElementBase.SetWidget(ctx, widget)
 }
 
 type buttonLayouter struct {

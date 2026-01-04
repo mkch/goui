@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/native"
 )
 
@@ -16,11 +15,12 @@ type Element interface {
 	Layouter() Layouter
 	// Parent returns the parent element, or nil if this is the root element of a window.
 	Parent() Element
+	// Destroy destroys the element and releases any associated resources.
+	Destroy() error
 
 	numChildren() int
 	child(n int) Element
 	indexChild(child Element) int
-	destroy()
 
 	// setLayouter sets the layouter of the element. For debug purposes only.
 	setLayouter(layouter Layouter)
@@ -60,14 +60,14 @@ func (e *ElementBase) Layouter() Layouter {
 	return e.ElementLayouter
 }
 
-// NativeHandle returns the native handle associated with the given element
-// or its nearest ancestor that is a native element.
+// NativeControl returns the native handle associated with the given element
+// or its nearest ancestor that is a [ControlElement].
 // If element is nil or there is no such ancestor, ctx.NativeWindow()
 // is returned.
-func NativeHandle(ctx *Context, element Element) native.Handle {
+func NativeControl(ctx *Context, element Element) native.Handle {
 	for elem := element; elem != nil; elem = elem.Parent() {
-		if nativeElem, ok := elem.(nativeElement); ok {
-			return nativeElem.NativeHandle()
+		if nativeElem, ok := elem.(ControlElement); ok {
+			return nativeElem.NativeControl()
 		}
 	}
 	return ctx.NativeWindow()
@@ -97,10 +97,14 @@ func (e *ElementBase) setChildrenSlice(children []Element) {
 	e.children = children
 }
 
-func (e *ElementBase) destroy() {
+// Destroy implements [Element.Destroy].
+func (e *ElementBase) Destroy() (err error) {
 	for _, child := range e.children {
-		child.destroy()
+		if err = child.Destroy(); err != nil {
+			return
+		}
 	}
+	return
 }
 
 func (e *ElementBase) setParent(parent Element) {
@@ -138,24 +142,28 @@ func element_AppendChild(parent, child Element) {
 // Then child's parent is set to parent.
 //
 // See [element_AppendChild] for explanation why this is a package-level function.
-func element_SetChild(parent Element, n int, child Element) {
+func element_SetChild(parent Element, n int, child Element) (err error) {
 	if parent.child(n) == child {
 		return
 	}
-	parent.child(n).destroy()
+	if err = parent.child(n).Destroy(); err != nil {
+		return
+	}
 	parent.setChildInSlice(n, child)
 	child.setParent(parent)
+	return
 }
 
-// nativeElement is the interface all native elements implement.
-// Currently all native elements embed [NativeElement].
-type nativeElement interface {
-	NativeHandle() native.Handle
-	destroy()
+// ControlElement is the element that represent a native GUI control.
+type ControlElement interface {
+	Element
+	// Returns the native handle of the control.
+	NativeControl() native.Handle
 }
 
-// NativeElement is an [Element] that represents a native GUI widget.
-type NativeElement struct {
+// ControlElementBase is an [Element] that represents a native GUI control.
+// This type can be used to implement [ControlElement] for native control widgets.
+type ControlElementBase struct {
 	ElementBase
 	Handle native.Handle
 	// DestroyFunc is called to destroy the native handle.
@@ -163,19 +171,20 @@ type NativeElement struct {
 	DestroyFunc func(native.Handle) error
 }
 
-// NativeElement returns e.Handle.
-func (e *NativeElement) NativeHandle() native.Handle {
-	// This method implements the nativeElement interface.
+// NativeControl implements the [ControlElement.NativeControl] method.
+func (e *ControlElementBase) NativeControl() native.Handle {
 	return e.Handle
 }
 
-func (e *NativeElement) destroy() {
+// Destroy implements the [ControlElement.Destroy] method.
+func (e *ControlElementBase) Destroy() error {
 	if e.DestroyFunc != nil {
 		err := e.DestroyFunc(e.Handle)
 		if err != nil {
-			errortrace.Panic(err)
+			return err
 		}
 	}
+	return nil
 }
 
 // buildElementTree builds the element tree for the given widget.
@@ -379,7 +388,9 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 		} else {
 			updatedElem, err = reconcileElementTreeImpl(ctx, matchedElem, widget)
 			if updatedElem != matchedElem {
-				matchedElem.destroy()
+				if err = matchedElem.Destroy(); err != nil {
+					return err
+				}
 			}
 			delete(unmatchedKeyedElements, widgetID)
 		}
@@ -390,11 +401,15 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 	}
 	// Destroy unmatched old elements
 	for _, unmatched := range unmatchedKeyedElements {
-		unmatched.destroy()
+		if err := unmatched.Destroy(); err != nil {
+			return err
+		}
 	}
 	// Destroy unused old elements
 	for _, unusedElem := range unusedElements {
-		unusedElem.destroy()
+		if err := unusedElem.Destroy(); err != nil {
+			return err
+		}
 	}
 	// Update the children
 	for _, child := range newChildren {
@@ -435,7 +450,7 @@ func reconciledChildElement(ctx *Context, parent Element, childIndex int, widget
 		return err
 	}
 	if newChild != oldChild {
-		element_SetChild(parent, childIndex, newChild)
+		return element_SetChild(parent, childIndex, newChild)
 	}
 	return
 }

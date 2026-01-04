@@ -51,7 +51,7 @@ func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints goui.Constrai
 	for child := range l.Children() {
 		if !visibility.Visible {
 			// Set the offset beyond the right edge of the window.
-			if _, _, l.childXOffset, _, err = native.WindowClientRect(goui.NativeHandle(ctx, elem.Parent())); err != nil {
+			if _, _, l.childXOffset, _, err = native.WindowClientRect(goui.NativeControl(ctx, elem.Parent())); err != nil {
 				return
 			}
 			if visibility.MaintainSize {
