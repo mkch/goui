@@ -66,6 +66,9 @@ type winBase interface {
 	InvalidateRect(rect *win32.RECT, eraseBk bool) error
 	GetClientRect() (*win32.RECT, error)
 	GetWindowRect() (*win32.RECT, error)
+	Value(key any) any
+	SetValue(key, value any)
+	SetWndProc(wndProc window.WndProc)
 }
 
 func DestroyWindow(handle Handle) (err error) {
@@ -414,4 +417,116 @@ func CreatePanel(parent Handle) (handle Handle, err error) {
 
 func SetPanelBackgroundColor(handle Handle, color *color.NRGBA) error {
 	return handle.(*panel.Panel).SetBackgroundColor(nativeColor(color))
+}
+
+type MouseEventListener interface {
+	OnMousePrimaryDown(parent Handle, x, y metrics.DP)
+	OnMousePrimaryUp(parent Handle, x, y metrics.DP)
+	OnMouseSecondaryDown(parent Handle, x, y metrics.DP)
+	OnMouseSecondaryUp(parent Handle, x, y metrics.DP)
+	OnMouseMiddleDown(parent Handle, x, y metrics.DP)
+	OnMouseMiddleUp(parent Handle, x, y metrics.DP)
+	OnMousePointerMove(parent Handle, x, y metrics.DP)
+}
+
+type winValueKey int
+
+const mouseEventListenerKey winValueKey = 0
+
+func Window_AddMouseEventListener(win Handle, listener MouseEventListener) (remove func()) {
+	w := win.(winBase)
+
+	type listenerSet = gg.Set[*MouseEventListener]
+	var listeners listenerSet
+	if v := w.Value(mouseEventListenerKey); v == nil {
+		listeners = make(listenerSet)
+		w.SetValue(mouseEventListenerKey, listeners)
+		w.SetWndProc(func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM, prevWndProc win32.WndProc) win32.LRESULT {
+			switch message {
+			case win32.WM_LBUTTONDOWN:
+				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				for listener := range listeners {
+					(*listener).OnMousePrimaryDown(win, x, y)
+				}
+
+			case win32.WM_LBUTTONUP:
+				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				for listener := range listeners {
+					(*listener).OnMousePrimaryUp(win, x, y)
+				}
+
+			case win32.WM_RBUTTONDOWN:
+				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+
+				for listener := range listeners {
+					(*listener).OnMouseSecondaryDown(win, x, y)
+				}
+
+			case win32.WM_RBUTTONUP:
+				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				for listener := range listeners {
+					(*listener).OnMouseSecondaryUp(win, x, y)
+				}
+			case win32.WM_MBUTTONDOWN:
+				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+
+				for listener := range listeners {
+					(*listener).OnMouseMiddleDown(win, x, y)
+				}
+			case win32.WM_MBUTTONUP:
+				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				for listener := range listeners {
+					(*listener).OnMouseMiddleUp(win, x, y)
+				}
+			case win32.WM_MOUSEMOVE:
+				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
+				for listener := range listeners {
+					(*listener).OnMousePointerMove(win, x, y)
+				}
+			}
+			return prevWndProc(hwnd, message, wParam, lParam)
+		})
+	} else {
+		listeners = v.(listenerSet)
+	}
+	listeners.Add(&listener)
+	return func() {
+		listeners.Delete(&listener)
+	}
+}
+
+func Window_ClientCoordinatesConv(from, to Handle, x, y metrics.DP) (newX, newY metrics.DP, err error) {
+	fromWin := from.(winBase).HWND()
+	toWin := to.(winBase).HWND()
+	fromDpi, err := win32.GetDpiForWindow(fromWin)
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	toDpi, err := win32.GetDpiForWindow(toWin)
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	var pt win32.POINT
+	pt.X = win32.LONG(x.Px(uint(fromDpi)))
+	pt.Y = win32.LONG(y.Px(uint(fromDpi)))
+	if err = win32.ClientToScreen(fromWin, &pt); err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	if err = win32.ScreenToClient(toWin, &pt); err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	newX = metrics.Px(int(pt.X), uint(toDpi))
+	newY = metrics.Px(int(pt.Y), uint(toDpi))
+	return
 }

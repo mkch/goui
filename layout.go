@@ -109,6 +109,10 @@ type Point struct {
 	X, Y metrics.DP
 }
 
+func (pt Point) String() string {
+	return fmt.Sprintf("{X: %v, Y: %v}", pt.X, pt.Y)
+}
+
 type Rect struct {
 	Left, Top, Right, Bottom metrics.DP
 }

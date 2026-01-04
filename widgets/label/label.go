@@ -24,7 +24,6 @@ type Label struct {
 	Text            string
 	Multiline       bool // If true, the label supports multiple lines of text.
 	TextAlignment   TextAlignment
-	Padding         *goui.Size   // Padding around the label text. If nil, no padding is applied.
 	BackgroundColor *color.NRGBA // Background color of the label. If nil, default is used.
 }
 
@@ -114,15 +113,11 @@ func (l *labelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) 
 		return
 	}
 	widget := elem.Widget().(*Label)
-	padding := widget.Padding
-	if padding == nil {
-		padding = &goui.Size{Width: 0, Height: 0}
-	}
-	intrinsicWidth, intrinsicHeight, err := native.GetTextDrawingSize(elem.Handle, widget.Text, widget.Multiline, constraints.MaxWidth-padding.Width)
+	intrinsicWidth, intrinsicHeight, err := native.GetTextDrawingSize(elem.Handle, widget.Text, widget.Multiline, constraints.MaxWidth)
 	if err != nil {
 		return
 	}
-	size = constraints.Clamp(goui.Size{Width: intrinsicWidth + padding.Width, Height: intrinsicHeight + padding.Height})
+	size = constraints.Clamp(goui.Size{Width: intrinsicWidth, Height: intrinsicHeight})
 	l.layoutSize = size
 	return
 }

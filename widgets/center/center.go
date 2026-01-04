@@ -43,7 +43,7 @@ func (c *Center) NumChildren() int {
 }
 
 func (c *Center) Child(n int) goui.Widget {
-	if n != 0 {
+	if c.Widget == nil || n != 0 {
 		panic("index out of range")
 	}
 	return c.Widget
@@ -76,6 +76,7 @@ type centerLayouter struct {
 func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	l.lastConstraints = &constraints
 
+	center := l.Element().Widget().(*Center)
 	for child := range l.Children() {
 		var childSize goui.Size
 		childSize, err = child.Layout(ctx, constraints)
@@ -86,8 +87,6 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, constraints); err != nil {
 			return
 		}
-
-		center := l.Element().(*centerElement).Widget().(*Center)
 		if center.WidthFactor == 0 {
 			size.Width = constraints.MaxWidth
 		} else {
@@ -103,7 +102,10 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 		l.childOffset.Y = (size.Height - childSize.Height) / 2
 		return
 	}
-	return constraints.MinSize(), nil
+	// No children
+	size.Width = gg.If(center.WidthFactor == 0, constraints.MaxWidth, constraints.MinHeight)
+	size.Height = gg.If(center.HeightFactor == 0, constraints.MaxHeight, constraints.MinHeight)
+	return
 }
 
 func (l *centerLayouter) PositionAt(x, y metrics.DP) (err error) {

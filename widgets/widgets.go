@@ -6,6 +6,7 @@ import (
 	"github.com/mkch/goui/widgets/column"
 	"github.com/mkch/goui/widgets/expanded"
 	"github.com/mkch/goui/widgets/label"
+	"github.com/mkch/goui/widgets/listener"
 	"github.com/mkch/goui/widgets/padding"
 	"github.com/mkch/goui/widgets/panel"
 	"github.com/mkch/goui/widgets/row"
@@ -36,3 +37,5 @@ type Expanded = expanded.Expanded
 type Visibility = visibility.Visibility
 
 type Panel = panel.Panel
+
+type Listener = listener.Listener
