@@ -33,7 +33,7 @@ func (btn *Label) WidgetID() goui.ID {
 }
 
 func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreateLabel(goui.NativeControl(ctx, parent), btn.Text)
+	handle, err := native.CreateLabel(goui.LookupNativeParent(ctx, parent), btn.Text)
 	if err != nil {
 		return nil, err
 	}

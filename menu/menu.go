@@ -139,7 +139,7 @@ var ErrNoParentMenu = errors.New("cannot use menu items out of a menu")
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	nativeParent := goui.NativeMenu(ctx, parent)
+	nativeParent := goui.LookupNativeMenuParent(ctx, parent)
 	if nativeParent == nil {
 		return nil, ErrNoParentMenu
 	}
@@ -223,8 +223,8 @@ func (sep *Separator) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	nativeParent := goui.NativeMenu(ctx, parent)
-	if nativeParent == 0 {
+	nativeParent := goui.LookupNativeMenuParent(ctx, parent)
+	if nativeParent == nil {
 		return nil, ErrNoParentMenu
 	}
 	handle, err := native.CreateMenuItem(nativeParent, "", true)

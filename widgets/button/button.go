@@ -20,7 +20,7 @@ func (btn *Button) WidgetID() goui.ID {
 }
 
 func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreateButton(goui.NativeControl(ctx, parent), btn.Label)
+	handle, err := native.CreateButton(goui.LookupNativeParent(ctx, parent), btn.Label)
 	if err != nil {
 		return nil, err
 	}

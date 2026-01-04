@@ -61,17 +61,54 @@ func (e *ElementBase) Layouter() Layouter {
 	return e.ElementLayouter
 }
 
-// NativeControl returns the native handle associated with the given element
+// LookupNativeParent returns the native handle associated with the given element
 // or its nearest ancestor that is a [ControlElement].
 // If element is nil or there is no such ancestor, ctx.NativeWindow()
 // is returned.
-func NativeControl(ctx *Context, element Element) native.Handle {
+func LookupNativeParent(ctx *Context, element Element) native.Handle {
+	ctrl, _ := LookupParent(element,
+		func(e Element) (ce ControlElement, ok bool) {
+			ce, ok = e.(ControlElement)
+			return
+		},
+	)
+	if ctrl == nil {
+		return ctx.NativeWindow()
+	}
+	return ctrl.NativeControl()
+}
+
+// LookupParent searches the element and its ancestors for an element
+// that satisfies the given predicate.
+// The first value returned by predicate is returned when found.
+// If no such element is found, the zero value of T and false are returned.
+func LookupParent[T any](element Element, predicate func(Element) (v T, found bool)) (v T, found bool) {
 	for elem := element; elem != nil; elem = elem.Parent() {
-		if nativeElem, ok := elem.(ControlElement); ok {
-			return nativeElem.NativeControl()
+		if t, ok := predicate(elem); ok {
+			return t, ok
 		}
 	}
-	return ctx.NativeWindow()
+	var zero T
+	return zero, false
+}
+
+// LookupChild searches the element and its descendants for an element
+// that satisfies the given predicate.
+// The first value returned by predicate is returned when found.
+// If no such element is found, the zero value of T and false are returned.
+// The predicate function can return continueSearch as false to stop searching.
+func LookupChild[T any](element Element, predicate func(Element) (v T, found bool, continueSearch bool)) (v T, found bool) {
+	if t, found, continueSearch := predicate(element); found {
+		return t, found
+	} else if continueSearch {
+		for i := 0; i < element.numChildren(); i++ {
+			if t, ok := LookupChild(element.child(i), predicate); ok {
+				return t, ok
+			}
+		}
+	}
+	var zero T
+	return zero, false
 }
 
 func (e *ElementBase) setLayouter(layouter Layouter) {
@@ -212,7 +249,7 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Widget) (Element,
 	if parent != nil {
 		// Appending elem to parent before elem is fully constructed because
 		// CreateElement method of native widget looks for its native parent
-		// handle up the element tree. See [NativeHandle] function.
+		// handle up the element tree. See [NativeControl] function.
 		element_AppendChild(parent, elem)
 	}
 

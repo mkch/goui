@@ -22,7 +22,7 @@ func (p *Panel) WidgetID() goui.ID {
 }
 
 func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreatePanel(goui.NativeControl(ctx, parent))
+	handle, err := native.CreatePanel(goui.LookupNativeParent(ctx, parent))
 	if err != nil {
 		return nil, err
 	}
