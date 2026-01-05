@@ -30,60 +30,80 @@ func (m *Menu) CreateElement(ctx *goui.Context, parent goui.Element) (element go
 	return createMenuElement(parent, true)
 }
 
-// lookupNativeItemParent searches the element and its ancestors for the nearest native menu item element.
-// If such an element is found, its native handle is returned.
-// If a native menu element is found first, nil and errWrongParent are returned.
+// lookupNativeItemParent searches the element and its ancestors for the nearest [*nativeItemElement]
+// and returns its handle, or nil if not found.
+// The search stops and returns ErrWrongParent error when encountering an element whose widget is neither
+// [goui.StatelessWidget], [goui.StatefulWidget] nor [*nativeItemElement].
 func lookupNativeItemParent(element goui.Element) (native.Handle, error) {
-	item, ok := goui.LookupParent(element, func(e goui.Element) (native.Handle, bool) {
-		if _, ok := e.(*nativeMenuElement); ok {
-			return nil, true // Menu found, wrong parent
-		}
-		if elem, ok := e.(*nativeItemElement); ok {
-			return elem.Handle, true
-		}
-		return nil, false
-	})
-	if !ok {
-		return nil, nil
+	item, err := lookupNativeParent[*nativeItemElement](element)
+	if err != nil {
+		return nil, err
 	}
 	if item == nil {
-		return nil, errortrace.WithStack(ErrWrongParent)
-	}
-	return item, nil
-}
-
-// lookupNativeMenuParent searches the element and its ancestors for the nearest native menu element.
-// If such an element is found, its native handle is returned.
-// If a native menu item element is found first, nil and errWrongParent are returned.
-func lookupNativeMenuParent(element goui.Element) (native.Handle, error) {
-	menu, ok := goui.LookupParent(element, func(e goui.Element) (native.Handle, bool) {
-		if _, ok := e.(*nativeItemElement); ok {
-			return nil, true // Menu found, wrong parent
-		}
-		if elem, ok := e.(*nativeMenuElement); ok {
-			return elem.NativeMenu(), true
-		}
-		return nil, false
-	})
-	if !ok {
 		return nil, nil
 	}
-	if menu == nil {
-		return nil, errortrace.WithStack(ErrWrongParent)
+	return item.Handle, nil
+}
+
+// lookupNativeMenuParent searches the element and its ancestors for the nearest [*nativeMenuElement]
+// and returns its handle, or nil if not found.
+// The search stops and returns ErrWrongParent error when encountering an element whose widget is neither
+// [goui.StatelessWidget], [goui.StatefulWidget] nor [*nativeMenuElement].
+func lookupNativeMenuParent(element goui.Element) (native.Handle, error) {
+	menu, err := lookupNativeParent[*nativeMenuElement](element)
+	if err != nil {
+		return nil, err
 	}
-	return menu, nil
+	if menu == nil {
+		return nil, nil
+	}
+	return menu.Handle, nil
+}
+
+// lookupNativeParent is a helper function for [lookupNativeMenuParent] and [lookupNativeItemParent].
+// It searches the element and its ancestors for the nearest element of type T
+// and returns it via ret, or nil if not found.
+// The search stops and returns ErrWrongParent error when encountering an element whose widget is neither
+// [goui.StatelessWidget], [goui.StatefulWidget] nor T.
+func lookupNativeParent[T *nativeItemElement | *nativeMenuElement](element goui.Element) (ret T, err error) {
+	type R struct {
+		val T
+		err error
+	}
+	r, found := goui.LookupParent(element, func(e goui.Element) (R, bool) {
+		if elem, ok := e.(T); ok {
+			return R{elem, nil}, true
+		}
+		widget := e.Widget()
+		if _, isStateless := widget.(goui.StatelessWidget); isStateless {
+			return R{}, false // Continue searching
+		}
+		if _, isStateful := widget.(goui.StatefulWidget); isStateful {
+			return R{}, false // Continue searching
+		}
+		return R{nil, errortrace.WithStack(ErrWrongParent)}, true // Wrong parent
+	})
+	if found {
+		ret = r.val
+		err = r.err
+	}
+	return
 }
 
 // createMenuElement is a helper function to create a popup or window menu element.
 func createMenuElement(parent goui.Element, popup bool) (element goui.Element, err error) {
 	handle := native.CreateMenu(popup)
-	opener, err := lookupNativeItemParent(parent)
-	if err != nil {
-		return
-	}
-	if opener != nil {
-		if err = native.SetMenuItemSubmenu(opener, handle); err != nil {
+	if parent != nil {
+		// If parent is given, it must represent a opener
+		// menu item to which this menu is a submenu.
+		var opener native.Handle
+		if opener, err = lookupNativeItemParent(parent); err != nil {
 			return
+		}
+		if opener != nil {
+			if err = native.SetMenuItemSubmenu(opener, handle); err != nil {
+				return
+			}
 		}
 	}
 	return &nativeMenuElement{
@@ -185,31 +205,36 @@ func (item *Item) Child(index int) goui.Widget {
 // Exclusive implements [goui.Container.Exclusive].
 func (item *Item) Exclusive(goui.Container) { /*Nop*/ }
 
-// ErrNoParentMenu is returned when trying to create a MenuItem element without a parent menu element.
-var ErrNoParentMenu = errors.New("cannot use menu items out of a menu")
-
 // ErrWrongParent is returned when a menu item or menu is placed in an invalid parent.
 var ErrWrongParent = errors.New("invalid parent for menu or menu item")
 
 // CreateElement implements [goui.Widget.CreateElement].
-func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	parentMenu, err := lookupNativeMenuParent(parent)
+func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
+	handle, err := createItem(parent, item.Title, false)
 	if err != nil {
-		return nil, err
+		return
 	}
-	if parentMenu == nil {
-		return nil, errortrace.WithStack(ErrNoParentMenu)
-	}
-	handle, err := native.CreateMenuItem(parentMenu, item.Title, false)
-	if err != nil {
-		return nil, err
-	}
-	return &nativeItemElement{
+	element = &nativeItemElement{
 		ElementBase: goui.ElementBase{
 			ElementLayouter: &menuLayouter{},
 		},
 		Handle: handle,
-	}, nil
+	}
+	return
+}
+
+// createItem is a helper function to create a menu item under the given parent element.
+// If separator is true, a separator item is created.
+func createItem(parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
+	parentMenu, err := lookupNativeMenuParent(parent)
+	if err == nil && parentMenu == nil {
+		err = errortrace.WithStack(ErrWrongParent) // Menu item must have a parent menu
+	}
+	if err != nil {
+		return
+	}
+	handle, err = native.CreateMenuItem(parentMenu, title, separator)
+	return
 }
 
 // nativeItemElement is an implementation of [goui.NativeMenuItemElement]
@@ -279,29 +304,28 @@ func (sep *Separator) WidgetID() goui.ID {
 }
 
 // CreateElement implements [goui.Widget.CreateElement].
-func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	parentMenu, err := lookupNativeMenuParent(parent)
+func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
+	handle, err := createItem(parent, "", true)
 	if err != nil {
-		return nil, err
+		return
 	}
-	if parentMenu == nil {
-		return nil, errortrace.WithStack(ErrNoParentMenu)
-	}
-	handle, err := native.CreateMenuItem(parentMenu, "", true)
-	if err != nil {
-		return nil, err
-	}
-	return &separatorElement{
+	element = &separatorElement{
 		ElementBase: goui.ElementBase{
 			ElementLayouter: &menuLayouter{},
 		},
 		Handle: handle,
-	}, nil
+	}
+	return
 }
 
 type separatorElement struct {
 	goui.ElementBase
 	Handle native.Handle
+}
+
+// NativeMenuItem implements [goui.NativeMenuItemElement.NativeMenuItem].
+func (e *separatorElement) NativeMenuItem() native.Handle {
+	return e.Handle
 }
 
 // Destroy implements [goui.Element.Destroy].
@@ -326,12 +350,8 @@ func (l *menuLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (
 
 // PositionAt implements [goui.Layouter.PositionAt].
 func (l *menuLayouter) PositionAt(x, y metrics.DP) (err error) {
-	for child := range l.Children() {
-		if err = child.PositionAt(x, y); err != nil {
-			return
-		}
-	}
-	return
+	// Nop positioning.
+	return nil
 }
 
 // Replayer implements [goui.Layouter.Replayer].

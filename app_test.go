@@ -424,7 +424,7 @@ func (c *testContainer) CreateElement(ctx *Context, parent Element) (Element, er
 }
 
 func (c *testContainer) NumChildren() int {
-	return c.elem.numChildren()
+	return c.elem.NumChildren()
 }
 
 func (c *testContainer) Child(n int) Widget {

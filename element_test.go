@@ -60,8 +60,8 @@ func TestBuildElementTree_SimpleWidget(t *testing.T) {
 	if elem.Widget() != widget {
 		t.Errorf("element widget not set correctly")
 	}
-	if elem.numChildren() != 0 {
-		t.Errorf("expected 0 children, got %d", elem.numChildren())
+	if elem.NumChildren() != 0 {
+		t.Errorf("expected 0 children, got %d", elem.NumChildren())
 	}
 	if layouter != nil {
 		t.Errorf("expected nil layouter for simple widget, got %v", layouter)
@@ -130,10 +130,10 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 	if elem.Widget().WidgetID() != widget.WidgetID() {
 		t.Errorf("element widget not set correctly")
 	}
-	if elem.numChildren() != 1 {
-		t.Errorf("expected 1 child, got %d", elem.numChildren())
+	if elem.NumChildren() != 1 {
+		t.Errorf("expected 1 child, got %d", elem.NumChildren())
 	}
-	if elem.child(0).Widget().WidgetID() != childWidget.WidgetID() {
+	if elem.Child(0).Widget().WidgetID() != childWidget.WidgetID() {
 		t.Errorf("child widget not set correctly")
 	}
 	if layouter != mockLayouter {
@@ -164,10 +164,10 @@ func TestBuildElementTree_StatelessWidget(t *testing.T) {
 	if elem.Widget().WidgetID() != widget.WidgetID() {
 		t.Errorf("element widget not set correctly")
 	}
-	if elem.numChildren() != 1 {
-		t.Errorf("expected 1 child, got %d", elem.numChildren())
+	if elem.NumChildren() != 1 {
+		t.Errorf("expected 1 child, got %d", elem.NumChildren())
 	}
-	if elem.child(0).Widget().WidgetID() != childWidget.WidgetID() {
+	if elem.Child(0).Widget().WidgetID() != childWidget.WidgetID() {
 		t.Errorf("child widget not set correctly")
 	}
 	if layouter != mockLayouter {
@@ -220,13 +220,13 @@ func TestBuildElementTree_Container(t *testing.T) {
 	if elem == nil {
 		t.Fatal("expected non-nil element")
 	}
-	if elem.numChildren() != 2 {
-		t.Errorf("expected 2 children, got %d", elem.numChildren())
+	if elem.NumChildren() != 2 {
+		t.Errorf("expected 2 children, got %d", elem.NumChildren())
 	}
-	if elem.child(0).Widget() != child1 {
+	if elem.Child(0).Widget() != child1 {
 		t.Errorf("first child widget not set correctly")
 	}
-	if elem.child(1).Widget().WidgetID() != ValueID("stateless") {
+	if elem.Child(1).Widget().WidgetID() != ValueID("stateless") {
 		t.Errorf("second child widget not set correctly")
 	}
 
@@ -262,8 +262,8 @@ func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 	if elem.Widget() != container {
 		t.Errorf("container widget not set correctly")
 	}
-	if elem.numChildren() != 1 {
-		t.Errorf("expected 1 child, got %d", elem.numChildren())
+	if elem.NumChildren() != 1 {
+		t.Errorf("expected 1 child, got %d", elem.NumChildren())
 	}
 	if layouter == nil {
 		t.Errorf("expected non-nil layouter for container widget")
@@ -310,16 +310,16 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 		t.Fatalf("expected root layouter to be the same")
 	}
 	// The first child element should be replaced.
-	if newElem.numChildren() != 2 {
-		t.Fatalf("expected 2 children, got %d", newElem.numChildren())
+	if newElem.NumChildren() != 2 {
+		t.Fatalf("expected 2 children, got %d", newElem.NumChildren())
 	}
-	if childWidget1, ok := newElem.child(0).Widget().(StatelessWidget); !ok {
+	if childWidget1, ok := newElem.Child(0).Widget().(StatelessWidget); !ok {
 		t.Fatal("expected first child to be a StatelessWidget")
 	} else if childWidget1.Build(ctx) != child1 {
 		t.Fatal("first child widget not updated correctly")
 	}
 	// The second child element should be the same.
-	if child2 := newElem.child(1); child2 != child2 {
+	if child2 := newElem.Child(1); child2 != child2 {
 		t.Fatalf("second child element not updated correctly")
 	}
 
@@ -357,13 +357,13 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 	if newElem2.Widget() != container3 {
 		t.Fatalf("new root element widget not set correctly")
 	}
-	if newElem2.numChildren() != 2 {
-		t.Fatalf("expected 2 children, got %d", newElem2.numChildren())
+	if newElem2.NumChildren() != 2 {
+		t.Fatalf("expected 2 children, got %d", newElem2.NumChildren())
 	}
-	if newElem2.child(0).Widget().WidgetID() != ValueID("stateless") {
+	if newElem2.Child(0).Widget().WidgetID() != ValueID("stateless") {
 		t.Fatal("first child widget not updated correctly")
 	}
-	if newElem2.child(1).Widget() != child2 {
+	if newElem2.Child(1).Widget() != child2 {
 		t.Fatalf("second child element not updated correctly")
 	}
 	children2 := slices.Collect(newLayouter2.Children())
@@ -399,8 +399,8 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		t.Fatalf("unexpected error during build: %v", err)
 	}
 
-	if elem.numChildren() != 3 {
-		t.Fatalf("expected 3 children, got %d", elem.numChildren())
+	if elem.NumChildren() != 3 {
+		t.Fatalf("expected 3 children, got %d", elem.NumChildren())
 	}
 
 	child4 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
@@ -433,16 +433,16 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 	}
 
 	// The child elements should be replaced.
-	if newElem.numChildren() != 3 {
-		t.Fatalf("expected 3 children, got %d", newElem.numChildren())
+	if newElem.NumChildren() != 3 {
+		t.Fatalf("expected 3 children, got %d", newElem.NumChildren())
 	}
-	if id := newElem.child(0).Widget().WidgetID(); id != ValueID("child1") {
+	if id := newElem.Child(0).Widget().WidgetID(); id != ValueID("child1") {
 		t.Fatalf("expected first child element to be replaced, got %v", id)
 	}
-	if id := newElem.child(1).child(0).Widget().WidgetID(); id != ValueID("child5") {
+	if id := newElem.Child(1).Child(0).Widget().WidgetID(); id != ValueID("child5") {
 		t.Fatalf("expected second child element to be replaced, got %v", id)
 	}
-	if id := newElem.child(2).child(0).Widget().WidgetID(); id != ValueID("child3") {
+	if id := newElem.Child(2).Child(0).Widget().WidgetID(); id != ValueID("child3") {
 		t.Fatalf("expected third child element to be the same, got %v", id)
 	}
 }
@@ -478,10 +478,10 @@ func TestUpdateElementTree_Append(t *testing.T) {
 	if newElem != elem {
 		t.Fatalf("expected root element to be the same")
 	}
-	if newElem.numChildren() != 3 {
-		t.Fatalf("expected 3 children, got %d", newElem.numChildren())
+	if newElem.NumChildren() != 3 {
+		t.Fatalf("expected 3 children, got %d", newElem.NumChildren())
 	}
-	if newElem.child(0).Widget() != child1 || newElem.child(1).Widget() != child2 || newElem.child(2).Widget() != child3 {
+	if newElem.Child(0).Widget() != child1 || newElem.Child(1).Widget() != child2 || newElem.Child(2).Widget() != child3 {
 		t.Fatalf("child elements not updated correctly")
 	}
 
@@ -527,10 +527,10 @@ func TestUpdateElementTree_Remove(t *testing.T) {
 	if newElem != elem {
 		t.Fatalf("expected root element to be the same")
 	}
-	if newElem.numChildren() != 2 {
-		t.Fatalf("expected 2 children, got %d", newElem.numChildren())
+	if newElem.NumChildren() != 2 {
+		t.Fatalf("expected 2 children, got %d", newElem.NumChildren())
 	}
-	if newElem.child(0).Widget() != child1 || newElem.child(1).Widget() != child3 {
+	if newElem.Child(0).Widget() != child1 || newElem.Child(1).Widget() != child3 {
 		t.Fatalf("child elements not updated correctly")
 	}
 

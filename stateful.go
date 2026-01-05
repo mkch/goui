@@ -176,7 +176,7 @@ func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement)
 	}
 
 	// Layout
-	layouter := layouterTree(statefulElement.child(0))
+	layouter := layouterTree(statefulElement.Child(0))
 	if layouter == nil {
 		return nil
 	}

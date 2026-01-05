@@ -17,9 +17,11 @@ type Element interface {
 	Parent() Element
 	// Destroy destroys the element and releases any associated resources.
 	Destroy() error
+	// NumChildren returns the number of child elements.
+	NumChildren() int
+	// Child returns the nth child element.
+	Child(n int) Element
 
-	numChildren() int
-	child(n int) Element
 	indexChild(child Element) int
 
 	// setLayouter sets the layouter of the element. For debug purposes only.
@@ -80,16 +82,16 @@ func LookupNativeParent(ctx *Context, element Element) native.Handle {
 
 // LookupParent searches the element and its ancestors for an element
 // that satisfies the given predicate.
+// The found result of predicate indicates whether it is satisfied.
 // The first value returned by predicate is returned when found.
 // If no such element is found, the zero value of T and false are returned.
-func LookupParent[T any](element Element, predicate func(Element) (v T, found bool)) (v T, found bool) {
+func LookupParent[T any](element Element, predicate func(Element) (v T, found bool)) (ret T, found bool) {
 	for elem := element; elem != nil; elem = elem.Parent() {
 		if t, ok := predicate(elem); ok {
 			return t, ok
 		}
 	}
-	var zero T
-	return zero, false
+	return
 }
 
 // LookupChild searches the element and its descendants for an element
@@ -101,8 +103,8 @@ func LookupChild[T any](element Element, predicate func(Element) (v T, found boo
 	if t, found, continueSearch := predicate(element); found {
 		return t, found
 	} else if continueSearch {
-		for i := 0; i < element.numChildren(); i++ {
-			if t, ok := LookupChild(element.child(i), predicate); ok {
+		for i := 0; i < element.NumChildren(); i++ {
+			if t, ok := LookupChild(element.Child(i), predicate); ok {
 				return t, ok
 			}
 		}
@@ -119,11 +121,11 @@ func (e *ElementBase) Parent() Element {
 	return e.theParent
 }
 
-func (e *ElementBase) numChildren() int {
+func (e *ElementBase) NumChildren() int {
 	return len(e.children)
 }
 
-func (e *ElementBase) child(n int) Element {
+func (e *ElementBase) Child(n int) Element {
 	return e.children[n]
 }
 
@@ -181,10 +183,10 @@ func element_AppendChild(parent, child Element) {
 //
 // See [element_AppendChild] for explanation why this is a package-level function.
 func element_SetChild(parent Element, n int, child Element) (err error) {
-	if parent.child(n) == child {
+	if parent.Child(n) == child {
 		return
 	}
-	if err = parent.child(n).Destroy(); err != nil {
+	if err = parent.Child(n).Destroy(); err != nil {
 		return
 	}
 	parent.setChildInSlice(n, child)
@@ -365,7 +367,7 @@ func updateStatefulWidget(ctx *Context, elem Element) error {
 func updateContainerElement(ctx *Context, element Element, container Container) error {
 	var newChildren = make([]Element, container.NumChildren()) // the updated children
 
-	numElem := element.numChildren()
+	numElem := element.NumChildren()
 	numWidget := container.NumChildren()
 
 	// Phase 1: Top-down match
@@ -373,7 +375,7 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 	var topDownCount = 0 // number of matched elements(widgets) from the top
 	for i := 0; i < min(numElem, numWidget); i++ {
 		widget := container.Child(i)
-		elem := element.child(i)
+		elem := element.Child(i)
 		if !widgetMatch(widget, elem.Widget()) {
 			break
 		}
@@ -392,7 +394,7 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 		widgetIndex := numWidget - 1 - i
 		elemIndex := numElem - 1 - i
 		widget := container.Child(widgetIndex)
-		elem := element.child(elemIndex)
+		elem := element.Child(elemIndex)
 		if !widgetMatch(widget, elem.Widget()) {
 			break
 		}
@@ -415,7 +417,7 @@ func updateContainerElement(ctx *Context, element Element, container Container) 
 		unmatchedKeyedElements = make(map[ID]Element, numElem-topDownCount-bottomUpCount)
 		// collect old elements with ID
 		for i := topDownCount; i <= numElem-1-bottomUpCount; i++ {
-			elem := element.child(i)
+			elem := element.Child(i)
 			id := elem.Widget().WidgetID()
 			if id != nil {
 				unmatchedKeyedElements[id] = elem
@@ -492,8 +494,8 @@ func reconcileElementTreeImpl(ctx *Context, element Element, widget Widget) (rec
 
 // reconciledChildElement reconciles the child element at childIndex of parent with widget.
 func reconciledChildElement(ctx *Context, parent Element, childIndex int, widget Widget) (err error) {
-	oldChild := parent.child(childIndex)
-	newChild, err := reconcileElementTreeImpl(ctx, parent.child(childIndex), widget)
+	oldChild := parent.Child(childIndex)
+	newChild, err := reconcileElementTreeImpl(ctx, parent.Child(childIndex), widget)
 	if err != nil {
 		return err
 	}

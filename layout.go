@@ -182,8 +182,8 @@ func (l *LayouterHelper) setElement(element Element) {
 
 func (l *LayouterHelper) Children() iter.Seq[Layouter] {
 	return func(yield func(Layouter) bool) {
-		for i := 0; i < l.element.numChildren(); i++ {
-			childLayouter := layouterTree(l.element.child(i))
+		for i := 0; i < l.element.NumChildren(); i++ {
+			childLayouter := layouterTree(l.element.Child(i))
 			if childLayouter == nil {
 				continue
 			}
@@ -339,8 +339,8 @@ func layouterTree(element Element) (layouter Layouter) {
 	if _, isContainer := element.Widget().(Container); isContainer {
 		panic("container without a layouter")
 	}
-	if element.numChildren() == 0 {
+	if element.NumChildren() == 0 {
 		return nil
 	}
-	return layouterTree(element.child(0))
+	return layouterTree(element.Child(0))
 }
