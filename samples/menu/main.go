@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/menu"
 	"github.com/mkch/goui/messagebox"
@@ -24,8 +25,8 @@ var app = goui.NewApp(&goui.AppConfig{
 func main() {
 	gg.MustOK(app.CreateWindow(goui.Window{
 		Title:     "menu demo",
-		Width:     400,
-		Height:    300,
+		Width:     800,
+		Height:    600,
 		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
 		Menu:      goui.StatefulWidgetFunc(MainMenu),
 		Root: &widgets.Listener{
@@ -34,14 +35,25 @@ func main() {
 				if screenCoord {
 					spec = &menu.PopupSpec{Pos: goui.Point{X: 10, Y: 20}}
 				}
-				menu.Popup(ctx, &menu.Menu{Items: []goui.Widget{
-					&menu.Item{
-						Title: "Hello!",
-						OnSelect: func(ctx *goui.Context) {
-							messagebox.Show(ctx, "Hello", "Hello, popup!", messagebox.IconInfo, messagebox.ButtonOK)
+				if event.Button&listener.SecondaryMouseButton != 0 {
+					err := menu.Popup(ctx, &menu.Menu{Items: []goui.Widget{
+						&menu.Item{Title: "Item1"},
+						&menu.Item{Title: "Item2"},
+						&menu.Item{Title: "Hello Submenu",
+							Submenu: &menu.Menu{Items: []goui.Widget{
+								&menu.Item{
+									Title: "Hello!",
+									OnSelect: func(ctx *goui.Context) {
+										messagebox.Show(ctx, "Hello", "Hello, popup!", messagebox.IconInfo, messagebox.ButtonOK)
+									},
+								},
+							}},
 						},
-					},
-				}}, spec)
+					}}, spec)
+					if err != nil {
+						errortrace.Panic(err)
+					}
+				}
 			},
 			Widget: &widgets.Expanded{},
 		},

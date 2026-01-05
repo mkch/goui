@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
@@ -14,7 +15,8 @@ import (
 type Menu struct {
 	ID goui.ID
 	// Items are the menu's child widgets.
-	// Only widgets representing menu items should be added; others will not display correctly.
+	// Only widgets representing menu items should be added;
+	// others will not display correctly or cause error returns.
 	Items []goui.Widget
 }
 
@@ -25,13 +27,61 @@ func (m *Menu) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (m *Menu) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
-	return createMenuElement(ctx, parent, true)
+	return createMenuElement(parent, true)
+}
+
+// parentNativeItem searches the element and its ancestors for the nearest native menu item element.
+// If such an element is found, its native handle is returned.
+// If a native menu element is found first, nil and errWrongParent are returned.
+func parentNativeItem(element goui.Element) (native.Handle, error) {
+	item, ok := goui.LookupParent(element, func(e goui.Element) (native.Handle, bool) {
+		if _, ok := e.(*nativeMenuElement); ok {
+			return nil, true // Menu found, wrong parent
+		}
+		if elem, ok := e.(*nativeItemElement); ok {
+			return elem.Handle, true
+		}
+		return nil, false
+	})
+	if !ok {
+		return nil, nil
+	}
+	if item == nil {
+		return nil, errortrace.WithStack(ErrWrongParent)
+	}
+	return item, nil
+}
+
+// parentNativeMenu searches the element and its ancestors for the nearest native menu element.
+// If such an element is found, its native handle is returned.
+// If a native menu item element is found first, nil and errWrongParent are returned.
+func parentNativeMenu(element goui.Element) (native.Handle, error) {
+	menu, ok := goui.LookupParent(element, func(e goui.Element) (native.Handle, bool) {
+		if _, ok := e.(*nativeItemElement); ok {
+			return nil, true // Menu found, wrong parent
+		}
+		if elem, ok := e.(*nativeMenuElement); ok {
+			return elem.NativeMenu(), true
+		}
+		return nil, false
+	})
+	if !ok {
+		return nil, nil
+	}
+	if menu == nil {
+		return nil, errortrace.WithStack(ErrWrongParent)
+	}
+	return menu, nil
 }
 
 // createMenuElement is a helper function to create a popup or window menu element.
-func createMenuElement(ctx *goui.Context, parent goui.Element, popup bool) (element goui.Element, err error) {
+func createMenuElement(parent goui.Element, popup bool) (element goui.Element, err error) {
 	handle := native.CreateMenu(popup)
-	if opener := goui.NativeMenuItem(ctx, parent); opener != nil {
+	opener, err := parentNativeItem(parent)
+	if err != nil {
+		return
+	}
+	if opener != nil {
 		if err = native.SetMenuItemSubmenu(opener, handle); err != nil {
 			return
 		}
@@ -69,7 +119,7 @@ func (m *WindowMenu) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (m *WindowMenu) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return createMenuElement(ctx, parent, false)
+	return createMenuElement(parent, false)
 }
 
 // NumChildren implements [goui.Container.NumChildren].
@@ -106,7 +156,8 @@ func (e *nativeMenuElement) Destroy() (err error) {
 type Item struct {
 	ID goui.ID
 	// Submenu is an optional submenu of this menu item.
-	// Only widgets representing menus should be assigned; others will not display correctly.
+	// Only widgets representing menus should be assigned;
+	// others will not display correctly or cause error returns.
 	Submenu  goui.Widget
 	Title    string
 	Disabled bool
@@ -134,16 +185,22 @@ func (item *Item) Child(index int) goui.Widget {
 // Exclusive implements [goui.Container.Exclusive].
 func (item *Item) Exclusive(goui.Container) { /*Nop*/ }
 
-// ErrNoParentMenu is returned by [Item.CreateElement] when trying to create a MenuItem element without a parent menu element.
+// ErrNoParentMenu is returned when trying to create a MenuItem element without a parent menu element.
 var ErrNoParentMenu = errors.New("cannot use menu items out of a menu")
+
+// ErrWrongParent is returned when a menu item or menu is placed in an invalid parent.
+var ErrWrongParent = errors.New("invalid parent for menu or menu item")
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	nativeParent := goui.LookupNativeMenuParent(ctx, parent)
-	if nativeParent == nil {
-		return nil, ErrNoParentMenu
+	parentMenu, err := parentNativeMenu(parent)
+	if err != nil {
+		return nil, err
 	}
-	handle, err := native.CreateMenuItem(nativeParent, item.Title, false)
+	if parentMenu == nil {
+		return nil, errortrace.WithStack(ErrNoParentMenu)
+	}
+	handle, err := native.CreateMenuItem(parentMenu, item.Title, false)
 	if err != nil {
 		return nil, err
 	}
@@ -223,11 +280,14 @@ func (sep *Separator) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	nativeParent := goui.LookupNativeMenuParent(ctx, parent)
-	if nativeParent == nil {
-		return nil, ErrNoParentMenu
+	parentMenu, err := parentNativeMenu(parent)
+	if err != nil {
+		return nil, err
 	}
-	handle, err := native.CreateMenuItem(nativeParent, "", true)
+	if parentMenu == nil {
+		return nil, errortrace.WithStack(ErrNoParentMenu)
+	}
+	handle, err := native.CreateMenuItem(parentMenu, "", true)
 	if err != nil {
 		return nil, err
 	}

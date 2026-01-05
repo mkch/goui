@@ -39,5 +39,5 @@ func Popup(ctx *goui.Context, menu *Menu, spec *PopupSpec) (err error) {
 			Y: spec.Pos.Y,
 		}
 	}
-	return native.TrackPopupMenu(goui.LookupNativeMenuParent(ctx, elem), ctx.NativeWindow(), nativeSpec)
+	return native.TrackPopupMenu(elem.(*nativeMenuElement).Handle, ctx.NativeWindow(), nativeSpec)
 }
