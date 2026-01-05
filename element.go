@@ -236,6 +236,12 @@ func buildElementTree(ctx *Context, widget Widget) (element Element, layouter La
 	return
 }
 
+// BuildElementTree builds the element tree for the given widget.
+// The returned element is the root element of the built tree.
+func BuildElementTree(ctx *Context, widget Widget) (Element, error) {
+	return buildElementTreeImpl(ctx, nil, widget)
+}
+
 // buildElementTreeImpl builds the element tree for the given widget.
 // The parent element can be nil. If parent is not nil, the ancestor
 // tree of parent must already be established.
