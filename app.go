@@ -194,7 +194,8 @@ func (app *App) CreateWindow(config *Window) error {
 		if err != nil {
 			errortrace.Panic(err)
 		}
-		if unwrapNativeMenu(elem) != nil {
+		if containsNativeMenu(elem) {
+			// Menu does not attach to window may cause resource leak.
 			return ErrInvalidWindowRoot
 		}
 		window.Root = elem
@@ -223,18 +224,37 @@ func (app *App) CreateWindow(config *Window) error {
 }
 
 // unwrapNativeMenu unwraps the given Element to find the nearest underlying [NativeMenuElement].
-// Any container that is not a [NativeMenuElement] will be skipped.
+// Any wrapper that is not [StatelessWidget] or [StatefulWidget] are skipped.
 func unwrapNativeMenu(element Element) native.Handle {
-	for {
-		if nativeElem, ok := element.(NativeMenuElement); ok {
-			return nativeElem.NativeMenu()
+	h, found := LookupChild(element, func(e Element) (h native.Handle, found bool, cont bool) {
+		if nativeMenu, found := e.(NativeMenuElement); found {
+			h = nativeMenu.NativeMenu()
+			return h, true, false
 		}
-		if element.numChildren() != 1 {
-			break
+		if _, isStateless := e.Widget().(StatelessWidget); isStateless {
+			cont = true
+		} else if _, isStateful := e.Widget().(StatefulWidget); isStateful {
+			cont = true
 		}
-		element = element.child(0)
+		return
+	})
+	if found {
+		return h
 	}
 	return nil
+}
+
+// containsNativeMenu reports whether the given element tree contains any [NativeMenuElement].
+func containsNativeMenu(element Element) bool {
+	_, found := LookupChild(element, func(e Element) (_ struct{}, found bool, cont bool) {
+		_, found = e.(NativeMenuElement)
+		if found {
+			return
+		}
+		cont = true
+		return
+	})
+	return found
 }
 
 var ErrNoSuchWindow = errors.New("no such window exists")
