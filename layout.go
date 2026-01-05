@@ -133,6 +133,16 @@ func (r *Rect) BottomRight() Point {
 	return Point{X: r.Right, Y: r.Bottom}
 }
 
+// WindowClientToScreenPt converts a point in window client coordinates to screen coordinates.
+func WindowClientToScreenPt(ctx *Context, pt Point) (screenPt Point, err error) {
+	screenX, screenY, err := native.ClientToScreen(ctx.NativeWindow(), pt.X, pt.Y)
+	if err != nil {
+		return
+	}
+	screenPt = Point{X: screenX, Y: screenY}
+	return
+}
+
 // Layouter is the interface for laying out elements.
 type Layouter interface {
 	// Layout computes the size of the element given the constraints.
@@ -274,6 +284,10 @@ func (l *debugLayouter) PositionAt(x, y metrics.DP) (err error) {
 	return
 }
 
+func (l *debugLayouter) Replayer() func(*Context) error {
+	return l.Layouter.Replayer()
+}
+
 // allLayouterDebugOutlines returns an iterator of debug rectangles for the given layouter tree.
 func allLayouterDebugOutlines(root Layouter) iter.Seq[native.DebugRect] {
 	return func(yield func(native.DebugRect) bool) {
@@ -320,6 +334,8 @@ func layouterTree(element Element) (layouter Layouter) {
 	if layouter != nil {
 		return
 	}
+	// Container without a layouter usually indicates a programming error.
+	// Provide a nop layouter if it really does not need to layout its children.
 	if _, isContainer := element.Widget().(Container); isContainer {
 		panic("container without a layouter")
 	}

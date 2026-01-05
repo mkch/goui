@@ -10,6 +10,7 @@ import (
 	"github.com/mkch/gw/app/gwapp"
 	"github.com/mkch/gw/button"
 	"github.com/mkch/gw/edit"
+	"github.com/mkch/gw/menu"
 	"github.com/mkch/gw/panel"
 	"github.com/mkch/gw/static"
 	"github.com/mkch/gw/win32"
@@ -63,12 +64,14 @@ func InvalidateWindow(handle Handle) error {
 
 type winBase interface {
 	HWND() win32.HWND
+	DPI() (win32.UINT, error)
 	InvalidateRect(rect *win32.RECT, eraseBk bool) error
 	GetClientRect() (*win32.RECT, error)
 	GetWindowRect() (*win32.RECT, error)
 	Value(key any) any
 	SetValue(key, value any)
 	SetWndProc(wndProc window.WndProc)
+	TrackPopupMenu(menu *menu.Menu, spec *window.PopupMenuSpec) error
 }
 
 func DestroyWindow(handle Handle) (err error) {
@@ -502,7 +505,7 @@ func Window_AddMouseEventListener(win Handle, listener MouseEventListener) (remo
 	}
 }
 
-func Window_ClientCoordinatesConv(from, to Handle, x, y metrics.DP) (newX, newY metrics.DP, err error) {
+func ClientCoordinatesConv(from, to Handle, x, y metrics.DP) (newX, newY metrics.DP, err error) {
 	fromWin := from.(winBase).HWND()
 	toWin := to.(winBase).HWND()
 	fromDpi, err := win32.GetDpiForWindow(fromWin)
@@ -529,4 +532,24 @@ func Window_ClientCoordinatesConv(from, to Handle, x, y metrics.DP) (newX, newY 
 	newX = metrics.Px(int(pt.X), uint(toDpi))
 	newY = metrics.Px(int(pt.Y), uint(toDpi))
 	return
+}
+
+// ClientToScreenPt converts the point (x, y) in the client area of the specified window
+// to screen coordinates.
+func ClientToScreen(win Handle, x, y metrics.DP) (screenX, screenY metrics.DP, err error) {
+	w := win.(winBase)
+	dpi, err := w.DPI()
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	pt := &win32.POINT{
+		X: win32.LONG(x.Px(uint(dpi))),
+		Y: win32.LONG(y.Px(uint(dpi))),
+	}
+	if err = win32.ClientToScreen(w.HWND(), pt); err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	return metrics.Px(int(pt.X), uint(dpi)), metrics.Px(int(pt.Y), uint(dpi)), nil
 }

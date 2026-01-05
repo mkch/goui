@@ -155,6 +155,8 @@ func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement)
 		return err
 	}
 
+	// Whether statefulElement is part of the window element tree.
+	var rootedInWindow bool
 	// If the updated stateful element is part of a menu, refresh the menu.
 	for elem := Element(statefulElement); elem != nil; elem = elem.Parent() {
 		if elem == ctx.window.Menu {
@@ -163,6 +165,14 @@ func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement)
 			}
 			break
 		}
+		if elem == ctx.window.Root {
+			rootedInWindow = true
+			break
+		}
+	}
+
+	if !rootedInWindow {
+		return nil
 	}
 
 	// Layout

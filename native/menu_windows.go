@@ -2,6 +2,7 @@ package native
 
 import (
 	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/gw/menu"
 	"github.com/mkch/gw/win32"
 	"github.com/mkch/gw/window"
@@ -94,4 +95,26 @@ func SetMenuItemSeparator(item Handle, separator bool) (err error) {
 
 func SetMenuItemOnClickListener(item Handle, listener func()) {
 	item.(*menu.Item).OnClick = listener
+}
+
+type TrackPopupSpec struct {
+	X, Y metrics.DP // Screen coordinates.
+}
+
+func TrackPopupMenu(menuToTrack, win Handle, spec *TrackPopupSpec) (err error) {
+	nativeWin := win.(winBase)
+	dpi, err := nativeWin.DPI()
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
+	var nativeSpec *window.PopupMenuSpec
+	if spec != nil {
+		nativeSpec = &window.PopupMenuSpec{
+			X: win32.LONG(spec.X.Px(uint(dpi))),
+			Y: win32.LONG(spec.Y.Px(uint(dpi))),
+		}
+	}
+
+	return nativeWin.TrackPopupMenu(menuToTrack.(*menu.Menu), nativeSpec)
 }

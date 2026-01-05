@@ -11,10 +11,13 @@ import (
 // Expanded is a widget that expands to fill the available space in the parent container.
 // If more than one Expanded widget is present in a parent, the available space is divided
 // among them according to their Flex factor.
+// Aan Expanded widget without siblings expands to fill all available space regardless of its Flex factor.
 type Expanded struct {
 	ID     goui.ID
 	Widget goui.Widget
-	Flex   float64 // The Flex factor to use for this Expanded widget.
+	// The Flex factor to use for this Expanded widget.
+	// Negative value is treated as zero.
+	Flex float64
 }
 
 func (p *Expanded) WidgetID() goui.ID {

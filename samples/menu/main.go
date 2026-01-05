@@ -10,7 +10,9 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/menu"
+	"github.com/mkch/goui/messagebox"
 	"github.com/mkch/goui/widgets"
+	"github.com/mkch/goui/widgets/listener"
 )
 
 var app = goui.NewApp(&goui.AppConfig{
@@ -26,11 +28,29 @@ func main() {
 		Height:    300,
 		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
 		Menu:      goui.StatefulWidgetFunc(MainMenu),
+		Root: &widgets.Listener{
+			OnPointerUp: func(ctx *goui.Context, event *listener.PointerEvent) {
+				var spec *menu.PopupSpec
+				if screenCoord {
+					spec = &menu.PopupSpec{Pos: goui.Point{X: 10, Y: 20}}
+				}
+				menu.Popup(ctx, &menu.Menu{Items: []goui.Widget{
+					&menu.Item{
+						Title: "Hello!",
+						OnSelect: func(ctx *goui.Context) {
+							messagebox.Show(ctx, "Hello", "Hello, popup!", messagebox.IconInfo, messagebox.ButtonOK)
+						},
+					},
+				}}, spec)
+			},
+			Widget: &widgets.Expanded{},
+		},
 	}))
 	os.Exit(app.Run())
 }
 
 var showHelp = true
+var screenCoord = false // Use screen coordinates for menu popup
 
 func MainMenu(ctx *goui.StateContext) (state goui.State) {
 	state = goui.NewState(ctx, func() goui.Widget {
@@ -55,6 +75,10 @@ func MainMenu(ctx *goui.StateContext) (state goui.State) {
 							&menu.Item{
 								Title:    gg.If(showHelp, "Hide Help", "Show Help"),
 								OnSelect: func(ctx *goui.Context) { state.Update(func() { showHelp = !showHelp }) },
+							},
+							&menu.Item{
+								Title:    gg.If(screenCoord, "Popup at mouse pointer", "Popup at (10,20) on screen"),
+								OnSelect: func(ctx *goui.Context) { state.Update(func() { screenCoord = !screenCoord }) },
 							},
 						},
 					},

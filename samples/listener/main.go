@@ -60,7 +60,7 @@ func (state *ListenerLabelState) Build() goui.Widget {
 	}
 	var labelText = "Nothing yet."
 	if state.event != nil {
-		labelText = fmt.Sprintf("%s\nWindowPos: %s", state.event, gg.Must(state.event.WindowPos()))
+		labelText = fmt.Sprintf("%s\nWindowPos: %s", state.event, gg.Must(state.event.WindowClientPos()))
 	}
 	return &listener.Listener{
 		OnPointerDown: f, OnPointerUp: f, OnPointerMove: f,

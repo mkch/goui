@@ -273,3 +273,11 @@ func (l *menuLayouter) PositionAt(x, y metrics.DP) (err error) {
 	}
 	return
 }
+
+// Replayer implements [goui.Layouter.Replayer].
+func (l *menuLayouter) Replayer() func(*goui.Context) error {
+	return func(ctx *goui.Context) error {
+		// Nop replaying to prevent the layout updating from going up to the window.
+		return nil
+	}
+}
