@@ -30,10 +30,10 @@ func (m *Menu) CreateElement(ctx *goui.Context, parent goui.Element) (element go
 	return createMenuElement(parent, true)
 }
 
-// parentNativeItem searches the element and its ancestors for the nearest native menu item element.
+// lookupNativeItemParent searches the element and its ancestors for the nearest native menu item element.
 // If such an element is found, its native handle is returned.
 // If a native menu element is found first, nil and errWrongParent are returned.
-func parentNativeItem(element goui.Element) (native.Handle, error) {
+func lookupNativeItemParent(element goui.Element) (native.Handle, error) {
 	item, ok := goui.LookupParent(element, func(e goui.Element) (native.Handle, bool) {
 		if _, ok := e.(*nativeMenuElement); ok {
 			return nil, true // Menu found, wrong parent
@@ -52,10 +52,10 @@ func parentNativeItem(element goui.Element) (native.Handle, error) {
 	return item, nil
 }
 
-// parentNativeMenu searches the element and its ancestors for the nearest native menu element.
+// lookupNativeMenuParent searches the element and its ancestors for the nearest native menu element.
 // If such an element is found, its native handle is returned.
 // If a native menu item element is found first, nil and errWrongParent are returned.
-func parentNativeMenu(element goui.Element) (native.Handle, error) {
+func lookupNativeMenuParent(element goui.Element) (native.Handle, error) {
 	menu, ok := goui.LookupParent(element, func(e goui.Element) (native.Handle, bool) {
 		if _, ok := e.(*nativeItemElement); ok {
 			return nil, true // Menu found, wrong parent
@@ -77,7 +77,7 @@ func parentNativeMenu(element goui.Element) (native.Handle, error) {
 // createMenuElement is a helper function to create a popup or window menu element.
 func createMenuElement(parent goui.Element, popup bool) (element goui.Element, err error) {
 	handle := native.CreateMenu(popup)
-	opener, err := parentNativeItem(parent)
+	opener, err := lookupNativeItemParent(parent)
 	if err != nil {
 		return
 	}
@@ -193,7 +193,7 @@ var ErrWrongParent = errors.New("invalid parent for menu or menu item")
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	parentMenu, err := parentNativeMenu(parent)
+	parentMenu, err := lookupNativeMenuParent(parent)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (sep *Separator) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	parentMenu, err := parentNativeMenu(parent)
+	parentMenu, err := lookupNativeMenuParent(parent)
 	if err != nil {
 		return nil, err
 	}
