@@ -63,11 +63,11 @@ func (state *ListenerLabelState) Build() goui.Widget {
 	if state.event != nil {
 		labelText = fmt.Sprintf("%s\nWindowPos: %s", state.event, gg.Must(state.event.WindowClientPos()))
 	}
-	return &widgets.Listener{
-		OnPointerDown: f, OnPointerUp: f, OnPointerMove: f,
-		Widget: &widgets.Expanded{
-			Widget: &widgets.Padding{
-				Left: 10, Right: 10, Top: 10, Bottom: 10,
+	return &widgets.Padding{
+		Left: 50, Right: 50, Top: 30, Bottom: 30,
+		Widget: &widgets.Listener{
+			OnPointerDown: f, OnPointerUp: f, OnPointerMove: f,
+			Widget: &widgets.Expanded{
 				Widget: &widgets.Column{
 					Widgets: []goui.Widget{
 						&widgets.Label{

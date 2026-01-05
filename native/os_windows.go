@@ -7,6 +7,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/metrics"
+	"github.com/mkch/gw/app"
 	"github.com/mkch/gw/app/gwapp"
 	"github.com/mkch/gw/button"
 	"github.com/mkch/gw/edit"
@@ -18,10 +19,30 @@ import (
 	"github.com/mkch/gw/window"
 )
 
-type App = *gwapp.GwApp
+type App any
 
 func NewApp() App {
 	return gwapp.New()
+}
+
+func App_Run(app App) int {
+	return app.(*gwapp.GwApp).Run()
+}
+
+func App_Post(app App, f func()) error {
+	return app.(*gwapp.GwApp).Post(f)
+}
+
+func App_Quit(app App, exitCode int) {
+	app.(*gwapp.GwApp).Quit(exitCode)
+}
+
+type MsgProc = gwapp.MessageDispatcher
+
+// SetMessageDispatcher sets a dispatcher for windows message dispatching.
+// The default message dispatcher is [win32.DispatchMessageW].
+func SetMessageDispatcher(msgProc MsgProc) {
+	app.SetMessageDispatcher(msgProc)
 }
 
 // Handle represents a platform-specific GUI object.
@@ -422,86 +443,66 @@ func SetPanelBackgroundColor(handle Handle, color *color.NRGBA) error {
 	return handle.(*panel.Panel).SetBackgroundColor(nativeColor(color))
 }
 
+// MouseEventListener defines methods to listen to mouse events.
+// Parameter win of the methods is the window whose client coordinates are used for the event positions.
 type MouseEventListener interface {
-	OnMousePrimaryDown(parent Handle, x, y metrics.DP)
-	OnMousePrimaryUp(parent Handle, x, y metrics.DP)
-	OnMouseSecondaryDown(parent Handle, x, y metrics.DP)
-	OnMouseSecondaryUp(parent Handle, x, y metrics.DP)
-	OnMouseMiddleDown(parent Handle, x, y metrics.DP)
-	OnMouseMiddleUp(parent Handle, x, y metrics.DP)
-	OnMousePointerMove(parent Handle, x, y metrics.DP)
+	OnMousePrimaryDown(win Handle, x, y metrics.DP)
+	OnMousePrimaryUp(win Handle, x, y metrics.DP)
+	OnMouseSecondaryDown(win Handle, x, y metrics.DP)
+	OnMouseSecondaryUp(win Handle, x, y metrics.DP)
+	OnMouseMiddleDown(win Handle, x, y metrics.DP)
+	OnMouseMiddleUp(win Handle, x, y metrics.DP)
+	OnMousePointerMove(win Handle, x, y metrics.DP)
 }
 
-type winValueKey int
+var mouseEventListeners map[*MouseEventListener]Handle
 
-const mouseEventListenerKey winValueKey = 0
+// callMouseEventListeners calls the specified method of all registered mouse event listeners.
+func callMouseEventListeners(msg *win32.MSG, method func(listener MouseEventListener, parent Handle, x metrics.DP, y metrics.DP)) {
+	pt := win32.POINT{
+		X: win32.LONG(win32.GET_X_LPARAM(msg.LParam)),
+		Y: win32.LONG(win32.GET_Y_LPARAM(msg.LParam))} // in Hwnd's client coordinates
+	gg.MustOK(win32.ClientToScreen(msg.Hwnd, &pt)) // to screen coordinates
 
-func Window_AddMouseEventListener(win Handle, listener MouseEventListener) (remove func()) {
-	w := win.(winBase)
-
-	type listenerSet = gg.Set[*MouseEventListener]
-	var listeners listenerSet
-	if v := w.Value(mouseEventListenerKey); v == nil {
-		listeners = make(listenerSet)
-		w.SetValue(mouseEventListenerKey, listeners)
-		w.SetWndProc(func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM, prevWndProc win32.WndProc) win32.LRESULT {
-			switch message {
-			case win32.WM_LBUTTONDOWN:
-				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				for listener := range listeners {
-					(*listener).OnMousePrimaryDown(win, x, y)
-				}
-
-			case win32.WM_LBUTTONUP:
-				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				for listener := range listeners {
-					(*listener).OnMousePrimaryUp(win, x, y)
-				}
-
-			case win32.WM_RBUTTONDOWN:
-				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-
-				for listener := range listeners {
-					(*listener).OnMouseSecondaryDown(win, x, y)
-				}
-
-			case win32.WM_RBUTTONUP:
-				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				for listener := range listeners {
-					(*listener).OnMouseSecondaryUp(win, x, y)
-				}
-			case win32.WM_MBUTTONDOWN:
-				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-
-				for listener := range listeners {
-					(*listener).OnMouseMiddleDown(win, x, y)
-				}
-			case win32.WM_MBUTTONUP:
-				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				for listener := range listeners {
-					(*listener).OnMouseMiddleUp(win, x, y)
-				}
-			case win32.WM_MOUSEMOVE:
-				x := metrics.Px(win32.GET_X_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				y := metrics.Px(win32.GET_Y_LPARAM(lParam), uint(gg.Must(win32.GetDpiForWindow(hwnd))))
-				for listener := range listeners {
-					(*listener).OnMousePointerMove(win, x, y)
-				}
-			}
-			return prevWndProc(hwnd, message, wParam, lParam)
-		})
-	} else {
-		listeners = v.(listenerSet)
+	for listener, win := range mouseEventListeners {
+		target := win.(winBase)
+		gg.MustOK(win32.ScreenToClient(target.HWND(), &pt)) // to target's client coordinates
+		dpi := uint(gg.Must(target.DPI()))
+		x := metrics.Px(int(pt.X), dpi)
+		y := metrics.Px(int(pt.Y), dpi)
+		method(*listener, win, x, y)
 	}
-	listeners.Add(&listener)
+}
+
+// App_AddMouseEventListener adds a mouse event listener to the specified window.
+// It returns a function to remove the listener.
+// Parameter win is the window whose client coordinates are used for the event positions.
+func App_AddMouseEventListener(app App, win Handle, listener MouseEventListener) (remove func()) {
+	if mouseEventListeners == nil {
+		mouseEventListeners = make(map[*MouseEventListener]Handle)
+		app.(*gwapp.GwApp).SetMessageDispatcher(func(msg *win32.MSG, prevProc func(msg *win32.MSG) win32.LRESULT) win32.LRESULT {
+			switch msg.Message {
+			case win32.WM_LBUTTONDOWN:
+				callMouseEventListeners(msg, MouseEventListener.OnMousePrimaryDown)
+			case win32.WM_LBUTTONUP:
+				callMouseEventListeners(msg, MouseEventListener.OnMousePrimaryUp)
+			case win32.WM_RBUTTONDOWN:
+				callMouseEventListeners(msg, MouseEventListener.OnMouseSecondaryDown)
+			case win32.WM_RBUTTONUP:
+				callMouseEventListeners(msg, MouseEventListener.OnMouseSecondaryUp)
+			case win32.WM_MBUTTONDOWN:
+				callMouseEventListeners(msg, MouseEventListener.OnMouseMiddleDown)
+			case win32.WM_MBUTTONUP:
+				callMouseEventListeners(msg, MouseEventListener.OnMouseMiddleUp)
+			case win32.WM_MOUSEMOVE:
+				callMouseEventListeners(msg, MouseEventListener.OnMousePointerMove)
+			}
+			return prevProc(msg)
+		})
+	}
+	mouseEventListeners[&listener] = win
 	return func() {
-		listeners.Delete(&listener)
+		delete(mouseEventListeners, &listener)
 	}
 }
 

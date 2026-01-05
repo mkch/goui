@@ -108,7 +108,7 @@ func (l *listenerElement) SetWidget(ctx *goui.Context, widget goui.Widget) error
 	if l.Widget() == nil {
 		// Only add to native listeners when first set
 		parent := goui.LookupNativeParent(ctx, l)
-		l.remove = native.Window_AddMouseEventListener(parent, l)
+		l.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, l)
 	}
 	return l.ElementBase.SetWidget(ctx, widget)
 }
@@ -119,7 +119,7 @@ func (e *listenerElement) Destroy() error {
 	return nil
 }
 
-func (e *listenerElement) callerPointerEventMethod(method func(ctx *goui.Context, event *PointerEvent),
+func (e *listenerElement) callPointerEventMethod(method func(ctx *goui.Context, event *PointerEvent),
 	button ButtonMask, parent native.Handle, x, y metrics.DP) {
 	if method != nil &&
 		x >= e.offset.X && x < e.offset.X+e.size.Width &&
@@ -136,31 +136,31 @@ func (e *listenerElement) callerPointerEventMethod(method func(ctx *goui.Context
 }
 
 func (e *listenerElement) OnMousePrimaryDown(parent native.Handle, x, y metrics.DP) {
-	e.callerPointerEventMethod(e.Widget().(*Listener).OnPointerDown, PrimaryMouseButton, parent, x, y)
+	e.callPointerEventMethod(e.Widget().(*Listener).OnPointerDown, PrimaryMouseButton, parent, x, y)
 }
 
 func (e *listenerElement) OnMousePrimaryUp(parent native.Handle, x, y metrics.DP) {
-	e.callerPointerEventMethod(e.Widget().(*Listener).OnPointerUp, PrimaryMouseButton, parent, x, y)
+	e.callPointerEventMethod(e.Widget().(*Listener).OnPointerUp, PrimaryMouseButton, parent, x, y)
 }
 
 func (e *listenerElement) OnMouseSecondaryDown(parent native.Handle, x, y metrics.DP) {
-	e.callerPointerEventMethod(e.Widget().(*Listener).OnPointerDown, SecondaryMouseButton, parent, x, y)
+	e.callPointerEventMethod(e.Widget().(*Listener).OnPointerDown, SecondaryMouseButton, parent, x, y)
 }
 
 func (e *listenerElement) OnMouseSecondaryUp(parent native.Handle, x, y metrics.DP) {
-	e.callerPointerEventMethod(e.Widget().(*Listener).OnPointerUp, SecondaryMouseButton, parent, x, y)
+	e.callPointerEventMethod(e.Widget().(*Listener).OnPointerUp, SecondaryMouseButton, parent, x, y)
 }
 
 func (e *listenerElement) OnMouseMiddleDown(parent native.Handle, x, y metrics.DP) {
-	e.callerPointerEventMethod(e.Widget().(*Listener).OnPointerDown, MiddleMouseButton, parent, x, y)
+	e.callPointerEventMethod(e.Widget().(*Listener).OnPointerDown, MiddleMouseButton, parent, x, y)
 }
 
 func (e *listenerElement) OnMouseMiddleUp(parent native.Handle, x, y metrics.DP) {
-	e.callerPointerEventMethod(e.Widget().(*Listener).OnPointerUp, MiddleMouseButton, parent, x, y)
+	e.callPointerEventMethod(e.Widget().(*Listener).OnPointerUp, MiddleMouseButton, parent, x, y)
 }
 
 func (e *listenerElement) OnMousePointerMove(parent native.Handle, x, y metrics.DP) {
-	e.callerPointerEventMethod(e.Widget().(*Listener).OnPointerMove, 0, parent, x, y)
+	e.callPointerEventMethod(e.Widget().(*Listener).OnPointerMove, 0, parent, x, y)
 }
 
 type listenerLayouter struct {

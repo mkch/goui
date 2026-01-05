@@ -33,6 +33,10 @@ func (ctx *Context) NativeWindow() native.Handle {
 	return ctx.window.Handle
 }
 
+func (ctx *Context) NativeApp() native.App {
+	return ctx.app.Native()
+}
+
 func (ctx *Context) App() *App {
 	return ctx.app
 }
@@ -58,9 +62,13 @@ type App struct {
 	windows map[ID]*window
 }
 
+func (app *App) Native() native.App {
+	return app.app
+}
+
 // Post posts a function to be executed on the main GUI goroutine.
 func (app *App) Post(f func()) error {
-	return app.app.Post(f)
+	return native.App_Post(app.app, f)
 }
 
 // AppConfig is the configuration for creating a new App.
@@ -96,11 +104,11 @@ func NewApp(config *AppConfig) (app *App) {
 }
 
 func (app *App) Run() int {
-	return app.app.Run()
+	return native.App_Run(app.app)
 }
 
 func (app *App) Exit(exitCode int) {
-	app.app.Quit(exitCode)
+	native.App_Quit(app.app, exitCode)
 }
 
 func layoutWindow(ctx *Context) error {
