@@ -8,7 +8,7 @@ import (
 func ExampleMenu() {
 	var app *goui.App // assume app is created elsewhere
 
-	_ = app.CreateWindow(goui.Window{
+	_ = app.CreateWindow(&goui.Window{
 		Title:  "Menu Example",
 		Width:  400,
 		Height: 300,

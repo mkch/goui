@@ -23,7 +23,7 @@ var app = goui.NewApp(&goui.AppConfig{
 })
 
 func main() {
-	gg.MustOK(app.CreateWindow(goui.Window{
+	gg.MustOK(app.CreateWindow(&goui.Window{
 		Title:     "menu demo",
 		Width:     800,
 		Height:    600,

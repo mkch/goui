@@ -135,7 +135,15 @@ func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 // such as a Menu or MenuItem.
 var ErrInvalidWindowRoot = errors.New("invalid window root")
 
-func (app *App) CreateWindow(config Window) error {
+// CreateWindow creates a new window with the given configuration.
+// If config is nil, a default configuration is used.
+// If a window with the same ID already exists, it returns an error.
+func (app *App) CreateWindow(config *Window) error {
+	if config == nil {
+		config = &Window{
+			Width: 800, Height: 600,
+		}
+	}
 	if config.ID == nil {
 		config.ID = UniqueID() // unique key is required to insert into the map
 	}
@@ -147,7 +155,6 @@ func (app *App) CreateWindow(config Window) error {
 		return err
 	}
 	window := &window{
-		Window: config,
 		ID:     config.ID,
 		Handle: handle,
 	}
@@ -182,8 +189,8 @@ func (app *App) CreateWindow(config Window) error {
 		window.DebugLayer = layer
 	}
 
-	if window.Window.Root != nil {
-		elem, layouter, err := buildElementTree(ctx, window.Window.Root)
+	if config.Root != nil {
+		elem, layouter, err := buildElementTree(ctx, config.Root)
 		if err != nil {
 			errortrace.Panic(err)
 		}
@@ -197,8 +204,8 @@ func (app *App) CreateWindow(config Window) error {
 		}
 	}
 
-	if window.Window.Menu != nil {
-		elem, _, err := buildElementTree(ctx, window.Window.Menu)
+	if config.Menu != nil {
+		elem, _, err := buildElementTree(ctx, config.Menu)
 		if err != nil {
 			errortrace.Panic(err)
 		}

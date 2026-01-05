@@ -39,7 +39,7 @@ func CountItem(ctx *goui.StateContext) goui.State {
 
 func Example_statefulMenuItem() {
 	var app *goui.App // assume app is created elsewhere
-	_ = app.CreateWindow(goui.Window{
+	_ = app.CreateWindow(&goui.Window{
 		Title:  "Stateful Menu Example",
 		Width:  400,
 		Height: 300,

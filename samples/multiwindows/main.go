@@ -24,7 +24,7 @@ func main() {
 	closeWindow3Button, enableCloseWindow3Button := newEnableDisableButton("Close Window3", func() {
 		app.CloseWindow(window3ID)
 	})
-	app.CreateWindow(goui.Window{
+	app.CreateWindow(&goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "Window 1",
 		Width:     800,
@@ -74,7 +74,7 @@ func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidg
 }
 
 func createWindow2() {
-	app.CreateWindow(goui.Window{
+	app.CreateWindow(&goui.Window{
 		Title:  "Window 2",
 		Width:  700,
 		Height: 600,
@@ -104,7 +104,7 @@ func newCountButton() goui.StatefulWidget {
 }
 
 func createWindow3(id goui.ID, onDestroy func(*goui.Context)) {
-	app.CreateWindow(goui.Window{
+	app.CreateWindow(&goui.Window{
 		ID:     id,
 		Title:  "Window 3",
 		Width:  600,

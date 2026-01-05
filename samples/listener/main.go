@@ -22,7 +22,7 @@ var app = goui.NewApp(&goui.AppConfig{
 })
 
 func main() {
-	err := app.CreateWindow(goui.Window{
+	err := app.CreateWindow(&goui.Window{
 		Title: "Listener Sample",
 		Width: 1200, Height: 400,
 		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },

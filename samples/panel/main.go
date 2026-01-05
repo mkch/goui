@@ -19,7 +19,7 @@ var app = goui.NewApp(&goui.AppConfig{
 })
 
 func main() {
-	err := app.CreateWindow(goui.Window{
+	err := app.CreateWindow(&goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "panel sample",
 		Width:     800,

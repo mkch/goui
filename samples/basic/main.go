@@ -18,7 +18,7 @@ var app = goui.NewApp(&goui.AppConfig{
 })
 
 func main() {
-	app.CreateWindow(goui.Window{
+	app.CreateWindow(&goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "goui demo",
 		Width:     1200,

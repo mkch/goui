@@ -24,7 +24,6 @@ type Window struct {
 }
 
 type window struct {
-	Window
 	ID         ID
 	Handle     native.Handle
 	Root       Element       // Root element.
