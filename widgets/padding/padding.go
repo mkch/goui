@@ -42,12 +42,12 @@ func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints
 
 	var childSize goui.Size
 	for child := range l.Children() {
-		childMaxWidth := constraints.ClampWidth(constraints.MaxWidth - padding.Left - padding.Right)
-		childMaxHeight := constraints.ClampHeight(constraints.MaxHeight - padding.Top - padding.Bottom)
+		childMaxWidth := max(0, constraints.MaxWidth-padding.Left-padding.Right)
+		childMaxHeight := max(0, constraints.MaxHeight-padding.Top-padding.Bottom)
 		childConstraints := goui.Constraints{
-			MinWidth:  constraints.MinWidth,
+			MinWidth:  0,
 			MaxWidth:  childMaxWidth,
-			MinHeight: constraints.MinHeight,
+			MinHeight: 0,
 			MaxHeight: childMaxHeight,
 		}
 		childSize, err = child.Layout(ctx, childConstraints)

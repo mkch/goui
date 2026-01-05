@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"os"
 
 	"github.com/mkch/gg"
@@ -62,14 +63,25 @@ func (state *ListenerLabelState) Build() goui.Widget {
 	if state.event != nil {
 		labelText = fmt.Sprintf("%s\nWindowPos: %s", state.event, gg.Must(state.event.WindowClientPos()))
 	}
-	return &listener.Listener{
+	return &widgets.Listener{
 		OnPointerDown: f, OnPointerUp: f, OnPointerMove: f,
-		Widget: &widgets.SizedBox{
-			Width: 1100, Height: 300,
-			Widget: &widgets.Label{
-				Multiline:     true,
-				TextAlignment: label.Center,
-				Text:          labelText,
+		Widget: &widgets.Expanded{
+			Widget: &widgets.Padding{
+				Left: 10, Right: 10, Top: 10, Bottom: 10,
+				Widget: &widgets.Column{
+					Widgets: []goui.Widget{
+						&widgets.Label{
+							Multiline:     true,
+							TextAlignment: label.Center,
+							Text:          labelText,
+						},
+						&widgets.Expanded{
+							Widget: &widgets.Panel{
+								BackgroundColor: &color.NRGBA{B: 255},
+							},
+						},
+					},
+				},
 			},
 		},
 	}

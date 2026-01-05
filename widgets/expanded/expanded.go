@@ -9,9 +9,9 @@ import (
 )
 
 // Expanded is a widget that expands to fill the available space in the parent container.
+// Expanded passes a tight constraint to its child widget to occupy all the allocated space.
 // If more than one Expanded widget is present in a parent, the available space is divided
 // among them according to their Flex factor.
-// Aan Expanded widget without siblings expands to fill all available space regardless of its Flex factor.
 type Expanded struct {
 	ID     goui.ID
 	Widget goui.Widget
@@ -46,7 +46,8 @@ type expandedLayouter struct {
 
 func (l *expandedLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
 	for child := range l.Children() {
-		size, err = child.Layout(ctx, constraints)
+		// Tight max constraint
+		size, err = child.Layout(ctx, constraints.TightMax())
 		if err != nil {
 			return
 		}
@@ -64,7 +65,22 @@ func (l *expandedLayouter) PositionAt(x, y metrics.DP) (err error) {
 }
 
 // Layout layouts the given Expanded widgets within the available space.
+// setConstraints is a function set a constraints use provided cross axis size and other
+// caller-calculated values.
 func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []goui.Layouter, setConstraints func(c *goui.Constraints, crossAxis metrics.DP)) (sizes []goui.Size, err error) {
+	if len(expandedLayouters) == 1 {
+		// Only one Expanded, occupy all available space.
+		l := expandedLayouters[0]
+		var constraints goui.Constraints
+		setConstraints(&constraints, availableSpace)
+		var size goui.Size
+		if size, err = l.Layout(ctx, constraints); err != nil {
+			return
+		}
+		sizes = append(sizes, size)
+		err = debug.CheckLayoutOverflow(ctx, l.Element().Widget(), size, constraints)
+		return
+	}
 	widgets := slices2.Map(expandedLayouters, func(l goui.Layouter) *Expanded {
 		return l.Element().Widget().(*Expanded)
 	})
@@ -76,7 +92,7 @@ func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []go
 	// Fast path: If totalFlex is zero, layout each Expanded with zero constraints.
 	if totalFlex == 0 {
 		for _, l := range expandedLayouters {
-			if _, err = l.Layout(nil, goui.Constraints{ /*zero*/ }); err != nil {
+			if _, err = l.Layout(ctx, goui.Constraints{ /*zero*/ }); err != nil {
 				return
 			}
 		}

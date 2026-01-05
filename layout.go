@@ -91,6 +91,26 @@ func (c *Constraints) ClampHeight(height metrics.DP) metrics.DP {
 	return clamp(height, c.MinHeight, c.MaxHeight)
 }
 
+// TightMax returns a new Constraints with tight max constraints.
+func (c *Constraints) TightMax() Constraints {
+	return Constraints{
+		MinWidth:  c.MaxWidth,
+		MinHeight: c.MaxHeight,
+		MaxWidth:  c.MaxWidth,
+		MaxHeight: c.MaxHeight,
+	}
+}
+
+// TightMin returns a new Constraints with tight min constraints.
+func (c *Constraints) TightMin() Constraints {
+	return Constraints{
+		MinWidth:  c.MinWidth,
+		MinHeight: c.MinHeight,
+		MaxWidth:  c.MinWidth,
+		MaxHeight: c.MinHeight,
+	}
+}
+
 // clamp clamps value between min and max.
 func clamp(value, minBound, maxBound metrics.DP) metrics.DP {
 	return min(max(value, minBound), maxBound)
