@@ -6,7 +6,6 @@ import (
 	"iter"
 
 	"github.com/mkch/gg"
-	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/internal/tricks"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
@@ -143,10 +142,13 @@ func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 // such as a Menu or MenuItem.
 var ErrInvalidWindowRoot = errors.New("invalid window root")
 
+// ErrInvalidWindowMenu is returned when creating a window with an widget that is not a menu.
+var ErrInvalidWindowMenu = errors.New("invalid window menu")
+
 // CreateWindow creates a new window with the given configuration.
 // If config is nil, a default configuration is used.
 // If a window with the same ID already exists, it returns an error.
-func (app *App) CreateWindow(config *Window) error {
+func (app *App) CreateWindow(config *Window) (err error) {
 	if config == nil {
 		config = &Window{
 			Width: 800, Height: 600,
@@ -158,18 +160,25 @@ func (app *App) CreateWindow(config *Window) error {
 	if app.windows[config.ID] != nil {
 		return fmt.Errorf("window with ID %v already exists", config.ID)
 	}
+
 	handle, err := native.CreateWindow(config.Title, config.Width, config.Height)
 	if err != nil {
-		return err
+		return
 	}
+	defer func() {
+		if err != nil {
+			native.DestroyWindow(handle)
+		}
+	}()
+
 	window := &window{
 		ID:     config.ID,
 		Handle: handle,
 	}
 	ctx := &Context{app, window}
 	native.SetWindowOnSizeChangedListener(handle, func(width, height metrics.DP) {
-		if err := performLayoutWindow(ctx, width, height); err != nil {
-			errortrace.Panic(err)
+		if err = performLayoutWindow(ctx, width, height); err != nil {
+			return
 		}
 	})
 	native.SetWindowOnCloseListener(handle, func() bool {
@@ -198,32 +207,35 @@ func (app *App) CreateWindow(config *Window) error {
 	}
 
 	if config.Root != nil {
-		elem, layouter, err := buildElementTree(ctx, config.Root)
+		window.Root, window.Layouter, err = buildElementTree(ctx, config.Root)
 		if err != nil {
-			errortrace.Panic(err)
+			return
 		}
-		if unwrapNativeMenu(elem) != nil {
+		if unwrapNativeMenu(window.Root) != nil {
 			// Cannot set a menu as the root element of a window
+			window.Root = nil
+			window.Layouter = nil
 			return ErrInvalidWindowRoot
 		}
-		window.Root = elem
-		window.Layouter = layouter
-		if err := layoutWindow(ctx); err != nil {
-			errortrace.Panic(err)
+		if err = layoutWindow(ctx); err != nil {
+			return
 		}
 	}
 
 	if config.Menu != nil {
-		elem, _, err := buildElementTree(ctx, config.Menu)
+		var elem Element
+		elem, err = BuildElementTree(ctx, config.Menu)
 		if err != nil {
-			return err
+			return
 		}
-		if nm := unwrapNativeMenu(elem); nm != nil {
-			window.Menu = elem
-			err = native.SetWindowMenu(window.Handle, nm)
-			if err != nil {
-				return err
-			}
+		menuHandle := unwrapNativeMenu(elem)
+		if menuHandle == nil {
+			return ErrInvalidWindowMenu
+		}
+		window.Menu = elem
+		err = native.SetWindowMenu(window.Handle, menuHandle)
+		if err != nil {
+			return
 		}
 	}
 
