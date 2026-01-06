@@ -17,7 +17,7 @@ type Context struct {
 	window *window // can't be nil
 }
 
-// newMockContext creates and returns a new mock goui.Context for testing.
+// newMockContext creates and returns a new mock Context for testing.
 func newMockContext(config *AppConfig) (ctx *Context) {
 	ctx = &Context{
 		app: &App{
@@ -202,8 +202,8 @@ func (app *App) CreateWindow(config *Window) error {
 		if err != nil {
 			errortrace.Panic(err)
 		}
-		if containsNativeMenu(elem) {
-			// Menu does not attach to window may cause resource leak.
+		if unwrapNativeMenu(elem) != nil {
+			// Cannot set a menu as the root element of a window
 			return ErrInvalidWindowRoot
 		}
 		window.Root = elem
@@ -234,17 +234,20 @@ func (app *App) CreateWindow(config *Window) error {
 // unwrapNativeMenu unwraps the given Element to find the nearest underlying [NativeMenuElement].
 // Any wrapper that is not [StatelessWidget] or [StatefulWidget] are skipped.
 func unwrapNativeMenu(element Element) native.Handle {
-	h, found := LookupChild(element, func(e Element) (h native.Handle, found bool, cont bool) {
-		if nativeMenu, found := e.(NativeMenuElement); found {
-			h = nativeMenu.NativeMenu()
-			return h, true, false
+	h, found := LookupChild(element, func(e Element) (native.Handle, bool) {
+		if nativeMenu, ok := e.(NativeMenuElement); ok {
+			return nativeMenu.NativeMenu(), true // Found a menu
 		}
-		if _, isStateless := e.Widget().(StatelessWidget); isStateless {
-			cont = true
-		} else if _, isStateful := e.Widget().(StatefulWidget); isStateful {
-			cont = true
+		widget := e.Widget()
+		if _, isStateless := widget.(StatelessWidget); isStateless {
+			return nil, false // May contain a menu, continue searching
 		}
-		return
+		if _, isStateful := widget.(StatefulWidget); isStateful {
+			return nil, false // May contain a menu, continue searching
+		}
+		// Can't contain a menu. Found a `Not Found`(nil).
+		// See the element creation logic in package menu.
+		return nil, true
 	})
 	if found {
 		return h
@@ -252,17 +255,38 @@ func unwrapNativeMenu(element Element) native.Handle {
 	return nil
 }
 
-// containsNativeMenu reports whether the given element tree contains any [NativeMenuElement].
-func containsNativeMenu(element Element) bool {
-	_, found := LookupChild(element, func(e Element) (_ struct{}, found bool, cont bool) {
-		_, found = e.(NativeMenuElement)
-		if found {
-			return
+// LookupParent searches the element and its ancestors for an element
+// that satisfies the given predicate.
+// The found result of predicate indicates whether it is satisfied.
+// The first value returned by predicate is returned when found.
+// If no such element is found, the zero value of T and false are returned.
+func LookupParent[T any](element Element, predicate func(Element) (v T, found bool)) (ret T, found bool) {
+	for elem := element; elem != nil; elem = elem.Parent() {
+		if t, ok := predicate(elem); ok {
+			return t, ok
 		}
-		cont = true
-		return
-	})
-	return found
+	}
+	return
+}
+
+// LookupChild searches the element and its descendants for an element
+// that satisfies the given predicate.
+// The predicate function should return:
+//   - satisfied=true: the element satisfies the condition, value is returned.
+//   - satisfied=false: the element does not satisfy, continue searching all descendants.
+//
+// If an element satisfies the predicate, its value and true are returned immediately.
+// If no such element is found, the zero value of T and false are returned.
+func LookupChild[T any](element Element, predicate func(Element) (value T, satisfied bool)) (v T, found bool) {
+	if t, ok := predicate(element); ok {
+		return t, true
+	}
+	for i := 0; i < element.NumChildren(); i++ {
+		if t, ok := LookupChild(element.Child(i), predicate); ok {
+			return t, ok
+		}
+	}
+	return
 }
 
 var ErrNoSuchWindow = errors.New("no such window exists")

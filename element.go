@@ -97,39 +97,6 @@ func LookupNativeParent(ctx *Context, element Element) (native.Handle, error) {
 	return ctx.NativeWindow(), nil
 }
 
-// LookupParent searches the element and its ancestors for an element
-// that satisfies the given predicate.
-// The found result of predicate indicates whether it is satisfied.
-// The first value returned by predicate is returned when found.
-// If no such element is found, the zero value of T and false are returned.
-func LookupParent[T any](element Element, predicate func(Element) (v T, found bool)) (ret T, found bool) {
-	for elem := element; elem != nil; elem = elem.Parent() {
-		if t, ok := predicate(elem); ok {
-			return t, ok
-		}
-	}
-	return
-}
-
-// LookupChild searches the element and its descendants for an element
-// that satisfies the given predicate.
-// The first value returned by predicate is returned when found.
-// If no such element is found, the zero value of T and false are returned.
-// The predicate function can return continueSearch as false to stop searching.
-func LookupChild[T any](element Element, predicate func(Element) (v T, found bool, continueSearch bool)) (v T, found bool) {
-	if t, found, continueSearch := predicate(element); found {
-		return t, found
-	} else if continueSearch {
-		for i := 0; i < element.NumChildren(); i++ {
-			if t, ok := LookupChild(element.Child(i), predicate); ok {
-				return t, ok
-			}
-		}
-	}
-	var zero T
-	return zero, false
-}
-
 func (e *ElementBase) setLayouter(layouter Layouter) {
 	e.ElementLayouter = layouter
 }
