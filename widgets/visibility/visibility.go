@@ -12,6 +12,7 @@ import (
 // based on the Visible field. If not visible, the child is positioned beyond
 // the right edge of the window. If MaintainSize is true, the invisible child
 // still takes up space in layout.
+// Menu and menu items are not allowed to be placed inside Visibility.
 type Visibility struct {
 	ID           goui.ID
 	Widget       goui.Widget

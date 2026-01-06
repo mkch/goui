@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/widgetstest"
 )
 
@@ -418,5 +419,33 @@ func TestBuildFailure_ContainerBeforeStateless(t *testing.T) {
 	}
 	if !errors.Is(err, goui.ErrWrongParent) {
 		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
+	}
+}
+
+func TestBuildFailure_MenuInVisibility(t *testing.T) {
+	ctx := widgetstest.NewContext()
+
+	var w goui.Widget = &widgets.Visibility{
+		ID:     goui.ValueID("visibility"),
+		Widget: &Menu{},
+	}
+
+	_, _, err := widgetstest.BuildElementTree(ctx, w, nil)
+	if !errors.Is(err, goui.ErrWrongParent) {
+		t.Fatalf("expected build to fail when Menu is inside Visibility, got error: %v", err)
+	}
+
+	w = &Menu{
+		Items: []goui.Widget{
+			&widgets.Visibility{
+				ID:     goui.ValueID("visibility"),
+				Widget: &Item{},
+			},
+		},
+	}
+
+	_, _, err = widgetstest.BuildElementTree(ctx, w, nil)
+	if !errors.Is(err, goui.ErrWrongParent) {
+		t.Fatalf("expected build to fail when Item is inside Visibility, got error: %v", err)
 	}
 }
