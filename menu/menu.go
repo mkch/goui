@@ -2,8 +2,6 @@
 package menu
 
 import (
-	"errors"
-
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
@@ -81,7 +79,7 @@ func lookupNativeParent[T *nativeItemElement | *nativeMenuElement](element goui.
 		if _, isStateful := widget.(goui.StatefulWidget); isStateful {
 			return R{}, false // Continue searching
 		}
-		return R{nil, errortrace.WithStack(ErrWrongParent)}, true // Wrong parent
+		return R{nil, errortrace.WithStack(goui.ErrWrongParent)}, true // Wrong parent
 	})
 	if found {
 		ret = r.val
@@ -98,6 +96,7 @@ func createMenuElement(parent goui.Element, popup bool) (element goui.Element, e
 		// menu item to which this menu is a submenu.
 		var opener native.Handle
 		if opener, err = lookupNativeItemParent(parent); err != nil {
+			err = errortrace.ErrorfStack("Create menu failed: %w", err)
 			return
 		}
 		if opener != nil {
@@ -205,9 +204,6 @@ func (item *Item) Child(index int) goui.Widget {
 // Exclusive implements [goui.Container.Exclusive].
 func (item *Item) Exclusive(goui.Container) { /*Nop*/ }
 
-// ErrWrongParent is returned when a menu item or menu is placed in an invalid parent.
-var ErrWrongParent = errors.New("invalid parent for menu or menu item")
-
 // CreateElement implements [goui.Widget.CreateElement].
 func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
 	handle, err := createItem(parent, item.Title, false)
@@ -228,9 +224,11 @@ func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element
 func createItem(parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
 	parentMenu, err := lookupNativeMenuParent(parent)
 	if err == nil && parentMenu == nil {
-		err = errortrace.WithStack(ErrWrongParent) // Menu item must have a parent menu
+		// Menu item must have a parent menu
+		err = goui.ErrWrongParent
 	}
 	if err != nil {
+		err = errortrace.ErrorfStack("Create menu %s failed: %w", gg.If(separator, "separator", "item"), err)
 		return
 	}
 	handle, err = native.CreateMenuItem(parentMenu, title, separator)

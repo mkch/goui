@@ -68,12 +68,6 @@ func MainMenu(ctx *goui.StateContext) (state goui.State) {
 	state = goui.NewState(ctx, func() goui.Widget {
 		m := &menu.WindowMenu{
 			Items: []goui.Widget{
-				&widgets.SizedBox{
-					Width: 100, Height: 200,
-					Widget: &widgets.Button{
-						Label: "Wrong!",
-					},
-				},
 				&menu.Item{
 					Title: "File",
 					Submenu: &menu.Menu{

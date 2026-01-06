@@ -3,6 +3,7 @@ package label
 import (
 	"image/color"
 
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
@@ -31,13 +32,19 @@ func (btn *Label) WidgetID() goui.ID {
 	return btn.ID
 }
 
-func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreateLabel(goui.LookupNativeParent(ctx, parent), btn.Text)
+func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
+	parentHandle, err := goui.LookupNativeParent(ctx, parent)
 	if err != nil {
-		return nil, err
+		err = errortrace.ErrorfStack("Create Label failed: %w", err)
+		return
+	}
+	handle, err := native.CreateLabel(parentHandle, btn.Text)
+	if err != nil {
+		err = errortrace.ErrorfStack("Create Label failed: %w", err)
+		return
 	}
 	layouter := &labelLayouter{}
-	elem := &labelElement{
+	element = &labelElement{
 		goui.ControlElementBase{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: layouter,
@@ -46,7 +53,7 @@ func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (goui.El
 			DestroyFunc: native.DestroyWindow,
 		},
 	}
-	return elem, nil
+	return
 }
 
 type labelElement struct {

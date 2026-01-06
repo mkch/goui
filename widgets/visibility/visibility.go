@@ -2,6 +2,7 @@ package visibility
 
 import (
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
@@ -51,7 +52,14 @@ func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints goui.Constrai
 	for child := range l.Children() {
 		if !visibility.Visible {
 			// Set the offset beyond the right edge of the window.
-			if _, _, l.childXOffset, _, err = native.WindowClientRect(goui.LookupNativeParent(ctx, elem.Parent())); err != nil {
+			var parentHandle native.Handle
+			parentHandle, err = goui.LookupNativeParent(ctx, elem.Parent())
+			if err != nil {
+				err = errortrace.ErrorfStack("Layout Visibility failed: %w", err)
+				return
+			}
+			if _, _, l.childXOffset, _, err = native.WindowClientRect(parentHandle); err != nil {
+				err = errortrace.ErrorfStack("Layout Visibility failed: %w", err)
 				return
 			}
 			if visibility.MaintainSize {

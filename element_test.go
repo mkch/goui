@@ -2,10 +2,13 @@ package goui
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 	"testing"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/goui/metrics"
+	"github.com/mkch/goui/native"
 )
 
 type mockWidget struct {
@@ -543,5 +546,82 @@ func TestUpdateElementTree_Remove(t *testing.T) {
 	}
 	if children[0].Element().Widget() != child3 {
 		t.Fatalf("child layouters not updated correctly")
+	}
+}
+
+type mockMenu struct {
+	ID     ID
+	Widget Widget
+}
+
+func (m *mockMenu) WidgetID() ID {
+	return m.ID
+}
+
+func (m *mockMenu) CreateElement(ctx *Context, parent Element) (Element, error) {
+	var elem mockMenuElement
+	elem.Handle = 1001
+	return &elem, nil
+}
+
+func (m *mockMenu) NumChildren() int {
+	return gg.If(m.Widget != nil, 1, 0)
+}
+
+func (m *mockMenu) Child(n int) Widget {
+	if n != 0 || m.Widget == nil {
+		panic("index out of range")
+	}
+	return m.Widget
+}
+
+func (m *mockMenu) Exclusive(Container) { /*Nop*/ }
+
+type mockMenuElement struct {
+	ElementBase
+	Handle native.Handle
+}
+
+func (e *mockMenuElement) NativeMenu() native.Handle {
+	return e.Handle
+}
+
+type mockControl struct {
+	ID ID
+}
+
+func (c *mockControl) WidgetID() ID {
+	return c.ID
+}
+
+func (c *mockControl) CreateElement(ctx *Context, parent Element) (Element, error) {
+	nativeParent, err := LookupNativeParent(ctx, parent)
+	if err != nil {
+		return nil, fmt.Errorf("Create mock control failed: %w", err)
+	}
+	var elem mockControlElement
+	elem.Handle = 1
+	elem.nativeParent = nativeParent
+	return &elem, nil
+}
+
+type mockControlElement struct {
+	ControlElementBase
+	nativeParent native.Handle
+}
+
+func TestBuildElementFail_ControlInMenu(t *testing.T) {
+	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
+
+	var w Widget = &mockMenu{
+		ID: ValueID("menu"),
+		Widget: &mockControl{
+			ID: ValueID("child"),
+		},
+	}
+
+	elem, err := BuildElementTree(ctx, w)
+	if !errors.Is(err, ErrWrongParent) {
+		t.Fatalf("expected error when building control inside menu, got element %#v", elem)
 	}
 }

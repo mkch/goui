@@ -334,7 +334,7 @@ func TestBuildFailure_ItemWrappedByContainer(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected build to fail when Item is wrapped by Container (lookupNativeMenuParent blocked)")
 	}
-	if !errors.Is(err, ErrWrongParent) {
+	if !errors.Is(err, goui.ErrWrongParent) {
 		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
 	}
 }
@@ -364,7 +364,7 @@ func TestBuildFailure_SubmenuWrappedByContainer(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected build to fail when Submenu is wrapped by Container (lookupNativeItemParent blocked)")
 	}
-	if !errors.Is(err, ErrWrongParent) {
+	if !errors.Is(err, goui.ErrWrongParent) {
 		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
 	}
 }
@@ -387,7 +387,7 @@ func TestBuildFailure_SeparatorWrappedByContainer(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected build to fail when Separator is wrapped by Container (lookupNativeMenuParent blocked)")
 	}
-	if !errors.Is(err, ErrWrongParent) {
+	if !errors.Is(err, goui.ErrWrongParent) {
 		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
 	}
 }
@@ -416,7 +416,7 @@ func TestBuildFailure_ContainerBeforeStateless(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected build to fail when Container is between Menu and Item, even with StatelessWidget after")
 	}
-	if !errors.Is(err, ErrWrongParent) {
+	if !errors.Is(err, goui.ErrWrongParent) {
 		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
 	}
 }

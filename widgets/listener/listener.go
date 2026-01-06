@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
@@ -105,11 +106,15 @@ type listenerElement struct {
 // SetWidget implements [goui.Element.SetWidget]
 func (l *listenerElement) SetWidget(ctx *goui.Context, widget goui.Widget) error {
 	l.ctx = ctx
-	if l.Widget() == nil {
-		// Only add to native listeners when first set
-		parent := goui.LookupNativeParent(ctx, l)
-		l.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, l)
+	if l.remove != nil {
+		l.remove()
+		l.remove = nil
 	}
+	parent, err := goui.LookupNativeParent(ctx, l)
+	if err != nil {
+		return errortrace.ErrorfStack("Configure Listener failed: %w", err)
+	}
+	l.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, l)
 	return l.ElementBase.SetWidget(ctx, widget)
 }
 

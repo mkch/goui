@@ -4,6 +4,7 @@ import (
 	"image/color"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
 	"github.com/mkch/goui/metrics"
@@ -21,12 +22,18 @@ func (p *Panel) WidgetID() goui.ID {
 	return p.ID
 }
 
-func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreatePanel(goui.LookupNativeParent(ctx, parent))
+func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
+	parentHandle, err := goui.LookupNativeParent(ctx, parent)
 	if err != nil {
-		return nil, err
+		err = errortrace.ErrorfStack("Create Panel failed: %w", err)
+		return
 	}
-	elem := &panelElement{
+	handle, err := native.CreatePanel(parentHandle)
+	if err != nil {
+		err = errortrace.ErrorfStack("Create Panel failed: %w", err)
+		return
+	}
+	element = &panelElement{
 		goui.ControlElementBase{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: &panelLayouter{},
@@ -35,7 +42,7 @@ func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Elem
 			DestroyFunc: native.DestroyWindow,
 		},
 	}
-	return elem, nil
+	return
 }
 
 func (p *Panel) NumChildren() int {

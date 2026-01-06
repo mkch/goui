@@ -1,6 +1,7 @@
 package button
 
 import (
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
@@ -19,14 +20,20 @@ func (btn *Button) WidgetID() goui.ID {
 	return btn.ID
 }
 
-func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreateButton(goui.LookupNativeParent(ctx, parent), btn.Label)
+func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
+	parentHandle, err := goui.LookupNativeParent(ctx, parent)
 	if err != nil {
-		return nil, err
+		err = errortrace.ErrorfStack("Create Button failed: %w", err)
+		return
+	}
+	handle, err := native.CreateButton(parentHandle, btn.Label)
+	if err != nil {
+		err = errortrace.ErrorfStack("Create Button failed: %w", err)
+		return
 	}
 	native.SetWidgetEnabled(handle, !btn.Disabled)
 	layouter := &buttonLayouter{}
-	elem := &buttonElement{
+	element = &buttonElement{
 		goui.ControlElementBase{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: layouter,
@@ -40,7 +47,7 @@ func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (goui.E
 			btn.OnClick(ctx)
 		}
 	})
-	return elem, nil
+	return
 }
 
 type buttonElement struct {

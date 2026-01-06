@@ -95,11 +95,8 @@ func userPass(userNameCtrl, passwordCtrl *widgets.TextFieldController) goui.Widg
 					Widgets: []goui.Widget{
 						&widgets.Expanded{
 							Flex: 1,
-							Widget: &widgets.Padding{
-								Right: 20,
-								Widget: &widgets.Label{
-									Text: "Username:",
-								},
+							Widget: &widgets.Label{
+								Text: "Username:",
 							},
 						},
 						&widgets.SizedBox{Width: 20},

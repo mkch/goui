@@ -1,9 +1,11 @@
 package goui
 
 import (
+	"errors"
 	"reflect"
 	"slices"
 
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/native"
 )
 
@@ -63,21 +65,36 @@ func (e *ElementBase) Layouter() Layouter {
 	return e.ElementLayouter
 }
 
+// ErrWrongParent is returned when build element tree fails due to invalid parent element.
+// For example, a native control widget is created under a native menu element or vice versa.
+var ErrWrongParent = errors.New("wrong parent")
+
 // LookupNativeParent returns the native handle associated with the given element
 // or its nearest ancestor that is a [ControlElement].
 // If element is nil or there is no such ancestor, ctx.NativeWindow()
 // is returned.
-func LookupNativeParent(ctx *Context, element Element) native.Handle {
-	ctrl, _ := LookupParent(element,
-		func(e Element) (ce ControlElement, ok bool) {
-			ce, ok = e.(ControlElement)
-			return
-		},
-	)
-	if ctrl == nil {
-		return ctx.NativeWindow()
+func LookupNativeParent(ctx *Context, element Element) (native.Handle, error) {
+	type R struct {
+		h   native.Handle
+		err error
 	}
-	return ctrl.NativeControl()
+	r, found := LookupParent(element, func(e Element) (R, bool) {
+		if elem, ok := e.(ControlElement); ok {
+			return R{elem.NativeControl(), nil}, true
+		}
+		if _, ok := e.(NativeMenuElement); ok {
+			return R{nil, errortrace.WithStack(ErrWrongParent)}, true // Wrong parent
+		}
+		if _, ok := e.(NativeMenuItemElement); ok {
+			return R{nil, errortrace.WithStack(ErrWrongParent)}, true // Wrong parent
+		}
+		return R{}, false // Continue searching
+	})
+	if found {
+		return r.h, r.err
+	}
+	// If no parent found, use the window handle
+	return ctx.NativeWindow(), nil
 }
 
 // LookupParent searches the element and its ancestors for an element
