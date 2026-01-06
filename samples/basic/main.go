@@ -6,8 +6,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 )
 
@@ -67,7 +67,7 @@ var counterButton goui.StatefulWidgetFunc = func(ctx *goui.StateContext) (state 
 		return &widgets.Button{
 			Label: fmt.Sprintf("Clicked %d times", count),
 			OnClick: func(ctx *goui.Context) {
-				gg.MustOK(state.Update(func() { count++ }))
+				check.MustOK(state.Update(func() { count++ }))
 			},
 		}
 	}, nil)

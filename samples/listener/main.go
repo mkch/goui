@@ -8,9 +8,9 @@ import (
 	"image/color"
 	"os"
 
-	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/label"
 	"github.com/mkch/goui/widgets/listener"
@@ -61,7 +61,7 @@ func (state *ListenerLabelState) Build() goui.Widget {
 	}
 	var labelText = "Nothing yet."
 	if state.event != nil {
-		labelText = fmt.Sprintf("%s\nWindowPos: %s", state.event, gg.Must(state.event.WindowClientPos()))
+		labelText = fmt.Sprintf("%s\nWindowPos: %s", state.event, check.Must(state.event.WindowClientPos()))
 	}
 	return &widgets.Padding{
 		Left: 50, Right: 50, Top: 30, Bottom: 30,

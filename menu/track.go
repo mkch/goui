@@ -1,8 +1,8 @@
 package menu
 
 import (
-	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/native"
 )
 
@@ -29,7 +29,7 @@ func Popup(ctx *goui.Context, menu *Menu, spec *PopupSpec) (err error) {
 	// If the menu is destroyed before that, the menu commands will not be delivered
 	// to the menu item callback.
 	defer ctx.App().Post(func() {
-		gg.MustOK(elem.Destroy())
+		check.MustOK(elem.Destroy())
 	})
 
 	var nativeSpec *native.TrackPopupSpec

@@ -8,6 +8,7 @@ import (
 
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/label"
@@ -75,7 +76,7 @@ func (s *numberState) Build() goui.Widget {
 }
 
 func (s *numberState) Inc() {
-	gg.MustOK(s.Update(func() { s.number++ }))
+	check.MustOK(s.Update(func() { s.number++ }))
 }
 
 var state *numberState

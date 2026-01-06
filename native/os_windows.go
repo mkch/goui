@@ -6,6 +6,7 @@ import (
 
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/gw/app"
 	"github.com/mkch/gw/app/gwapp"
@@ -462,12 +463,12 @@ func callMouseEventListeners(msg *win32.MSG, method func(listener MouseEventList
 	pt := win32.POINT{
 		X: win32.LONG(win32.GET_X_LPARAM(msg.LParam)),
 		Y: win32.LONG(win32.GET_Y_LPARAM(msg.LParam))} // in Hwnd's client coordinates
-	gg.MustOK(win32.ClientToScreen(msg.Hwnd, &pt)) // to screen coordinates
+	check.MustOK(win32.ClientToScreen(msg.Hwnd, &pt)) // to screen coordinates
 
 	for listener, win := range mouseEventListeners {
 		target := win.(winBase)
-		gg.MustOK(win32.ScreenToClient(target.HWND(), &pt)) // to target's client coordinates
-		dpi := uint(gg.Must(target.DPI()))
+		check.MustOK(win32.ScreenToClient(target.HWND(), &pt)) // to target's client coordinates
+		dpi := uint(check.Must(target.DPI()))
 		x := metrics.Px(int(pt.X), dpi)
 		y := metrics.Px(int(pt.Y), dpi)
 		method(*listener, win, x, y)

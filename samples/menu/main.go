@@ -10,6 +10,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/menu"
 	"github.com/mkch/goui/messagebox"
 	"github.com/mkch/goui/widgets"
@@ -23,7 +24,7 @@ var app = goui.NewApp(&goui.AppConfig{
 })
 
 func main() {
-	gg.MustOK(app.CreateWindow(&goui.Window{
+	check.MustOK(app.CreateWindow(&goui.Window{
 		Title:     "menu demo",
 		Width:     800,
 		Height:    600,

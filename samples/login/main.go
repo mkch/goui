@@ -6,8 +6,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/messagebox"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
@@ -68,8 +68,8 @@ func rootWidget() goui.Widget {
 }
 
 func doLogin(ctx *goui.Context, userNameCtrl, passwordCtrl *widgets.TextFieldController) {
-	user := gg.Must(userNameCtrl.Text())
-	pass := gg.Must(passwordCtrl.Text())
+	user := check.Must(userNameCtrl.Text())
+	pass := check.Must(passwordCtrl.Text())
 	if user == username && pass == password {
 		messagebox.Show(ctx, "Login", "Logged in successfully!", messagebox.IconInfo, messagebox.ButtonOK)
 	} else {

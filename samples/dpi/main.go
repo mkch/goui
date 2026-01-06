@@ -7,8 +7,8 @@ import (
 	"image/color"
 	"os"
 
-	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
@@ -23,7 +23,7 @@ var app = goui.NewApp(&goui.AppConfig{
 
 func main() {
 
-	gg.MustOK(app.CreateWindow(&goui.Window{
+	check.MustOK(app.CreateWindow(&goui.Window{
 		Title: "dpi test",
 		Width: 800, Height: 850,
 		OnDestroy: func(*goui.Context) { app.Exit(0) },

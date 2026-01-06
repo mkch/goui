@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 )
 
@@ -76,7 +76,7 @@ func (s *State) Build() goui.Widget {
 					Label: "Sort by name",
 					OnClick: func(ctx *goui.Context) {
 						// Update the whole Root widget to rebuild children
-						gg.MustOK(s.Update(func() {
+						check.MustOK(s.Update(func() {
 							// Sort personList by Name
 							slices.SortStableFunc(s.PersonList, func(a, b Person) int {
 								return strings.Compare(a.Name, b.Name)
@@ -92,7 +92,7 @@ func (s *State) Build() goui.Widget {
 					Label: "Sort by age",
 					OnClick: func(ctx *goui.Context) {
 						// Update the whole Root widget to rebuild children
-						gg.MustOK(s.Update(func() {
+						check.MustOK(s.Update(func() {
 							// Sort personList by Age
 							slices.SortStableFunc(s.PersonList, func(a, b Person) int {
 								return a.Age - b.Age
@@ -123,7 +123,7 @@ func (s *PersonState) Build() goui.Widget {
 		ID:    goui.ValueID(s.person.ID),
 		Label: fmt.Sprintf("%s (%d years old) - Clicked %d times", s.person.Name, s.person.Age, s.clicked),
 		OnClick: func(ctx *goui.Context) {
-			gg.MustOK(s.Update(func() { s.clicked++ }))
+			check.MustOK(s.Update(func() { s.clicked++ }))
 		},
 	}
 }

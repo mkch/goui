@@ -216,13 +216,13 @@ func (app *App) CreateWindow(config *Window) error {
 	if config.Menu != nil {
 		elem, _, err := buildElementTree(ctx, config.Menu)
 		if err != nil {
-			errortrace.Panic(err)
+			return err
 		}
 		if nm := unwrapNativeMenu(elem); nm != nil {
 			window.Menu = elem
 			err = native.SetWindowMenu(window.Handle, nm)
 			if err != nil {
-				errortrace.Panic(err)
+				return err
 			}
 		}
 	}

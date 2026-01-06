@@ -6,8 +6,8 @@ package main
 import (
 	"image/color"
 
-	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 )
@@ -19,17 +19,13 @@ var app = goui.NewApp(&goui.AppConfig{
 })
 
 func main() {
-	err := app.CreateWindow(&goui.Window{
+	check.MustOK(app.CreateWindow(&goui.Window{
 		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "panel sample",
 		Width:     800,
 		Height:    600,
 		Root:      rootWidget(),
-	})
-
-	if err != nil {
-		errortrace.Panic(err)
-	}
+	}))
 
 	app.Run()
 }

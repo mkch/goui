@@ -3,8 +3,8 @@ package native
 import (
 	"iter"
 
-	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/gw/paint"
 	"github.com/mkch/gw/paint/brush"
@@ -18,12 +18,12 @@ var debugRectPen = func() func() *pen.Pen {
 	var p *pen.Pen
 	return func() *pen.Pen {
 		if p == nil {
-			p = gg.Must(pen.New(pen.NewLogPen(&win32.LOGPEN{
+			p = check.Must(pen.New(pen.NewLogPen(&win32.LOGPEN{
 				Style: win32.PS_DOT,
 				Width: 2,
 				Color: win32.RGB(255, 0, 0),
 			}, 96), 96))
-			//p = gg.Must(pen.NewCosmetic(win32.PS_DOT, win32.RGB(255, 0, 0)))
+			//p = check.Must(pen.NewCosmetic(win32.PS_DOT, win32.RGB(255, 0, 0)))
 		}
 		return p
 	}
@@ -33,7 +33,7 @@ var debugRectHollowBrush = func() func() *brush.Brush {
 	var b *brush.Brush
 	return func() *brush.Brush {
 		if b == nil {
-			b = gg.Must(brush.NewStock(win32.NULL_BRUSH))
+			b = check.Must(brush.NewStock(win32.NULL_BRUSH))
 		}
 		return b
 	}
@@ -43,7 +43,7 @@ var debugRectHighlightBrush = func() func() *brush.Brush {
 	var b *brush.Brush
 	return func() *brush.Brush {
 		if b == nil {
-			b = gg.Must(brush.New(&win32.LOGBRUSH{
+			b = check.Must(brush.New(&win32.LOGBRUSH{
 				Style: win32.BS_SOLID,
 				Color: win32.RGB(255, 0, 0),
 			}))
@@ -110,17 +110,17 @@ For windows 10/11, one can include this compatibility snippet in its app.manifes
 			Erase: paintData.Erase,
 		})
 
-		dpi := gg.Must(win32.GetDpiForWindow(layeredPanel.HWND()))
+		dpi := check.Must(win32.GetDpiForWindow(layeredPanel.HWND()))
 
 		pen := debugRectPen()
-		defer gg.Must(paint.SelectObject(paintData.DC, pen.HPEN())).Restore()
+		defer check.Must(paint.SelectObject(paintData.DC, pen.HPEN())).Restore()
 
 		for rect := range rects() {
 			var restore func()
 			if rect.Highlight {
-				restore = gg.Must(paint.SelectObject(paintData.DC, debugRectHighlightBrush().HBRUSH())).Restore
+				restore = check.Must(paint.SelectObject(paintData.DC, debugRectHighlightBrush().HBRUSH())).Restore
 			} else {
-				restore = gg.Must(paint.SelectObject(paintData.DC, debugRectHollowBrush().HBRUSH())).Restore
+				restore = check.Must(paint.SelectObject(paintData.DC, debugRectHollowBrush().HBRUSH())).Restore
 			}
 			left := rect.Left.Px(uint(dpi))
 			right := rect.Right.Px(uint(dpi))

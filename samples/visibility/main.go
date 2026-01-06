@@ -4,8 +4,8 @@ package main
 //go:generate rsrc -arch 386 -manifest manifest.xml
 
 import (
-	"github.com/mkch/gg"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 )
@@ -69,7 +69,7 @@ func (s *state) Build() goui.Widget {
 				Label: "Show",
 				OnClick: func(ctx *goui.Context) {
 					if !s.visible {
-						gg.MustOK(s.Update(func() { s.visible = true }))
+						check.MustOK(s.Update(func() { s.visible = true }))
 					}
 				},
 			},
@@ -77,7 +77,7 @@ func (s *state) Build() goui.Widget {
 				Label: "Hide",
 				OnClick: func(ctx *goui.Context) {
 					if s.visible || s.maintainSize {
-						gg.MustOK(s.Update(func() { s.visible = false; s.maintainSize = false }))
+						check.MustOK(s.Update(func() { s.visible = false; s.maintainSize = false }))
 					}
 				},
 			},
@@ -85,7 +85,7 @@ func (s *state) Build() goui.Widget {
 				Label: "Hide, maintain size",
 				OnClick: func(ctx *goui.Context) {
 					if s.visible || !s.maintainSize {
-						gg.MustOK(s.Update(func() { s.visible = false; s.maintainSize = true }))
+						check.MustOK(s.Update(func() { s.visible = false; s.maintainSize = true }))
 					}
 				},
 			},
