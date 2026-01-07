@@ -23,6 +23,8 @@ var app = goui.NewApp(&goui.AppConfig{
 	},
 })
 
+var popupCount = 0
+
 func main() {
 	check.MustOK(app.CreateWindow(&goui.Window{
 		Title:     "menu demo",
@@ -39,7 +41,10 @@ func main() {
 				if event.Button&listener.SecondaryMouseButton != 0 {
 					err := menu.Popup(ctx, &menu.Menu{Items: []goui.Widget{
 						&menu.Item{Title: "Item1"},
-						&menu.Item{Title: "Item2"},
+						&menu.Item{
+							Title:    fmt.Sprintf("Popup Count: %d", popupCount),
+							OnSelect: func(ctx *goui.Context) { popupCount++ },
+						},
 						&menu.Item{Title: "Hello Submenu",
 							Submenu: &menu.Menu{Items: []goui.Widget{
 								&menu.Item{

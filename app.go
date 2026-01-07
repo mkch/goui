@@ -244,6 +244,7 @@ func (app *App) CreateWindow(config *Window) (err error) {
 }
 
 // unwrapNativeMenu unwraps the given Element to find the nearest underlying [NativeMenuElement].
+// If such a NativeMenuElement is found, its native.Handle is returned.
 // Any wrapper that is not [StatelessWidget] or [StatefulWidget] are skipped.
 func unwrapNativeMenu(element Element) native.Handle {
 	h, found := LookupChild(element, func(e Element) (native.Handle, bool) {

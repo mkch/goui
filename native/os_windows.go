@@ -555,3 +555,7 @@ func ClientToScreen(win Handle, x, y metrics.DP) (screenX, screenY metrics.DP, e
 	}
 	return metrics.Px(int(pt.X), uint(dpi)), metrics.Px(int(pt.Y), uint(dpi)), nil
 }
+
+func GetWindowMenu(win Handle) (Handle, error) {
+	return win32.GetMenu(win.(winBase).HWND())
+}
