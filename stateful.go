@@ -2,6 +2,7 @@ package goui
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/mkch/goui/native"
 )
@@ -139,24 +140,13 @@ func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement)
 		return err
 	}
 
-	// Whether statefulElement is part of the window element tree.
-	var rootedInWindow bool
-	// If the updated stateful element is part of a menu, refresh the menu.
-	for elem := Element(statefulElement); elem != nil; elem = elem.Parent() {
-		if elem == ctx.window.Menu {
-			if err := native.RefreshWindowMenu(ctx.NativeWindow()); err != nil {
-				return err
-			}
-			break
-		}
-		if elem == ctx.window.Root {
-			rootedInWindow = true
-			break
-		}
+	attachment := elementAttachedToWindow(ctx, statefulElement)
+	if attachment == None {
+		return nil
 	}
 
-	if !rootedInWindow {
-		return nil
+	if attachment == IsWindowMenu {
+		return native.RefreshWindowMenu(ctx.NativeWindow())
 	}
 
 	// Layout
@@ -173,6 +163,126 @@ func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement)
 		return layoutWindow(ctx)
 	}
 	return err
+}
+
+type windowAttachment int
+
+const (
+	None windowAttachment = iota
+	InWidgetTree
+	IsWindowMenu
+)
+
+// elementAttachedToWindow checks whether the given element is attached to the window.
+// Returns IsWindowMenu only if element itself is the window menu or element's direct
+// native parent is the window menu.
+// Returns InWidgetTree if the element is in the window's main widget tree.
+// Returns None otherwise.
+func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
+	const (
+		stateInitial = iota
+		stateInWidgetTree
+		stateInMenuTree
+	)
+
+	state := stateInitial
+
+	for elem := element; elem != nil; elem = elem.Parent() {
+		switch state {
+		case stateInitial:
+			// Check for window menu or root
+			if elem == ctx.window.Menu {
+				return IsWindowMenu
+			}
+			if elem == ctx.window.Root {
+				return InWidgetTree
+			}
+
+			if _, ok := elem.(NativeMenuElement); ok {
+				// Non-window menu, not attached to window
+				return None
+			}
+
+			// Check for menu item, enter menu tree state
+			if _, ok := elem.(NativeMenuItemElement); ok {
+				// May be an item of the window menu
+				state = stateInMenuTree
+				continue
+			}
+
+			// Skip transparent widgets (StatefulWidget and StatelessWidget)
+			widget := elem.Widget()
+			if _, ok := widget.(*StatefulWidget); ok {
+				continue
+			}
+			if _, ok := widget.(*StatelessWidget); ok {
+				continue
+			}
+
+			// Encountered non-transparent widget (Container or other), enter widget tree state
+			state = stateInWidgetTree
+
+		case stateInWidgetTree:
+			// Check for root widget
+			if elem == ctx.window.Root {
+				return InWidgetTree
+			}
+
+			// Skip transparent widgets and containers
+			widget := elem.Widget()
+			if _, ok := widget.(*StatefulWidget); ok {
+				continue
+			}
+			if _, ok := widget.(*StatelessWidget); ok {
+				continue
+			}
+			if _, ok := widget.(Container); ok {
+				continue
+			}
+
+			if ctx.app.debug != nil {
+				if _, ok := widget.(NativeMenuElement); ok {
+					panic("invalid element tree: widget tree contains menu element")
+				}
+				if _, ok := widget.(NativeMenuItemElement); ok {
+					panic("invalid element tree: widget tree contains menu item element")
+				}
+			}
+
+			// Encountered other element, not in window widget tree
+			return None
+
+		case stateInMenuTree:
+			// Check for window menu
+			if elem == ctx.window.Menu {
+				return IsWindowMenu
+			}
+
+			if _, ok := elem.(NativeMenuElement); ok {
+				// Non-window menu, not attached to window
+				return None
+			}
+
+			// Skip transparent widgets
+			widget := elem.Widget()
+			if _, ok := widget.(*StatefulWidget); ok {
+				continue
+			}
+			if _, ok := widget.(*StatelessWidget); ok {
+				continue
+			}
+
+			// If it's neither transparent widget nor menu, the element tree
+			// is illegal.
+			if ctx.app.debug != nil {
+				panic(fmt.Sprintf("invalid element tree: menu tree contains non-menu element %T", elem))
+			}
+			return None
+		}
+	}
+
+	// Reached end of parent chain without finding root or window menu
+	return None
 }
 
 var errNotReplayable = errors.New("the parent layouter does not support replaying")
