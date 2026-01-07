@@ -118,9 +118,12 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
 
-	widget := NewStatefulWidget(ValueID("stateful"), func(ctx *StateContext) State {
-		return NewState(ctx, func() Widget { return childWidget }, nil)
-	})
+	widget := &StatefulWidget{
+		ID: ValueID("stateful"),
+		StateCreator: func(ctx *StateContext) State {
+			return NewState(ctx, func() Widget { return childWidget }, nil)
+		},
+	}
 
 	elem, layouter, err := buildElementTree(ctx, widget)
 
@@ -152,9 +155,11 @@ func TestBuildElementTree_StatelessWidget(t *testing.T) {
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
 
-	widget := NewStatelessWidget(ValueID("stateless"), func(ctx *Context) Widget {
-		return childWidget
-	})
+	widget := &StatelessWidget{
+		ID: ValueID("stateless"),
+		Builder: func(ctx *Context) Widget {
+			return childWidget
+		}}
 
 	elem, layouter, err := buildElementTree(ctx, widget)
 
@@ -210,9 +215,12 @@ func TestBuildElementTree_Container(t *testing.T) {
 
 	container := &mockContainer{
 		ID: ValueID("container"),
-		Children: []Widget{child1, NewStatelessWidget(ValueID("stateless"), func(ctx *Context) Widget {
-			return child2
-		})},
+		Children: []Widget{child1, &StatelessWidget{
+			ID: ValueID("stateless"),
+			Builder: func(ctx *Context) Widget {
+				return child2
+			},
+		}},
 	}
 
 	elem, layouter, err := buildElementTree(ctx, container)
@@ -253,9 +261,12 @@ func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 	childWidget := &mockWidget{ID: ValueID("child"), element: &ElementBase{}}
 	container := &mockContainer{
 		ID: ValueID("container"),
-		Children: []Widget{NewStatelessWidget(ValueID("stateless"), func(ctx *Context) Widget {
-			return childWidget
-		})},
+		Children: []Widget{&StatelessWidget{
+			ID: ValueID("stateless"),
+			Builder: func(ctx *Context) Widget {
+				return childWidget
+			},
+		}},
 	}
 	elem, layouter, err := buildElementTree(ctx, container)
 
@@ -295,7 +306,10 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 	container2 := &mockContainer{
 		ID: ValueID("container"),
 		Children: []Widget{
-			NewStatelessWidget(nil, func(ctx *Context) Widget { return child1 }),
+			&StatelessWidget{
+				Builder: func(ctx *Context) Widget {
+					return child1
+				}},
 			child2},
 	}
 
@@ -316,7 +330,7 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 	if newElem.NumChildren() != 2 {
 		t.Fatalf("expected 2 children, got %d", newElem.NumChildren())
 	}
-	if childWidget1, ok := newElem.Child(0).Widget().(StatelessWidget); !ok {
+	if childWidget1, ok := newElem.Child(0).Widget().(*StatelessWidget); !ok {
 		t.Fatal("expected first child to be a StatelessWidget")
 	} else if childWidget1.Build(ctx) != child1 {
 		t.Fatal("first child widget not updated correctly")
@@ -340,8 +354,14 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 
 	container3 := &mockContainer{
 		Children: []Widget{
-			NewStatelessWidget(ValueID("stateless"), func(ctx *Context) Widget { return child1 }),
-			child2},
+			&StatelessWidget{
+				ID: ValueID("stateless"),
+				Builder: func(ctx *Context) Widget {
+					return child1
+				},
+			},
+			child2,
+		},
 	}
 
 	newElem2, err := reconcileElementTreeImpl(ctx, newElem, container3)
@@ -387,12 +407,17 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child1,
-			NewStatefulWidget(nil, func(ctx *StateContext) State {
-				return NewState(ctx, func() Widget { return child2 }, nil)
-			}),
-			NewStatefulWidget(ValueID("no-change"), func(ctx *StateContext) State {
-				return NewState(ctx, func() Widget { return child3 }, nil)
-			}),
+			&StatefulWidget{
+				StateCreator: func(ctx *StateContext) State {
+					return NewState(ctx, func() Widget { return child2 }, nil)
+				},
+			},
+			&StatefulWidget{
+				ID: ValueID("no-change"),
+				StateCreator: func(ctx *StateContext) State {
+					return NewState(ctx, func() Widget { return child3 }, nil)
+				},
+			},
 		},
 	}
 
@@ -412,12 +437,18 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child4, // Match old #0, update in-place.
-			NewStatefulWidget(ValueID("parent-of-child5"), func(ctx *StateContext) State { // No match, recrated
-				return NewState(ctx, func() Widget { return child5 }, nil)
-			}),
-			NewStatefulWidget(ValueID("no-change"), func(ctx *StateContext) State { // Match old #2, update in-place and createState will not be called.
-				return NewState(ctx, func() Widget { return child3 }, nil)
-			}),
+			&StatefulWidget{
+				ID: ValueID("parent-of-child5"),
+				StateCreator: func(ctx *StateContext) State { // No match, recrated
+					return NewState(ctx, func() Widget { return child5 }, nil)
+				},
+			},
+			&StatefulWidget{
+				ID: ValueID("no-change"),
+				StateCreator: func(ctx *StateContext) State { // Match old #2, update in-place and createState will not be called.
+					return NewState(ctx, func() Widget { return child3 }, nil)
+				},
+			},
 		},
 	}
 

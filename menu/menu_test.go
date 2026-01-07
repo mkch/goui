@@ -41,46 +41,6 @@ func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui
 	return &goui.ElementBase{}, nil
 }
 
-// mockStatelessWidget is a test widget implementing [goui.StatelessWidget].
-// It can be used as a widget that is neither menu nor menu item, or
-// as the parent of menu or menu item.
-type mockStatelessWidget struct {
-	goui.StatelessWidgetImpl
-	id    goui.ID
-	child goui.Widget
-}
-
-func (w *mockStatelessWidget) WidgetID() goui.ID {
-	return w.id
-}
-
-func (w *mockStatelessWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return &goui.ElementBase{}, nil
-}
-
-func (w *mockStatelessWidget) Build(ctx *goui.Context) goui.Widget {
-	return w.child
-}
-
-// mockStatefulWidget is a test widget implementing [goui.StatefulWidget].
-// It can be used as a widget that is neither menu nor menu item, or
-// as the parent of menu or menu item.
-type mockStatefulWidget struct {
-	goui.StatefulWidgetHelper
-	id    goui.ID
-	child goui.Widget
-}
-
-func (w *mockStatefulWidget) WidgetID() goui.ID {
-	return w.id
-}
-
-func (w *mockStatefulWidget) CreateState(ctx *goui.StateContext) goui.State {
-	return goui.NewState(ctx, func() goui.Widget {
-		return w.child
-	}, nil)
-}
-
 // TestBuildSuccess_BasicMenuStructure tests basic menu structure builds successfully
 func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
 	ctx := widgetstest.NewContext()
@@ -122,11 +82,13 @@ func TestBuildSuccess_ItemWrappedByStateless(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&mockStatelessWidget{
-				id: goui.ValueID("stateless"),
-				child: &Item{
-					ID:    goui.ValueID("item"),
-					Title: "Item",
+			&goui.StatelessWidget{
+				ID: goui.ValueID("stateless"),
+				Builder: func(ctx *goui.Context) goui.Widget {
+					return &Item{
+						ID:    goui.ValueID("item"),
+						Title: "Item",
+					}
 				},
 			},
 		},
@@ -145,11 +107,15 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&mockStatefulWidget{
-				id: goui.ValueID("stateful"),
-				child: &Item{
-					ID:    goui.ValueID("item"),
-					Title: "Item",
+			&goui.StatefulWidget{
+				ID: goui.ValueID("stateful"),
+				StateCreator: func(ctx *goui.StateContext) goui.State {
+					return goui.NewState(ctx, func() goui.Widget {
+						return &Item{
+							ID:    goui.ValueID("item"),
+							Title: "Item",
+						}
+					}, nil)
 				},
 			},
 		},
@@ -165,11 +131,12 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 func TestBuildSuccess_MenuWrappedByStateless(t *testing.T) {
 	ctx := widgetstest.NewContext()
 
-	menu := &mockStatelessWidget{
-		id: goui.ValueID("stateless"),
-		child: &Menu{
-			ID:    goui.ValueID("submenu"),
-			Items: []goui.Widget{},
+	menu := &goui.StatelessWidget{
+		ID: goui.ValueID("stateless"),
+		Builder: func(ctx *goui.Context) goui.Widget {
+			return &Menu{
+				ID: goui.ValueID("submenu"),
+			}
 		},
 	}
 
@@ -189,11 +156,13 @@ func TestBuildSuccess_SubmenuWrappedByStateless(t *testing.T) {
 			&Item{
 				ID:    goui.ValueID("item"),
 				Title: "Item",
-				Submenu: &mockStatelessWidget{
-					id: goui.ValueID("stateless"),
-					child: &Menu{
-						ID:    goui.ValueID("submenu"),
-						Items: []goui.Widget{},
+				Submenu: &goui.StatelessWidget{
+					ID: goui.ValueID("stateless"),
+					Builder: func(ctx *goui.Context) goui.Widget {
+						return &Menu{
+							ID:    goui.ValueID("submenu"),
+							Items: []goui.Widget{},
+						}
 					},
 				},
 			},
@@ -216,11 +185,15 @@ func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
 			&Item{
 				ID:    goui.ValueID("item"),
 				Title: "Item",
-				Submenu: &mockStatefulWidget{
-					id: goui.ValueID("stateful"),
-					child: &Menu{
-						ID:    goui.ValueID("submenu"),
-						Items: []goui.Widget{},
+				Submenu: &goui.StatefulWidget{
+					ID: goui.ValueID("stateful"),
+					StateCreator: func(ctx *goui.StateContext) goui.State {
+						return goui.NewState(ctx, func() goui.Widget {
+							return &Menu{
+								ID:    goui.ValueID("submenu"),
+								Items: []goui.Widget{},
+							}
+						}, nil)
 					},
 				},
 			},
@@ -240,14 +213,18 @@ func TestBuildSuccess_NestedStatelessWidgets(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&mockStatelessWidget{
-				id: goui.ValueID("stateless1"),
-				child: &mockStatelessWidget{
-					id: goui.ValueID("stateless2"),
-					child: &Item{
-						ID:    goui.ValueID("item"),
-						Title: "Item",
-					},
+			&goui.StatelessWidget{
+				ID: goui.ValueID("stateless1"),
+				Builder: func(ctx *goui.Context) goui.Widget {
+					return &goui.StatelessWidget{
+						ID: goui.ValueID("stateless2"),
+						Builder: func(ctx *goui.Context) goui.Widget {
+							return &Item{
+								ID:    goui.ValueID("item"),
+								Title: "Item",
+							}
+						},
+					}
 				},
 			},
 		},
@@ -266,23 +243,29 @@ func TestBuildSuccess_MixedWrappers(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&mockStatefulWidget{
-				id: goui.ValueID("stateful"),
-				child: &Item{
-					ID:    goui.ValueID("item"),
-					Title: "Item",
-					Submenu: &mockStatelessWidget{
-						id: goui.ValueID("stateless"),
-						child: &Menu{
-							ID: goui.ValueID("submenu"),
-							Items: []goui.Widget{
-								&Item{
-									ID:    goui.ValueID("subitem"),
-									Title: "Sub Item",
+			&goui.StatefulWidget{
+				ID: goui.ValueID("stateful"),
+				StateCreator: func(ctx *goui.StateContext) goui.State {
+					return goui.NewState(ctx, func() goui.Widget {
+						return &Item{
+							ID:    goui.ValueID("item"),
+							Title: "Item",
+							Submenu: &goui.StatelessWidget{
+								ID: goui.ValueID("stateless"),
+								Builder: func(ctx *goui.Context) goui.Widget {
+									return &Menu{
+										ID: goui.ValueID("submenu"),
+										Items: []goui.Widget{
+											&Item{
+												ID:    goui.ValueID("subitem"),
+												Title: "Sub Item",
+											},
+										},
+									}
 								},
 							},
-						},
-					},
+						}
+					}, nil)
 				},
 			},
 		},
@@ -301,9 +284,11 @@ func TestBuildSuccess_SeparatorWrappedByStateless(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&mockStatelessWidget{
-				id:    goui.ValueID("stateless"),
-				child: &Separator{ID: goui.ValueID("separator")},
+			&goui.StatelessWidget{
+				ID: goui.ValueID("stateless"),
+				Builder: func(ctx *goui.Context) goui.Widget {
+					return &Separator{ID: goui.ValueID("separator")}
+				},
 			},
 		},
 	}
@@ -402,11 +387,13 @@ func TestBuildFailure_ContainerBeforeStateless(t *testing.T) {
 		Items: []goui.Widget{
 			&mockWidget{
 				id: goui.ValueID("container"),
-				child: &mockStatelessWidget{
-					id: goui.ValueID("stateless"),
-					child: &Item{
-						ID:    goui.ValueID("item"),
-						Title: "Item",
+				child: &goui.StatelessWidget{
+					ID: goui.ValueID("stateless"),
+					Builder: func(ctx *goui.Context) goui.Widget {
+						return &Item{
+							ID:    goui.ValueID("item"),
+							Title: "Item",
+						}
 					},
 				},
 			},

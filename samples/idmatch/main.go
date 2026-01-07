@@ -105,10 +105,12 @@ func (s *State) Build() goui.Widget {
 	}
 }
 
-func Root() goui.StatefulWidget {
-	return goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
-		return NewState(ctx)
-	})
+func Root() goui.Widget {
+	return &goui.StatefulWidget{
+		StateCreator: func(ctx *goui.StateContext) goui.State {
+			return NewState(ctx)
+		},
+	}
 }
 
 type PersonState struct {
@@ -136,11 +138,11 @@ func NewPersonState(ctx *goui.StateContext, person *Person) goui.State {
 	}
 }
 
-func NewPersonWidget(person Person) goui.StatefulWidget {
-	return goui.NewStatefulWidget(
-		goui.ValueID(person.ID),
-		func(ctx *goui.StateContext) goui.State {
+func NewPersonWidget(person Person) goui.Widget {
+	return &goui.StatefulWidget{
+		ID: goui.ValueID(person.ID),
+		StateCreator: func(ctx *goui.StateContext) goui.State {
 			return NewPersonState(ctx, &person)
-		})
-
+		},
+	}
 }

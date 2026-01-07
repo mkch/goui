@@ -34,40 +34,20 @@ func (state *CountState) Build() goui.Widget {
 	}
 }
 
-// CounterButton is a stateful widget that displays a button showing the click count.
+// NewCounterButton creates a new counter button with the given ID.
+// The returned counter button is a stateful widget that displays a button showing the click count.
 // Each time the button is clicked, the click count increases by one.
-type CounterButton struct {
-	goui.StatefulWidgetHelper
-	goui.ID
-}
-
-// NewCounterButton creates a new [CounterButton] with the given ID.
-func NewCounterButton(ID goui.ID) *CounterButton {
-	return &CounterButton{
+func NewCounterButton(ID goui.ID) *goui.StatefulWidget {
+	return &goui.StatefulWidget{
 		ID: ID,
+		StateCreator: func(ctx *goui.StateContext) goui.State {
+			return NewCountState(ctx)
+		},
 	}
 }
 
-// CreateState implements [goui.StatefulWidget.CreateState] method.
-func (*CounterButton) CreateState(ctx *goui.StateContext) goui.State {
-	return NewCountState(ctx)
-}
-
-// ID implements [goui.Widget.ID] method.
-func (b *CounterButton) WidgetID() goui.ID {
-	return b.ID
-}
-
 func ExampleStatefulWidget() {
-	var counterButton goui.StatefulWidget = NewCounterButton(goui.ValueID("id"))
-	// Or simply use StatefulWidgetFunc:
-	counterButton = goui.NewStatefulWidget(goui.ValueID("id"), func(ctx *goui.StateContext) goui.State {
-		return NewCountState(ctx)
-	})
-	// Or StatefulWidgetFunc if ID is nil:
-	counterButton = goui.StatefulWidgetFunc(func(sc *goui.StateContext) goui.State {
-		return NewCountState(sc)
-	})
+	var counterButton *goui.StatefulWidget = NewCounterButton(goui.ValueID("id"))
 
 	_ = counterButton
 }

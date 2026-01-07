@@ -6,45 +6,29 @@ import (
 	"github.com/mkch/goui/native"
 )
 
-type StatefulWidget interface {
-	Widget
-	// CreateState creates the state associated with this widget.
-	CreateState(*StateContext) State
-	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
-	Exclusive(StatefulWidget)
+// StatefulWidget is a widget that has mutable state.
+// The state is stored in a separate State object associated with the widget.
+// The state can be updated via [State].Update method, which triggers a rebuild of the widget tree.
+type StatefulWidget struct {
+	ID ID
+	// StateCreator creates the state associated with this widget.
+	StateCreator func(ctx *StateContext) State
 }
 
-// StatefulWidgetHelper is a building block to implement [StatefulWidget].
-// Embedding StatefulWidgetHelper in a struct and implementing WidgetID and
-// CreateState methods allows the struct type to satisfy the [StatefulWidget] interface.
-// See example in [StatefulWidget].
-type StatefulWidgetHelper struct{}
+func (w *StatefulWidget) WidgetID() ID {
+	return w.ID
+}
 
-func (StatefulWidgetHelper) Exclusive(StatefulWidget) { /*Nop*/ }
-
-func (StatefulWidgetHelper) CreateElement(ctx *Context, parent Element) (Element, error) {
+func (w *StatefulWidget) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatefulElement(ctx), nil
 }
 
-// StatefulWidgetFunc is a function type that implements [StatefulWidget].
-// The WidgetID method returns nil.
-// This function is convenient to create simple stateful widgets without defining a new struct type.
-// See example of [StatefulWidget].
-type StatefulWidgetFunc func(*StateContext) State
-
-func (f StatefulWidgetFunc) WidgetID() ID {
-	return nil
+func (w *StatefulWidget) CreateState(ctx *StateContext) State {
+	return w.StateCreator(ctx)
 }
 
-func (f StatefulWidgetFunc) CreateElement(ctx *Context, parent Element) (Element, error) {
-	return createStatefulElement(ctx), nil
-}
-
-func (f StatefulWidgetFunc) CreateState(ctx *StateContext) State {
-	return f(ctx)
-}
-
-func (f StatefulWidgetFunc) Exclusive(StatefulWidget) { /*Nop*/ }
+// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
+func (w *StatefulWidget) Exclusive(StatefulWidget) { /*Nop*/ }
 
 type statefulElement struct {
 	ElementBase
@@ -77,7 +61,7 @@ type State interface {
 	// Having f return an error would add unnecessary noise for callers.
 
 	// Update calls updater and then updates the state.
-	// Use [StateUpdater] to implement this method.
+	// Use StateUpdater to implement this method.
 	Update(updater func()) error
 }
 
@@ -118,14 +102,14 @@ type NopDestroyer struct{}
 // Destroy does nothing.
 func (NopDestroyer) Destroy() { /*NOP*/ }
 
-// StateUpdater implements State.Update method.
+// StateUpdater implements [State].Update method.
 // Embedding StateUpdater in a struct and implementing other methods of [State]
 // allows the struct type to satisfy the [State] interface.
 type StateUpdater stateUpdater
 
 type stateUpdater func(updater func()) error
 
-// Update implements [State.Update].
+// Update implements [State].Update.
 func (h StateUpdater) Update(updater func()) error {
 	return h(updater)
 }
@@ -208,33 +192,4 @@ func replayParentLayouter(ctx *Context, root Layouter) error {
 		return errNotReplayable
 	}
 	return replayer(ctx)
-}
-
-// statelessWidget is an implementation of StatelessWidget.
-type statefulWidget struct {
-	id          ID
-	createState func(ctx *StateContext) State
-}
-
-func (w *statefulWidget) WidgetID() ID {
-	return w.id
-}
-
-func (w *statefulWidget) CreateElement(ctx *Context, parent Element) (Element, error) {
-	return createStatefulElement(ctx), nil
-}
-
-func (w *statefulWidget) CreateState(ctx *StateContext) State {
-	return w.createState(ctx)
-}
-
-func (w *statefulWidget) Exclusive(StatefulWidget) { /*Nop*/ }
-
-// NewStatefulWidget creates a new StatefulWidget with the given ID and createState function.
-// The createState function is called in StatefulWidget.CreateState method.
-func NewStatefulWidget(id ID, createState func(ctx *StateContext) State) StatefulWidget {
-	return &statefulWidget{
-		id:          id,
-		createState: createState,
-	}
 }

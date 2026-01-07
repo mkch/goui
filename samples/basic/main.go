@@ -60,16 +60,18 @@ func main() {
 	app.Run()
 }
 
-var counterButton goui.StatefulWidgetFunc = func(ctx *goui.StateContext) (state goui.State) {
-	// Click count, the real state.
-	var count int
-	state = goui.NewState(ctx, func() goui.Widget {
-		return &widgets.Button{
-			Label: fmt.Sprintf("Clicked %d times", count),
-			OnClick: func(ctx *goui.Context) {
-				check.MustOK(state.Update(func() { count++ }))
-			},
-		}
-	}, nil)
-	return
+var counterButton = &goui.StatefulWidget{
+	StateCreator: func(ctx *goui.StateContext) (state goui.State) {
+		// Click count, the real state.
+		var count int
+		state = goui.NewState(ctx, func() goui.Widget {
+			return &widgets.Button{
+				Label: fmt.Sprintf("Clicked %d times", count),
+				OnClick: func(ctx *goui.Context) {
+					check.MustOK(state.Update(func() { count++ }))
+				},
+			}
+		}, nil)
+		return
+	},
 }

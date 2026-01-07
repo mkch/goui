@@ -61,22 +61,19 @@ func TestUnwrapNativeMenu_WrappedInStatelessWidget(t *testing.T) {
 		elem: menuElem,
 	}
 
-	statelessWidget := &testStatelessWidget{
-		id:   ValueID("stateless_wrapper"),
-		elem: &ElementBase{}, // This will be set to statelessElem
-		menu: menuWidget,
+	statelessWidget := &StatelessWidget{
+		ID: ValueID("stateless_wrapper"),
+		Builder: func(ctx *Context) Widget {
+			return menuWidget
+		},
 	}
 
-	// Create the element for the stateless widget
-	statelessElem := &ElementBase{
-		theWidget: statelessWidget,
+	elem, err := BuildElementTree(newMockContext(nil), statelessWidget)
+	if err != nil {
+		t.Fatalf("failed to build element tree: %v", err)
 	}
-	statelessWidget.elem = statelessElem
 
-	// Manually append menu element as child (simulating what the framework would do)
-	element_AppendChild(statelessElem, menuElem)
-
-	result := unwrapNativeMenu(statelessElem)
+	result := unwrapNativeMenu(elem)
 
 	if result != expectedHandle {
 		t.Errorf("expected handle %v, got %v", expectedHandle, result)
@@ -99,22 +96,21 @@ func TestUnwrapNativeMenu_WrappedInStatefulWidget(t *testing.T) {
 		elem: menuElem,
 	}
 
-	statefulWidget := &testStatefulWidget{
-		id:   ValueID("stateful_wrapper"),
-		elem: &ElementBase{}, // This will be set to statefulElem
-		menu: menuWidget,
+	statefulWidget := &StatefulWidget{
+		ID: ValueID("stateful_wrapper"),
+		StateCreator: func(ctx *StateContext) State {
+			return NewState(ctx, func() Widget {
+				return menuWidget
+			}, nil)
+		},
 	}
 
-	// Create the element for the stateful widget
-	statefulElem := &ElementBase{
-		theWidget: statefulWidget,
+	elem, err := BuildElementTree(newMockContext(nil), statefulWidget)
+	if err != nil {
+		t.Fatalf("failed to build element tree: %v", err)
 	}
-	statefulWidget.elem = statefulElem
 
-	// Manually append menu element as child (simulating what the framework would do)
-	element_AppendChild(statefulElem, menuElem)
-
-	result := unwrapNativeMenu(statefulElem)
+	result := unwrapNativeMenu(elem)
 
 	if result != expectedHandle {
 		t.Errorf("expected handle %v, got %v", expectedHandle, result)
@@ -132,30 +128,29 @@ func TestUnwrapNativeMenu_StatefulInStateless(t *testing.T) {
 	}
 
 	// Create a StatefulWidget that has the menu
-	statefulWidget := &testStatefulWidget{
-		id:   ValueID("stateful_inner"),
-		elem: &ElementBase{},
-		menu: &mockNativeMenuWidget{id: ValueID("menu"), elem: menuElem},
+	statefulWidget := &StatefulWidget{
+		ID: ValueID("stateful_inner"),
+		StateCreator: func(ctx *StateContext) State {
+			return NewState(ctx, func() Widget {
+				return &mockNativeMenuWidget{id: ValueID("menu"), elem: menuElem}
+			}, nil)
+		},
 	}
-	statefulElem := &ElementBase{
-		theWidget: statefulWidget,
-	}
-	statefulWidget.elem = statefulElem
-	element_AppendChild(statefulElem, menuElem)
 
 	// Create a StatelessWidget that contains the StatefulWidget
-	statelessWidget := &testStatelessWidget{
-		id:   ValueID("stateless_outer"),
-		elem: &ElementBase{},
-		menu: statefulWidget, // Returns the stateful widget
+	statelessWidget := &StatelessWidget{
+		ID: ValueID("stateless_outer"),
+		Builder: func(ctx *Context) Widget {
+			return statefulWidget
+		},
 	}
-	statelessElem := &ElementBase{
-		theWidget: statelessWidget,
-	}
-	statelessWidget.elem = statelessElem
-	element_AppendChild(statelessElem, statefulElem)
 
-	result := unwrapNativeMenu(statelessElem)
+	elem, err := BuildElementTree(newMockContext(nil), statelessWidget)
+	if err != nil {
+		t.Fatalf("failed to build element tree: %v", err)
+	}
+
+	result := unwrapNativeMenu(elem)
 
 	if result != expectedHandle {
 		t.Errorf("expected handle %v, got %v", expectedHandle, result)
@@ -173,30 +168,29 @@ func TestUnwrapNativeMenu_StatelessInStateful(t *testing.T) {
 	}
 
 	// Create a StatelessWidget that has the menu
-	statelessWidget := &testStatelessWidget{
-		id:   ValueID("stateless_inner"),
-		elem: &ElementBase{},
-		menu: &mockNativeMenuWidget{id: ValueID("menu"), elem: menuElem},
+	statelessWidget := &StatelessWidget{
+		ID: ValueID("stateless_inner"),
+		Builder: func(ctx *Context) Widget {
+			return &mockNativeMenuWidget{id: ValueID("menu"), elem: menuElem}
+		},
 	}
-	statelessElem := &ElementBase{
-		theWidget: statelessWidget,
-	}
-	statelessWidget.elem = statelessElem
-	element_AppendChild(statelessElem, menuElem)
 
 	// Create a StatefulWidget that contains the StatelessWidget
-	statefulWidget := &testStatefulWidget{
-		id:   ValueID("stateful_outer"),
-		elem: &ElementBase{},
-		menu: statelessWidget, // Returns the stateless widget
+	statefulWidget := &StatefulWidget{
+		ID: ValueID("stateful_outer"),
+		StateCreator: func(ctx *StateContext) State {
+			return NewState(ctx, func() Widget {
+				return statelessWidget
+			}, nil)
+		},
 	}
-	statefulElem := &ElementBase{
-		theWidget: statefulWidget,
-	}
-	statefulWidget.elem = statefulElem
-	element_AppendChild(statefulElem, statelessElem)
 
-	result := unwrapNativeMenu(statefulElem)
+	elem, err := BuildElementTree(newMockContext(nil), statefulWidget)
+	if err != nil {
+		t.Fatalf("failed to build element tree: %v", err)
+	}
+
+	result := unwrapNativeMenu(elem)
 
 	if result != expectedHandle {
 		t.Errorf("expected handle %v, got %v", expectedHandle, result)
@@ -232,9 +226,11 @@ func TestUnwrapNativeMenu_BlockedByContainer(t *testing.T) {
 func TestUnwrapNativeMenu_NotFound(t *testing.T) {
 	// Create a stateless widget without a menu
 	statelessElem := &ElementBase{}
-	statelessElem.theWidget = &testStatelessWidget{
-		id:   ValueID("regular"),
-		elem: statelessElem,
+	statelessElem.theWidget = &StatelessWidget{
+		ID: ValueID("regular"),
+		Builder: func(ctx *Context) Widget {
+			return nil
+		},
 	}
 
 	result := unwrapNativeMenu(statelessElem)
@@ -242,63 +238,6 @@ func TestUnwrapNativeMenu_NotFound(t *testing.T) {
 	if result != nil {
 		t.Errorf("expected nil, got %v", result)
 	}
-}
-
-// Test helper widgets
-
-type testStatelessWidget struct {
-	id   ID
-	elem *ElementBase
-	menu Widget
-}
-
-func (w *testStatelessWidget) WidgetID() ID {
-	return w.id
-}
-
-func (w *testStatelessWidget) CreateElement(ctx *Context, parent Element) (Element, error) {
-	return w.elem, nil
-}
-
-func (w *testStatelessWidget) Build(ctx *Context) Widget {
-	return w.menu
-}
-
-func (w *testStatelessWidget) Exclusive(StatelessWidget) {}
-
-type testStatefulWidget struct {
-	id   ID
-	elem *ElementBase
-	menu Widget
-}
-
-func (w *testStatefulWidget) WidgetID() ID {
-	return w.id
-}
-
-func (w *testStatefulWidget) CreateElement(ctx *Context, parent Element) (Element, error) {
-	return w.elem, nil
-}
-
-func (w *testStatefulWidget) CreateState(ctx *StateContext) State {
-	return &testState{menu: w.menu}
-}
-
-func (w *testStatefulWidget) Exclusive(StatefulWidget) {}
-
-type testState struct {
-	menu Widget
-}
-
-func (s *testState) Build() Widget {
-	return s.menu
-}
-
-func (s *testState) Destroy() {}
-
-func (s *testState) Update(updater func()) error {
-	updater()
-	return nil
 }
 
 type testContainer struct {

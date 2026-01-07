@@ -29,7 +29,7 @@ func main() {
 		Width:     800,
 		Height:    600,
 		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
-		Menu:      goui.StatefulWidgetFunc(MainMenu),
+		Menu:      MainMenu,
 		Root: &widgets.Listener{
 			OnPointerUp: func(ctx *goui.Context, event *listener.PointerEvent) {
 				var spec *menu.PopupSpec
@@ -65,43 +65,45 @@ func main() {
 var showHelp = true
 var screenCoord = false // Use screen coordinates for menu popup
 
-func MainMenu(ctx *goui.StateContext) (state goui.State) {
-	state = goui.NewState(ctx, func() goui.Widget {
-		m := &menu.WindowMenu{
-			Items: []goui.Widget{
-				&menu.Item{
-					Title: "File",
-					Submenu: &menu.Menu{
-						Items: []goui.Widget{
-							&menu.Item{
-								Title:    "New",
-								OnSelect: func(ctx *goui.Context) { fmt.Println("New selected") },
-							},
-							&menu.Separator{},
-							goui.StatefulWidgetFunc(CountItem),
-							&menu.Item{
-								Title:    gg.If(showHelp, "Hide Help", "Show Help"),
-								OnSelect: func(ctx *goui.Context) { state.Update(func() { showHelp = !showHelp }) },
-							},
-							&menu.Item{
-								Title:    gg.If(screenCoord, "Popup at mouse pointer", "Popup at (10,20) on screen"),
-								OnSelect: func(ctx *goui.Context) { state.Update(func() { screenCoord = !screenCoord }) },
+var MainMenu = &goui.StatefulWidget{
+	StateCreator: func(ctx *goui.StateContext) (state goui.State) {
+		state = goui.NewState(ctx, func() goui.Widget {
+			m := &menu.WindowMenu{
+				Items: []goui.Widget{
+					&menu.Item{
+						Title: "File",
+						Submenu: &menu.Menu{
+							Items: []goui.Widget{
+								&menu.Item{
+									Title:    "New",
+									OnSelect: func(ctx *goui.Context) { fmt.Println("New selected") },
+								},
+								&menu.Separator{},
+								CounterItem,
+								&menu.Item{
+									Title:    gg.If(showHelp, "Hide Help", "Show Help"),
+									OnSelect: func(ctx *goui.Context) { state.Update(func() { showHelp = !showHelp }) },
+								},
+								&menu.Item{
+									Title:    gg.If(screenCoord, "Popup at mouse pointer", "Popup at (10,20) on screen"),
+									OnSelect: func(ctx *goui.Context) { state.Update(func() { screenCoord = !screenCoord }) },
+								},
 							},
 						},
 					},
 				},
-			},
-		}
-		if showHelp {
-			m.Items = append(m.Items, &menu.Item{
-				Title:    "Help",
-				Disabled: true,
-			},
-			)
-		}
-		return m
-	}, nil)
-	return
+			}
+			if showHelp {
+				m.Items = append(m.Items, &menu.Item{
+					Title:    "Help",
+					Disabled: true,
+				},
+				)
+			}
+			return m
+		}, nil)
+		return
+	},
 }
 
 type CountState struct {
@@ -123,8 +125,10 @@ func (s *CountState) Build() goui.Widget {
 	}
 }
 
-func CountItem(ctx *goui.StateContext) goui.State {
-	return &CountState{
-		StateUpdater: goui.NewStateUpdater(ctx),
-	}
+var CounterItem = &goui.StatefulWidget{
+	StateCreator: func(ctx *goui.StateContext) goui.State {
+		return &CountState{
+			StateUpdater: goui.NewStateUpdater(ctx),
+		}
+	},
 }

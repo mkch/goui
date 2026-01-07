@@ -251,10 +251,10 @@ func unwrapNativeMenu(element Element) native.Handle {
 			return nativeMenu.NativeMenu(), true // Found a menu
 		}
 		widget := e.Widget()
-		if _, isStateless := widget.(StatelessWidget); isStateless {
+		if _, isStateless := widget.(*StatelessWidget); isStateless {
 			return nil, false // May contain a menu, continue searching
 		}
-		if _, isStateful := widget.(StatefulWidget); isStateful {
+		if _, isStateful := widget.(*StatefulWidget); isStateful {
 			return nil, false // May contain a menu, continue searching
 		}
 		// Can't contain a menu. Found a `Not Found`(nil).

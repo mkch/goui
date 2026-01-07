@@ -93,8 +93,10 @@ func (s *state) Build() goui.Widget {
 	}
 }
 
-func demoWidget() goui.StatefulWidget {
-	return goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
-		return NewState(ctx)
-	})
+func demoWidget() *goui.StatefulWidget {
+	return &goui.StatefulWidget{
+		StateCreator: func(ctx *goui.StateContext) goui.State {
+			return NewState(ctx)
+		},
+	}
 }

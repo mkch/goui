@@ -52,21 +52,23 @@ func main() {
 	app.Run()
 }
 
-func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidget, setEnabled func(bool)) {
+func newEnableDisableButton(label string, onClick func()) (btn *goui.StatefulWidget, setEnabled func(bool)) {
 	var enabled bool = true
 	var updater goui.StateUpdater
-	btn = goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
-		updater = goui.NewStateUpdater(ctx)
-		return goui.NewState(ctx, func() goui.Widget {
-			return &widgets.Button{
-				Label:    label,
-				Disabled: !enabled,
-				OnClick: func(ctx *goui.Context) {
-					onClick()
-				},
-			}
-		}, nil)
-	})
+	btn = &goui.StatefulWidget{
+		StateCreator: func(ctx *goui.StateContext) goui.State {
+			updater = goui.NewStateUpdater(ctx)
+			return goui.NewState(ctx, func() goui.Widget {
+				return &widgets.Button{
+					Label:    label,
+					Disabled: !enabled,
+					OnClick: func(ctx *goui.Context) {
+						onClick()
+					},
+				}
+			}, nil)
+		},
+	}
 	setEnabled = func(value bool) {
 		updater.Update(func() { enabled = value })
 	}
@@ -88,19 +90,21 @@ func createWindow2() {
 	})
 }
 
-func newCountButton() goui.StatefulWidget {
-	return goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
-		var count int
-		var updater = goui.NewStateUpdater(ctx)
-		return goui.NewState(ctx, func() goui.Widget {
-			return &widgets.Button{
-				Label: fmt.Sprintf("Clicked %d times", count),
-				OnClick: func(ctx *goui.Context) {
-					check.MustOK(updater.Update(func() { count++ }))
-				},
-			}
-		}, nil)
-	})
+func newCountButton() *goui.StatefulWidget {
+	return &goui.StatefulWidget{
+		StateCreator: func(ctx *goui.StateContext) goui.State {
+			var count int
+			var updater = goui.NewStateUpdater(ctx)
+			return goui.NewState(ctx, func() goui.Widget {
+				return &widgets.Button{
+					Label: fmt.Sprintf("Clicked %d times", count),
+					OnClick: func(ctx *goui.Context) {
+						check.MustOK(updater.Update(func() { count++ }))
+					},
+				}
+			}, nil)
+		},
+	}
 }
 
 func createWindow3(id goui.ID, onDestroy func(*goui.Context)) {
