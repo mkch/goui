@@ -22,6 +22,8 @@ func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui
 	return &w.Element, nil
 }
 
+func (*mockWidget) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+
 type mockElement struct {
 	goui.ElementBase
 }
@@ -65,11 +67,11 @@ func Test_RowSize(t *testing.T) {
 		},
 	}
 
-	column := &Row{
+	row := &Row{
 		Widgets:      []goui.Widget{widget1, widget2},
 		MainAxisSize: axes.Min,
 	}
-	_, layouter, err := widgetstest.BuildElementTree(ctx, column, nil)
+	_, layouter, err := widgetstest.BuildElementTree(ctx, row, nil)
 	if err != nil {
 		t.Fatalf("BuildElementTree error: %v", err)
 	}
@@ -84,11 +86,11 @@ func Test_RowSize(t *testing.T) {
 		t.Fatalf("Unexpected size: got %v, want Width=300 Height=50", size)
 	}
 
-	column = &Row{
+	row = &Row{
 		Widgets:      []goui.Widget{widget1, widget2},
 		MainAxisSize: axes.Max,
 	}
-	_, layouter, err = widgetstest.BuildElementTree(ctx, column, nil)
+	_, layouter, err = widgetstest.BuildElementTree(ctx, row, nil)
 	if err != nil {
 		t.Fatalf("BuildElementTree error: %v", err)
 	}

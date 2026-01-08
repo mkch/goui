@@ -34,7 +34,7 @@ func main() {
 					&widgets.SizedBox{
 						Width:  200,
 						Height: 40,
-						Widget: stateful,
+						Widget: goui.StatefulWidgetFunc(stateful),
 					},
 					&widgets.SizedBox{Height: 10},
 					&widgets.Button{
@@ -81,9 +81,7 @@ func (s *numberState) Inc() {
 
 var state *numberState
 
-var stateful = &goui.Stateful{
-	StateCreator: func(ctx *goui.StateContext) goui.State {
-		state = NewState(ctx)
-		return state
-	},
+func stateful(ctx *goui.StateContext) goui.State {
+	state = NewState(ctx)
+	return state
 }

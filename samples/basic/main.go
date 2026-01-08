@@ -28,7 +28,7 @@ func main() {
 				HeightFactor: 1.2,
 				Widget: &widgets.SizedBox{
 					Width: 200, Height: 50,
-					Widget: newClickMeButton(),
+					Widget: goui.StatelessWidgetFunc(ClickMeButton),
 				},
 			},
 			&widgets.Center{
@@ -47,7 +47,7 @@ func main() {
 				Widget: &widgets.Padding{
 					Left:   100,
 					Right:  200,
-					Widget: counterButton,
+					Widget: goui.StatefulWidgetFunc(counterButton),
 				},
 			},
 		}},
@@ -55,31 +55,25 @@ func main() {
 	app.Run()
 }
 
-func newClickMeButton() goui.Widget {
-	return &goui.Stateless{
-		Builder: func(ctx *goui.Context) goui.Widget {
-			return &widgets.Button{
-				Label: "Click me!",
-				OnClick: func(ctx *goui.Context) {
-					fmt.Println("Click me!")
-				},
-			}
+func ClickMeButton(ctx *goui.Context) goui.Widget {
+	return &widgets.Button{
+		Label: "Click me!",
+		OnClick: func(ctx *goui.Context) {
+			fmt.Println("Click me!")
 		},
 	}
 }
 
-var counterButton = &goui.Stateful{
-	StateCreator: func(ctx *goui.StateContext) (state goui.State) {
-		// Click count, the real state.
-		var count int
-		state = goui.NewState(ctx, func() goui.Widget {
-			return &widgets.Button{
-				Label: fmt.Sprintf("Clicked %d times", count),
-				OnClick: func(ctx *goui.Context) {
-					check.MustOK(state.Update(func() { count++ }))
-				},
-			}
-		}, nil)
-		return
-	},
+func counterButton(ctx *goui.StateContext) (state goui.State) {
+	// Click count, the real state.
+	var count int
+	state = goui.NewState(ctx, func() goui.Widget {
+		return &widgets.Button{
+			Label: fmt.Sprintf("Clicked %d times", count),
+			OnClick: func(ctx *goui.Context) {
+				check.MustOK(state.Update(func() { count++ }))
+			},
+		}
+	}, nil)
+	return
 }

@@ -40,14 +40,14 @@ func main() {
 					spec = &menu.PopupSpec{Pos: metrics.Point{X: 10, Y: 20}}
 				}
 				if event.Button&listener.SecondaryMouseButton != 0 {
-					err := menu.Popup(ctx, &menu.Menu{Items: []goui.Widget{
+					err := menu.Popup(ctx, &menu.Menu{Items: []goui.MenuItem{
 						&menu.Item{Title: "Item1"},
 						&menu.Item{
 							Title:    fmt.Sprintf("Popup Count: %d", popupCount),
 							OnSelect: func(ctx *goui.Context) { popupCount++ },
 						},
 						&menu.Item{Title: "Hello Submenu",
-							Submenu: &menu.Menu{Items: []goui.Widget{
+							Submenu: &menu.Menu{Items: []goui.MenuItem{
 								&menu.Item{
 									Title: "Hello!",
 									OnSelect: func(ctx *goui.Context) {
@@ -71,15 +71,16 @@ func main() {
 var showHelp = true
 var screenCoord = false // Use screen coordinates for menu popup
 
-var MainMenu = &goui.Stateful{
-	StateCreator: func(ctx *goui.StateContext) (state goui.State) {
-		state = goui.NewState(ctx, func() goui.Widget {
+var MainMenu = menu.NewStatefulMenu(
+	nil,
+	func(ctx *goui.StateContext) (state menu.MenuState) {
+		state = menu.NewMenuState(ctx, func() goui.Menu {
 			m := &menu.WindowMenu{
-				Items: []goui.Widget{
+				Items: []goui.MenuItem{
 					&menu.Item{
 						Title: "File",
 						Submenu: &menu.Menu{
-							Items: []goui.Widget{
+							Items: []goui.MenuItem{
 								&menu.Item{
 									Title:    "New",
 									OnSelect: func(ctx *goui.Context) { fmt.Println("New selected") },
@@ -110,7 +111,7 @@ var MainMenu = &goui.Stateful{
 		}, nil)
 		return
 	},
-}
+)
 
 type CountState struct {
 	goui.StateUpdater
@@ -122,7 +123,7 @@ func (s *CountState) Increment() {
 	s.Update(func() { s.count++ })
 }
 
-func (s *CountState) Build() goui.Widget {
+func (s *CountState) Build() goui.MenuItem {
 	return &menu.Item{
 		Title: fmt.Sprintf("Count: %d", s.count),
 		OnSelect: func(ctx *goui.Context) {
@@ -131,10 +132,11 @@ func (s *CountState) Build() goui.Widget {
 	}
 }
 
-var CounterItem = &goui.Stateful{
-	StateCreator: func(ctx *goui.StateContext) goui.State {
+var CounterItem = menu.NewStatefulItem(
+	nil,
+	func(ctx *goui.StateContext) menu.ItemState {
 		return &CountState{
 			StateUpdater: goui.NewStateUpdater(ctx),
 		}
 	},
-}
+)

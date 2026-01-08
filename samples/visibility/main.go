@@ -29,7 +29,7 @@ func main() {
 }
 
 func rootWidget() goui.Widget {
-	return &widgets.Center{Widget: demoWidget()}
+	return &widgets.Center{Widget: goui.StatefulWidgetFunc(demoWidget)}
 }
 
 type state struct {
@@ -93,10 +93,6 @@ func (s *state) Build() goui.Widget {
 	}
 }
 
-func demoWidget() *goui.Stateful {
-	return &goui.Stateful{
-		StateCreator: func(ctx *goui.StateContext) goui.State {
-			return NewState(ctx)
-		},
-	}
+func demoWidget(ctx *goui.StateContext) goui.State {
+	return NewState(ctx)
 }

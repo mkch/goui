@@ -56,11 +56,13 @@ func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (element
 	return
 }
 
+func (*Label) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+
 type labelElement struct {
 	goui.ControlElementBase
 }
 
-func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
 	oldLabel, _ := e.Widget().(*Label)
 	newLabel := widget.(*Label)
 

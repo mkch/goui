@@ -34,11 +34,13 @@ func (p *Expanded) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Expanded) Child(n int) goui.Widget {
+func (p *Expanded) Child(n int) goui.WidgetBase {
 	return p.Widget
 }
 
-func (p *Expanded) Exclusive(goui.Container) { /*Nop*/ }
+func (p *Expanded) Exclusive(goui.ContainerBase) { /*Nop*/ }
+
+func (*Expanded) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
 
 type expandedLayouter struct {
 	goui.LayouterHelper
@@ -51,7 +53,7 @@ func (l *expandedLayouter) Layout(ctx *goui.Context, constraints metrics.Constra
 		if err != nil {
 			return
 		}
-		err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), size, constraints)
+		err = debug.CheckLayoutOverflow(ctx, child.Element().Widget().(goui.Widget), size, constraints)
 		return // Only one child
 	}
 	return constraints.MaxSize(), nil
@@ -78,7 +80,7 @@ func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []go
 			return
 		}
 		sizes = append(sizes, size)
-		err = debug.CheckLayoutOverflow(ctx, l.Element().Widget(), size, constraints)
+		err = debug.CheckLayoutOverflow(ctx, l.Element().Widget().(goui.Widget), size, constraints)
 		return
 	}
 	widgets := slices2.Map(expandedLayouters, func(l goui.Layouter) *Expanded {
@@ -123,7 +125,7 @@ func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []go
 		if err != nil {
 			return
 		}
-		if err = debug.CheckLayoutOverflow(ctx, l.Element().Widget(), layoutSize, constraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, l.Element().Widget().(goui.Widget), layoutSize, constraints); err != nil {
 			return
 		}
 		sizes = append(sizes, layoutSize)

@@ -25,7 +25,7 @@ func main() {
 		Title:     "goui idmatch demo",
 		Width:     1200,
 		Height:    800,
-		Root:      Root(),
+		Root:      goui.StatefulWidgetFunc(Root),
 	})
 	app.Run()
 }
@@ -105,12 +105,8 @@ func (s *State) Build() goui.Widget {
 	}
 }
 
-func Root() goui.Widget {
-	return &goui.Stateful{
-		StateCreator: func(ctx *goui.StateContext) goui.State {
-			return NewState(ctx)
-		},
-	}
+func Root(ctx *goui.StateContext) goui.State {
+	return NewState(ctx)
 }
 
 type PersonState struct {
@@ -139,10 +135,10 @@ func NewPersonState(ctx *goui.StateContext, person *Person) goui.State {
 }
 
 func NewPersonWidget(person Person) goui.Widget {
-	return &goui.Stateful{
-		ID: goui.ValueID(person.ID),
-		StateCreator: func(ctx *goui.StateContext) goui.State {
+	return goui.NewStatefulWidget(
+		goui.ValueID(person.ID),
+		func(ctx *goui.StateContext) goui.State {
 			return NewPersonState(ctx, &person)
 		},
-	}
+	)
 }

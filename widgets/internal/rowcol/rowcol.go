@@ -58,7 +58,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (s
 			return
 		}
 		childrenSizes = append(childrenSizes, childSize)
-		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, childConstraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget().(goui.Widget), childSize, childConstraints); err != nil {
 			return
 		}
 		notExpandableChildrenMain += *l.Main(&childSize)

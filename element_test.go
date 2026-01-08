@@ -28,6 +28,8 @@ func (w *mockWidget) CreateElement(ctx *Context, parent Element) (Element, error
 	return w.element, nil
 }
 
+func (*mockWidget) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
+
 func TestBuildElementTree_CreateElementError(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	expectedErr := errors.New("create element error")
@@ -118,12 +120,12 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
 
-	widget := &Stateful{
-		ID: ValueID("stateful"),
-		StateCreator: func(ctx *StateContext) State {
+	widget := NewStatefulWidget(
+		ValueID("stateful"),
+		func(ctx *StateContext) State {
 			return NewState(ctx, func() Widget { return childWidget }, nil)
 		},
-	}
+	)
 
 	elem, layouter, err := buildElementTree(ctx, widget)
 
@@ -155,11 +157,11 @@ func TestBuildElementTree_StatelessWidget(t *testing.T) {
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
 
-	widget := &Stateless{
-		ID: ValueID("stateless"),
-		Builder: func(ctx *Context) Widget {
+	widget := NewStatelessWidget(
+		ValueID("stateless"),
+		func(ctx *Context) Widget {
 			return childWidget
-		}}
+		})
 
 	elem, layouter, err := buildElementTree(ctx, widget)
 
@@ -200,11 +202,13 @@ func (c *mockContainer) NumChildren() int {
 	return len(c.Children)
 }
 
-func (c *mockContainer) Child(n int) Widget {
+func (c *mockContainer) Child(n int) WidgetBase {
 	return c.Children[n]
 }
 
-func (c *mockContainer) Exclusive(Container) { /*Nop*/ }
+func (c *mockContainer) Exclusive(ContainerBase) { /*Nop*/ }
+
+func (*mockContainer) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
 
 func TestBuildElementTree_Container(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
@@ -215,12 +219,14 @@ func TestBuildElementTree_Container(t *testing.T) {
 
 	container := &mockContainer{
 		ID: ValueID("container"),
-		Children: []Widget{child1, &Stateless{
-			ID: ValueID("stateless"),
-			Builder: func(ctx *Context) Widget {
-				return child2
-			},
-		}},
+		Children: []Widget{
+			child1,
+			NewStatelessWidget(
+				ValueID("stateless"),
+				func(ctx *Context) Widget {
+					return child2
+				},
+			)},
 	}
 
 	elem, layouter, err := buildElementTree(ctx, container)
@@ -261,12 +267,12 @@ func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 	childWidget := &mockWidget{ID: ValueID("child"), element: &ElementBase{}}
 	container := &mockContainer{
 		ID: ValueID("container"),
-		Children: []Widget{&Stateless{
-			ID: ValueID("stateless"),
-			Builder: func(ctx *Context) Widget {
+		Children: []Widget{NewStatelessWidget(
+			ValueID("stateless"),
+			func(ctx *Context) Widget {
 				return childWidget
 			},
-		}},
+		)},
 	}
 	elem, layouter, err := buildElementTree(ctx, container)
 
@@ -306,10 +312,9 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 	container2 := &mockContainer{
 		ID: ValueID("container"),
 		Children: []Widget{
-			&Stateless{
-				Builder: func(ctx *Context) Widget {
-					return child1
-				}},
+			StatelessWidgetFunc(func(ctx *Context) Widget {
+				return child1
+			}),
 			child2},
 	}
 
@@ -330,7 +335,7 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 	if newElem.NumChildren() != 2 {
 		t.Fatalf("expected 2 children, got %d", newElem.NumChildren())
 	}
-	if childWidget1, ok := newElem.Child(0).Widget().(*Stateless); !ok {
+	if childWidget1, ok := newElem.Child(0).Widget().(StatelessWidget); !ok {
 		t.Fatal("expected first child to be a StatelessWidget")
 	} else if childWidget1.Build(ctx) != child1 {
 		t.Fatal("first child widget not updated correctly")
@@ -354,12 +359,12 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 
 	container3 := &mockContainer{
 		Children: []Widget{
-			&Stateless{
-				ID: ValueID("stateless"),
-				Builder: func(ctx *Context) Widget {
+			NewStatelessWidget(
+				ValueID("stateless"),
+				func(ctx *Context) Widget {
 					return child1
 				},
-			},
+			),
 			child2,
 		},
 	}
@@ -407,17 +412,18 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child1,
-			&Stateful{
-				StateCreator: func(ctx *StateContext) State {
+			NewStatefulWidget(
+				nil,
+				func(ctx *StateContext) State {
 					return NewState(ctx, func() Widget { return child2 }, nil)
 				},
-			},
-			&Stateful{
-				ID: ValueID("no-change"),
-				StateCreator: func(ctx *StateContext) State {
+			),
+			NewStatefulWidget(
+				ValueID("no-change"),
+				func(ctx *StateContext) State {
 					return NewState(ctx, func() Widget { return child3 }, nil)
 				},
-			},
+			),
 		},
 	}
 
@@ -437,18 +443,18 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child4, // Match old #0, update in-place.
-			&Stateful{
-				ID: ValueID("parent-of-child5"),
-				StateCreator: func(ctx *StateContext) State { // No match, recrated
+			NewStatefulWidget(
+				ValueID("parent-of-child5"),
+				func(ctx *StateContext) State { // No match, recrated
 					return NewState(ctx, func() Widget { return child5 }, nil)
 				},
-			},
-			&Stateful{
-				ID: ValueID("no-change"),
-				StateCreator: func(ctx *StateContext) State { // Match old #2, update in-place and createState will not be called.
+			),
+			NewStatefulWidget(
+				ValueID("no-change"),
+				func(ctx *StateContext) State { // Match old #2, update in-place and createState will not be called.
 					return NewState(ctx, func() Widget { return child3 }, nil)
 				},
-			},
+			),
 		},
 	}
 
@@ -606,7 +612,9 @@ func (m *mockMenu) Child(n int) Widget {
 	return m.Widget
 }
 
-func (m *mockMenu) Exclusive(Container) { /*Nop*/ }
+func (m *mockMenu) Exclusive(ContainerBase) { /*Nop*/ }
+
+func (m *mockMenu) ExclusiveWidgetMenu(Menu) { /*Nop*/ }
 
 type mockMenuElement struct {
 	ElementBase
@@ -639,20 +647,4 @@ func (c *mockControl) CreateElement(ctx *Context, parent Element) (Element, erro
 type mockControlElement struct {
 	ControlElementBase
 	nativeParent native.Handle
-}
-
-func TestBuildElementFail_ControlInMenu(t *testing.T) {
-	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
-
-	var w Widget = &mockMenu{
-		ID: ValueID("menu"),
-		Widget: &mockControl{
-			ID: ValueID("child"),
-		},
-	}
-
-	elem, err := BuildElementTree(ctx, w)
-	if !errors.Is(err, ErrWrongParent) {
-		t.Fatalf("expected error when building control inside menu, got element %#v", elem)
-	}
 }

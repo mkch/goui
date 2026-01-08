@@ -13,9 +13,9 @@ func ExampleMenu() {
 		Width:  400,
 		Height: 300,
 		Menu: &menu.Menu{
-			Items: []goui.Widget{&menu.Item{
+			Items: []goui.MenuItem{&menu.Item{
 				Title: "File",
-				Submenu: &menu.Menu{Items: []goui.Widget{
+				Submenu: &menu.Menu{Items: []goui.MenuItem{
 					&menu.Item{
 						Title:    "New",
 						OnSelect: func(ctx *goui.Context) { /* handle New action */ },

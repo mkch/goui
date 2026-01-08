@@ -1,11 +1,9 @@
 package menu
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/widgetstest"
 )
 
@@ -28,14 +26,14 @@ func (w *mockWidget) NumChildren() int {
 	return 0
 }
 
-func (w *mockWidget) Child(n int) goui.Widget {
+func (w *mockWidget) Child(n int) goui.WidgetBase {
 	if w.child == nil || n != 0 {
 		panic("index out of range")
 	}
 	return w.child
 }
 
-func (w *mockWidget) Exclusive(goui.Container) {}
+func (w *mockWidget) Exclusive(goui.ContainerBase) {}
 
 func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &goui.ElementBase{}, nil
@@ -47,7 +45,7 @@ func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
 
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
+		Items: []goui.MenuItem{
 			&Item{
 				ID:    goui.ValueID("item1"),
 				Title: "Item 1",
@@ -58,7 +56,7 @@ func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
 				Title: "Item 2",
 				Submenu: &Menu{
 					ID: goui.ValueID("submenu"),
-					Items: []goui.Widget{
+					Items: []goui.MenuItem{
 						&Item{
 							ID:    goui.ValueID("subitem"),
 							Title: "Sub Item",
@@ -81,16 +79,16 @@ func TestBuildSuccess_ItemWrappedByStateless(t *testing.T) {
 
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&goui.Stateless{
-				ID: goui.ValueID("stateless"),
-				Builder: func(ctx *goui.Context) goui.Widget {
+		Items: []goui.MenuItem{
+			NewStatelessItem(
+				goui.ValueID("stateless"),
+				func(ctx *goui.Context) goui.MenuItem {
 					return &Item{
 						ID:    goui.ValueID("item"),
 						Title: "Item",
 					}
 				},
-			},
+			),
 		},
 	}
 
@@ -106,18 +104,18 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&goui.Stateful{
-				ID: goui.ValueID("stateful"),
-				StateCreator: func(ctx *goui.StateContext) goui.State {
-					return goui.NewState(ctx, func() goui.Widget {
+		Items: []goui.MenuItem{
+			NewStatefulItem(
+				goui.ValueID("stateful"),
+				func(ctx *goui.StateContext) ItemState {
+					return NewItemState(ctx, func() goui.MenuItem {
 						return &Item{
 							ID:    goui.ValueID("item"),
 							Title: "Item",
 						}
 					}, nil)
 				},
-			},
+			),
 		},
 	}
 
@@ -131,14 +129,14 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 func TestBuildSuccess_MenuWrappedByStateless(t *testing.T) {
 	ctx := widgetstest.NewContext()
 
-	menu := &goui.Stateless{
-		ID: goui.ValueID("stateless"),
-		Builder: func(ctx *goui.Context) goui.Widget {
+	menu := NewStatelessMenu(
+		goui.ValueID("stateless"),
+		func(ctx *goui.Context) goui.Menu {
 			return &Menu{
 				ID: goui.ValueID("submenu"),
 			}
 		},
-	}
+	)
 
 	_, _, err := widgetstest.BuildElementTree(ctx, menu, nil)
 	if err != nil {
@@ -152,19 +150,19 @@ func TestBuildSuccess_SubmenuWrappedByStateless(t *testing.T) {
 
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
+		Items: []goui.MenuItem{
 			&Item{
 				ID:    goui.ValueID("item"),
 				Title: "Item",
-				Submenu: &goui.Stateless{
-					ID: goui.ValueID("stateless"),
-					Builder: func(ctx *goui.Context) goui.Widget {
+				Submenu: NewStatelessMenu(
+					goui.ValueID("stateless"),
+					func(ctx *goui.Context) goui.Menu {
 						return &Menu{
 							ID:    goui.ValueID("submenu"),
-							Items: []goui.Widget{},
+							Items: []goui.MenuItem{},
 						}
 					},
-				},
+				),
 			},
 		},
 	}
@@ -181,21 +179,21 @@ func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
 
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
+		Items: []goui.MenuItem{
 			&Item{
 				ID:    goui.ValueID("item"),
 				Title: "Item",
-				Submenu: &goui.Stateful{
-					ID: goui.ValueID("stateful"),
-					StateCreator: func(ctx *goui.StateContext) goui.State {
-						return goui.NewState(ctx, func() goui.Widget {
+				Submenu: NewStatefulMenu(
+					goui.ValueID("stateful"),
+					func(ctx *goui.StateContext) MenuState {
+						return NewMenuState(ctx, func() goui.Menu {
 							return &Menu{
 								ID:    goui.ValueID("submenu"),
-								Items: []goui.Widget{},
+								Items: []goui.MenuItem{},
 							}
 						}, nil)
 					},
-				},
+				),
 			},
 		},
 	}
@@ -212,21 +210,21 @@ func TestBuildSuccess_NestedStatelessWidgets(t *testing.T) {
 
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&goui.Stateless{
-				ID: goui.ValueID("stateless1"),
-				Builder: func(ctx *goui.Context) goui.Widget {
-					return &goui.Stateless{
-						ID: goui.ValueID("stateless2"),
-						Builder: func(ctx *goui.Context) goui.Widget {
+		Items: []goui.MenuItem{
+			NewStatelessItem(
+				goui.ValueID("stateless1"),
+				func(ctx *goui.Context) goui.MenuItem {
+					return NewStatelessItem(
+						goui.ValueID("stateless2"),
+						func(ctx *goui.Context) goui.MenuItem {
 							return &Item{
 								ID:    goui.ValueID("item"),
 								Title: "Item",
 							}
 						},
-					}
+					)
 				},
-			},
+			),
 		},
 	}
 
@@ -242,20 +240,20 @@ func TestBuildSuccess_MixedWrappers(t *testing.T) {
 
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&goui.Stateful{
-				ID: goui.ValueID("stateful"),
-				StateCreator: func(ctx *goui.StateContext) goui.State {
-					return goui.NewState(ctx, func() goui.Widget {
+		Items: []goui.MenuItem{
+			NewStatefulItem(
+				goui.ValueID("stateful"),
+				func(ctx *goui.StateContext) ItemState {
+					return NewItemState(ctx, func() goui.MenuItem {
 						return &Item{
 							ID:    goui.ValueID("item"),
 							Title: "Item",
-							Submenu: &goui.Stateless{
-								ID: goui.ValueID("stateless"),
-								Builder: func(ctx *goui.Context) goui.Widget {
+							Submenu: NewStatelessMenu(
+								goui.ValueID("stateless"),
+								func(ctx *goui.Context) goui.Menu {
 									return &Menu{
 										ID: goui.ValueID("submenu"),
-										Items: []goui.Widget{
+										Items: []goui.MenuItem{
 											&Item{
 												ID:    goui.ValueID("subitem"),
 												Title: "Sub Item",
@@ -263,11 +261,11 @@ func TestBuildSuccess_MixedWrappers(t *testing.T) {
 										},
 									}
 								},
-							},
+							),
 						}
 					}, nil)
 				},
-			},
+			),
 		},
 	}
 
@@ -283,156 +281,18 @@ func TestBuildSuccess_SeparatorWrappedByStateless(t *testing.T) {
 
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&goui.Stateless{
-				ID: goui.ValueID("stateless"),
-				Builder: func(ctx *goui.Context) goui.Widget {
+		Items: []goui.MenuItem{
+			NewStatelessItem(
+				goui.ValueID("stateless"),
+				func(ctx *goui.Context) goui.MenuItem {
 					return &Separator{ID: goui.ValueID("separator")}
 				},
-			},
+			),
 		},
 	}
 
 	_, _, err := widgetstest.BuildElementTree(ctx, menu, nil)
 	if err != nil {
 		t.Errorf("expected build to succeed when Separator is wrapped by StatelessWidget, got error: %v", err)
-	}
-}
-
-// TestBuildFailure_ItemWrappedByContainer tests Item wrapped by Container fails to build
-func TestBuildFailure_ItemWrappedByContainer(t *testing.T) {
-	ctx := widgetstest.NewContext()
-
-	menu := &Menu{
-		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&mockWidget{
-				id: goui.ValueID("container"),
-				child: &Item{
-					ID:    goui.ValueID("item"),
-					Title: "Item",
-				},
-			},
-		},
-	}
-
-	_, _, err := widgetstest.BuildElementTree(ctx, menu, nil)
-	if err == nil {
-		t.Fatalf("expected build to fail when Item is wrapped by Container (lookupNativeMenuParent blocked)")
-	}
-	if !errors.Is(err, goui.ErrWrongParent) {
-		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
-	}
-}
-
-// TestBuildFailure_SubmenuWrappedByContainer tests Submenu wrapped by Container fails to build
-func TestBuildFailure_SubmenuWrappedByContainer(t *testing.T) {
-	ctx := widgetstest.NewContext()
-
-	menu := &Menu{
-		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&Item{
-				ID:    goui.ValueID("item"),
-				Title: "Item",
-				Submenu: &mockWidget{
-					id: goui.ValueID("container"),
-					child: &Menu{
-						ID:    goui.ValueID("submenu"),
-						Items: []goui.Widget{},
-					},
-				},
-			},
-		},
-	}
-
-	_, _, err := widgetstest.BuildElementTree(ctx, menu, nil)
-	if err == nil {
-		t.Fatalf("expected build to fail when Submenu is wrapped by Container (lookupNativeItemParent blocked)")
-	}
-	if !errors.Is(err, goui.ErrWrongParent) {
-		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
-	}
-}
-
-// TestBuildFailure_SeparatorWrappedByContainer tests Separator wrapped by Container fails to build
-func TestBuildFailure_SeparatorWrappedByContainer(t *testing.T) {
-	ctx := widgetstest.NewContext()
-
-	menu := &Menu{
-		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&mockWidget{
-				id:    goui.ValueID("container"),
-				child: &Separator{ID: goui.ValueID("separator")},
-			},
-		},
-	}
-
-	_, _, err := widgetstest.BuildElementTree(ctx, menu, nil)
-	if err == nil {
-		t.Fatalf("expected build to fail when Separator is wrapped by Container (lookupNativeMenuParent blocked)")
-	}
-	if !errors.Is(err, goui.ErrWrongParent) {
-		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
-	}
-}
-
-// TestBuildFailure_ContainerBeforeStateless tests Container before StatelessWidget fails to build
-func TestBuildFailure_ContainerBeforeStateless(t *testing.T) {
-	ctx := widgetstest.NewContext()
-
-	menu := &Menu{
-		ID: goui.ValueID("menu"),
-		Items: []goui.Widget{
-			&mockWidget{
-				id: goui.ValueID("container"),
-				child: &goui.Stateless{
-					ID: goui.ValueID("stateless"),
-					Builder: func(ctx *goui.Context) goui.Widget {
-						return &Item{
-							ID:    goui.ValueID("item"),
-							Title: "Item",
-						}
-					},
-				},
-			},
-		},
-	}
-
-	_, _, err := widgetstest.BuildElementTree(ctx, menu, nil)
-	if err == nil {
-		t.Fatalf("expected build to fail when Container is between Menu and Item, even with StatelessWidget after")
-	}
-	if !errors.Is(err, goui.ErrWrongParent) {
-		t.Errorf("expected error to be ErrWrongParent, got: %v", err)
-	}
-}
-
-func TestBuildFailure_MenuInVisibility(t *testing.T) {
-	ctx := widgetstest.NewContext()
-
-	var w goui.Widget = &widgets.Visibility{
-		ID:     goui.ValueID("visibility"),
-		Widget: &Menu{},
-	}
-
-	_, _, err := widgetstest.BuildElementTree(ctx, w, nil)
-	if !errors.Is(err, goui.ErrWrongParent) {
-		t.Fatalf("expected build to fail when Menu is inside Visibility, got error: %v", err)
-	}
-
-	w = &Menu{
-		Items: []goui.Widget{
-			&widgets.Visibility{
-				ID:     goui.ValueID("visibility"),
-				Widget: &Item{},
-			},
-		},
-	}
-
-	_, _, err = widgetstest.BuildElementTree(ctx, w, nil)
-	if !errors.Is(err, goui.ErrWrongParent) {
-		t.Fatalf("expected build to fail when Item is inside Visibility, got error: %v", err)
 	}
 }

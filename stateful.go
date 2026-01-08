@@ -7,40 +7,91 @@ import (
 	"github.com/mkch/goui/native"
 )
 
-// StatefulWidget is a widget that has mutable state.
+// StatefulWidgetBase is a [WidgetBase] that has mutable state.
 // The state is stored in a separate State object associated with the widget.
 // The state can be updated via [State].Update method, which triggers a rebuild of the widget tree.
-type StatefulWidget interface {
-	Widget
-	CreateState(ctx *StateContext) State
-	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
-	Exclusive(StatefulWidget)
+type StatefulWidgetBase interface {
+	WidgetBase
+	CreateState(ctx *StateContext) StateBase
+	// Exclusive is a marker method to distinguish StatefulWidgetBase, StatelessWidgetBase and ContainerBase.
+	Exclusive(StatefulWidgetBase)
 }
 
-// Stateful implements a [StatefulWidget].
-type Stateful struct {
+// StatefulWidgets is a [Widget] that has mutable state.
+type StatefulWidget interface {
+	StatefulWidgetBase
+	ExclusiveWidgetMenu(Widget)
+}
+
+// StatefulHelper is a helper to implement concrete state widgets.
+type StatefulHelper struct {
 	ID ID
 	// StateCreator creates the state associated with this widget.
-	StateCreator func(ctx *StateContext) State
+	StateCreator func(ctx *StateContext) StateBase
 }
 
-func (w *Stateful) WidgetID() ID {
+func (w *StatefulHelper) WidgetID() ID {
 	return w.ID
 }
 
-func (w *Stateful) CreateElement(ctx *Context, parent Element) (Element, error) {
-	return createStatefulElement(ctx), nil
+func (w *StatefulHelper) CreateElement(ctx *Context, parent Element) (Element, error) {
+	return createStatefulElement(ctx)
 }
 
-func (w *Stateful) CreateState(ctx *StateContext) State {
+func (w *StatefulHelper) CreateState(ctx *StateContext) StateBase {
 	return w.StateCreator(ctx)
 }
 
-func (w *Stateful) Exclusive(StatefulWidget) { /*Nop*/ }
+func (*StatefulHelper) Exclusive(StatefulWidgetBase) { /*Nop*/ }
+
+type stateful struct {
+	StatefulHelper
+}
+
+func (*stateful) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
+
+// fromStateAdapter adapts a State to an StateBase.
+type fromStateAdapter struct {
+	State
+}
+
+func (a *fromStateAdapter) Build() WidgetBase {
+	return a.State.Build()
+}
+
+// NewStatefulWidget creates a new StatefulWidget with the given ID and state creator function.
+func NewStatefulWidget(ID ID, stateCreator func(ctx *StateContext) State) StatefulWidget {
+	return &stateful{
+		StatefulHelper: StatefulHelper{
+			ID:           ID,
+			StateCreator: func(ctx *StateContext) StateBase { return &fromStateAdapter{State: stateCreator(ctx)} },
+		},
+	}
+}
+
+// StatefulWidgetFunc is a function type that implements [StatefulWidget].
+// Method WidgetID returns nil and CreateState calls f.
+type StatefulWidgetFunc func(ctx *StateContext) State
+
+func (f StatefulWidgetFunc) WidgetID() ID {
+	return nil
+}
+
+func (f StatefulWidgetFunc) CreateElement(ctx *Context, parent Element) (Element, error) {
+	return createStatefulElement(ctx)
+}
+
+func (f StatefulWidgetFunc) CreateState(ctx *StateContext) StateBase {
+	return &fromStateAdapter{State: f(ctx)}
+}
+
+func (f StatefulWidgetFunc) Exclusive(StatefulWidgetBase) { /*Nop*/ }
+
+func (f StatefulWidgetFunc) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
 
 type statefulElement struct {
 	ElementBase
-	state State
+	state StateBase
 }
 
 // Destroy implements [Element.Destroy].
@@ -50,16 +101,16 @@ func (e *statefulElement) Destroy() error {
 }
 
 // createStatefulElement creates a new [Element] for a [StatefulWidget].
-func createStatefulElement(*Context) Element {
-	return &statefulElement{}
+func createStatefulElement(*Context) (Element, error) {
+	return &statefulElement{}, nil
 }
 
-// State is the state associated with a [StatefulWidget].
-type State interface {
+// StateBase is the state associated with a [StatefulWidgetBase].
+type StateBase interface {
 	// Build builds the widget tree for this state.
 	// It is called during the initial creation of the state
 	// and whenever the state is updated via [UpdateStateFunc].
-	Build() Widget
+	Build() WidgetBase
 	// Destroy is called when the state is destroyed.
 	// It can be used to clean up any resources associated with the state.
 	Destroy()
@@ -73,18 +124,25 @@ type State interface {
 	Update(updater func()) error
 }
 
-// simpleState is a simple implementation of State.
-type simpleState struct {
+// State is the state associated with a [StatefulWidget].
+type State interface {
+	Build() Widget
+	Destroy()
+	Update(updater func()) error
+}
+
+// state is a simple implementation of [State].
+type state struct {
 	StateUpdater
 	destroy func()        // Can be nil
 	build   func() Widget // Can't be nil
 }
 
-func (s *simpleState) Build() Widget {
+func (s *state) Build() Widget {
 	return s.build()
 }
 
-func (s *simpleState) Destroy() {
+func (s *state) Destroy() {
 	if s.destroy != nil {
 		s.destroy()
 	}
@@ -96,7 +154,7 @@ func (s *simpleState) Destroy() {
 // The destroy func can be nil.
 // This function is convenient to create simple states without defining a new struct type.
 func NewState(ctx *StateContext, build func() Widget, destroy func()) State {
-	return &simpleState{
+	return &state{
 		StateUpdater: NewStateUpdater(ctx),
 		build:        build,
 		destroy:      destroy,

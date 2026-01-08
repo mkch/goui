@@ -22,6 +22,8 @@ func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui
 	return &w.Element, nil
 }
 
+func (*mockWidget) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+
 type mockElement struct {
 	goui.ElementBase
 }

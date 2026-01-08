@@ -41,11 +41,13 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 	return elem, nil
 }
 
+func (*TextField) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+
 type textFieldElement struct {
 	goui.ControlElementBase
 }
 
-func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
 	newWidget := widget.(*TextField)
 
 	if err = e.ControlElementBase.SetWidget(ctx, widget); err != nil {

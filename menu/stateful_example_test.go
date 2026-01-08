@@ -21,7 +21,7 @@ func (s *CountState) Increment() {
 }
 
 // Build builds the menu item widget representing and mutating the current state.
-func (s *CountState) Build() goui.Widget {
+func (s *CountState) Build() goui.MenuItem {
 	return &menu.Item{
 		Title: fmt.Sprintf("Count: %d", s.count),
 		OnSelect: func(ctx *goui.Context) {
@@ -31,14 +31,15 @@ func (s *CountState) Build() goui.Widget {
 }
 
 // NewCounterItem creates a stateful menu item that tracks how many times it has been selected.
-func NewCounterItem() *goui.Stateful {
-	return &goui.Stateful{
-		StateCreator: func(ctx *goui.StateContext) goui.State {
+func NewCounterItem() menu.StatefulItem {
+	return menu.NewStatefulItem(
+		nil,
+		func(ctx *goui.StateContext) menu.ItemState {
 			return &CountState{
 				StateUpdater: goui.NewStateUpdater(ctx),
 			}
 		},
-	}
+	)
 }
 func Example_statefulMenuItem() {
 	var app *goui.App // assume app is created elsewhere
@@ -47,10 +48,10 @@ func Example_statefulMenuItem() {
 		Width:  400,
 		Height: 300,
 		Menu: &menu.Menu{
-			Items: []goui.Widget{&menu.Item{
+			Items: []goui.MenuItem{&menu.Item{
 				Title: "Stateful item inside",
 				Submenu: &menu.Menu{
-					Items: []goui.Widget{
+					Items: []goui.MenuItem{
 						NewCounterItem(),
 					},
 				},

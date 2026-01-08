@@ -13,7 +13,7 @@ import (
 // OverflowConstraintsError is returned when a widget's size exceeds its constraints in debug mode.
 // Widget can be nil and if it is not nil, it is included in the error message for better debugging.
 type OverflowConstraintsError struct {
-	Widget      Widget
+	Widget      WidgetBase
 	Size        metrics.Size
 	Constraints metrics.Constraints
 }

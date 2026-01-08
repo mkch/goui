@@ -16,7 +16,7 @@ type Window struct {
 	// The menu widget for the window.
 	// If nil, no menu is created.
 	// Only widgets representing menus should be assigned; others will not display correctly.
-	Menu Widget
+	Menu Menu
 	// OnClose is called when the window is requested to close, if not nil.
 	// If OnClose is not nil and returns false, the window will not close.
 	OnClose   func(ctx *Context) bool

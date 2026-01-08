@@ -34,11 +34,13 @@ func (p *Visibility) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Visibility) Child(n int) goui.Widget {
+func (p *Visibility) Child(n int) goui.WidgetBase {
 	return p.Widget
 }
 
-func (p *Visibility) Exclusive(goui.Container) { /*Nop*/ }
+func (p *Visibility) Exclusive(goui.ContainerBase) { /*Nop*/ }
+
+func (Visibility) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
 
 type visibilityLayouter struct {
 	goui.LayouterHelper

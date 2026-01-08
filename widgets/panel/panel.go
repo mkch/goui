@@ -49,17 +49,19 @@ func (p *Panel) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Panel) Child(n int) goui.Widget {
+func (p *Panel) Child(n int) goui.WidgetBase {
 	return p.Widget
 }
 
-func (p *Panel) Exclusive(goui.Container) { /*Nop*/ }
+func (p *Panel) Exclusive(goui.ContainerBase) { /*Nop*/ }
+
+func (*Panel) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
 
 type panelElement struct {
 	goui.ControlElementBase
 }
 
-func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
 	oldPanel, _ := elem.Widget().(*Panel)
 	newPanel := widget.(*Panel)
 

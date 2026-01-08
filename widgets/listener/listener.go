@@ -77,7 +77,7 @@ func (l *Listener) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child]
-func (l *Listener) Child(index int) goui.Widget {
+func (l *Listener) Child(index int) goui.WidgetBase {
 	if l.Widget == nil || index != 0 {
 		panic("index out of range")
 	}
@@ -85,7 +85,9 @@ func (l *Listener) Child(index int) goui.Widget {
 }
 
 // Exclusive implements [goui.Container.Exclusive]
-func (l *Listener) Exclusive(goui.Container) { /*NOP*/ }
+func (l *Listener) Exclusive(goui.ContainerBase) { /*NOP*/ }
+
+func (*Listener) ExclusiveWidgetMenu(goui.Widget) { /*NOP*/ }
 
 // CreateElement implements [goui.Widget.CreateElement]
 func (l *Listener) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
@@ -104,7 +106,7 @@ type listenerElement struct {
 }
 
 // SetWidget implements [goui.Element.SetWidget]
-func (l *listenerElement) SetWidget(ctx *goui.Context, widget goui.Widget) error {
+func (l *listenerElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) error {
 	l.ctx = ctx
 	if l.remove != nil {
 		l.remove()

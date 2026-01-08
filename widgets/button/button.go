@@ -50,11 +50,13 @@ func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (elemen
 	return
 }
 
+func (*Button) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+
 type buttonElement struct {
 	goui.ControlElementBase
 }
 
-func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
 	oldBtn, _ := e.Widget().(*Button)
 	newBtn := widget.(*Button)
 

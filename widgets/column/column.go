@@ -42,8 +42,10 @@ func (c *Column) NumChildren() int {
 	return len(c.Widgets)
 }
 
-func (c *Column) Child(n int) goui.Widget {
+func (c *Column) Child(n int) goui.WidgetBase {
 	return c.Widgets[n]
 }
 
-func (c *Column) Exclusive(goui.Container) { /*Nop*/ }
+func (c *Column) Exclusive(goui.ContainerBase) { /*Nop*/ }
+
+func (*Column) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }

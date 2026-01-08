@@ -40,19 +40,6 @@ func (ctx *Context) App() *App {
 	return ctx.app
 }
 
-type Widget interface {
-	WidgetID() ID
-	CreateElement(ctx *Context, parent Element) (Element, error)
-}
-
-type Container interface {
-	Widget
-	NumChildren() int
-	Child(n int) Widget
-	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
-	Exclusive(Container)
-}
-
 // App is the main application object that manages the GUI application's lifecycle and windows.
 // There should not be more than one App instance per goroutine.
 type App struct {
@@ -252,10 +239,10 @@ func unwrapNativeMenu(element Element) native.Handle {
 			return nativeMenu.NativeMenu(), true // Found a menu
 		}
 		widget := e.Widget()
-		if _, isStateless := widget.(StatelessWidget); isStateless {
+		if _, isStateless := widget.(StatelessWidgetBase); isStateless {
 			return nil, false // May contain a menu, continue searching
 		}
-		if _, isStateful := widget.(StatefulWidget); isStateful {
+		if _, isStateful := widget.(StatefulWidgetBase); isStateful {
 			return nil, false // May contain a menu, continue searching
 		}
 		// Can't contain a menu. Found a `Not Found`(nil).

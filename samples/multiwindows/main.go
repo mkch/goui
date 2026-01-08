@@ -52,23 +52,22 @@ func main() {
 	app.Run()
 }
 
-func newEnableDisableButton(label string, onClick func()) (btn *goui.Stateful, setEnabled func(bool)) {
+func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidget, setEnabled func(bool)) {
 	var enabled bool = true
 	var updater goui.StateUpdater
-	btn = &goui.Stateful{
-		StateCreator: func(ctx *goui.StateContext) goui.State {
-			updater = goui.NewStateUpdater(ctx)
-			return goui.NewState(ctx, func() goui.Widget {
-				return &widgets.Button{
-					Label:    label,
-					Disabled: !enabled,
-					OnClick: func(ctx *goui.Context) {
-						onClick()
-					},
-				}
-			}, nil)
-		},
-	}
+	btn = goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
+		updater = goui.NewStateUpdater(ctx)
+		return goui.NewState(ctx, func() goui.Widget {
+			return &widgets.Button{
+				Label:    label,
+				Disabled: !enabled,
+				OnClick: func(ctx *goui.Context) {
+					onClick()
+				},
+			}
+		}, nil)
+	},
+	)
 	setEnabled = func(value bool) {
 		updater.Update(func() { enabled = value })
 	}
@@ -80,7 +79,7 @@ func createWindow2() {
 		Title:  "Window 2",
 		Width:  700,
 		Height: 600,
-		Root:   &widgets.Center{Widget: newCountButton()},
+		Root:   &widgets.Center{Widget: goui.StatefulWidgetFunc(CountButton)},
 		OnClose: func(ctx *goui.Context) bool {
 			ret, _ := messagebox.Show(ctx, "Window2", "Are you sure you want to close this window?",
 				messagebox.IconQuestion,
@@ -90,21 +89,17 @@ func createWindow2() {
 	})
 }
 
-func newCountButton() *goui.Stateful {
-	return &goui.Stateful{
-		StateCreator: func(ctx *goui.StateContext) goui.State {
-			var count int
-			var updater = goui.NewStateUpdater(ctx)
-			return goui.NewState(ctx, func() goui.Widget {
-				return &widgets.Button{
-					Label: fmt.Sprintf("Clicked %d times", count),
-					OnClick: func(ctx *goui.Context) {
-						check.MustOK(updater.Update(func() { count++ }))
-					},
-				}
-			}, nil)
-		},
-	}
+func CountButton(ctx *goui.StateContext) goui.State {
+	var count int
+	var updater = goui.NewStateUpdater(ctx)
+	return goui.NewState(ctx, func() goui.Widget {
+		return &widgets.Button{
+			Label: fmt.Sprintf("Clicked %d times", count),
+			OnClick: func(ctx *goui.Context) {
+				check.MustOK(updater.Update(func() { count++ }))
+			},
+		}
+	}, nil)
 }
 
 func createWindow3(id goui.ID, onDestroy func(*goui.Context)) {

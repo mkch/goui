@@ -37,17 +37,18 @@ func (state *CountState) Build() goui.Widget {
 // NewCounterButton creates a new counter button with the given ID.
 // The returned counter button is a stateful widget that displays a button showing the click count.
 // Each time the button is clicked, the click count increases by one.
-func NewCounterButton(ID goui.ID) *goui.Stateful {
-	return &goui.Stateful{
-		ID: ID,
-		StateCreator: func(ctx *goui.StateContext) goui.State {
-			return NewCountState(ctx)
-		},
-	}
+func NewCounterButton(ID goui.ID) goui.StatefulWidget {
+	return goui.NewStatefulWidget(
+		ID,
+		func(ctx *goui.StateContext) goui.State { return NewCountState(ctx) },
+	)
 }
 
 func ExampleStatefulWidget() {
-	var counterButton *goui.Stateful = NewCounterButton(goui.ValueID("id"))
+	var counterButton goui.StatefulWidget = NewCounterButton(goui.ValueID("id"))
+
+	// If there is no need to set an id, StatefulWidgetFunc is very convenient.
+	counterButton = goui.StatefulWidgetFunc(NewCountState)
 
 	_ = counterButton
 }

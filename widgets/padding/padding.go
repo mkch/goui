@@ -27,11 +27,13 @@ func (p *Padding) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Padding) Child(n int) goui.Widget {
+func (p *Padding) Child(n int) goui.WidgetBase {
 	return p.Widget
 }
 
-func (p *Padding) Exclusive(goui.Container) { /*Nop*/ }
+func (p *Padding) Exclusive(goui.ContainerBase) { /*Nop*/ }
+
+func (*Padding) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
 
 type paddingLayouter struct {
 	goui.LayouterHelper

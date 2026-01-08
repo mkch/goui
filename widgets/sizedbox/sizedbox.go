@@ -29,11 +29,13 @@ func (s *SizedBox) NumChildren() int {
 	return gg.If(s.Widget != nil, 1, 0)
 }
 
-func (s *SizedBox) Child(n int) goui.Widget {
+func (s *SizedBox) Child(n int) goui.WidgetBase {
 	return s.Widget
 }
 
-func (s *SizedBox) Exclusive(goui.Container) { /*Nop*/ }
+func (s *SizedBox) Exclusive(goui.ContainerBase) { /*Nop*/ }
+
+func (*SizedBox) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
 
 type sizedBoxLayouter struct {
 	goui.LayouterHelper

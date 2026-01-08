@@ -42,20 +42,22 @@ func (c *Center) NumChildren() int {
 	return gg.If(c.Widget != nil, 1, 0)
 }
 
-func (c *Center) Child(n int) goui.Widget {
+func (c *Center) Child(n int) goui.WidgetBase {
 	if c.Widget == nil || n != 0 {
 		panic("index out of range")
 	}
 	return c.Widget
 }
 
-func (c *Center) Exclusive(goui.Container) { /*Nop*/ }
+func (c *Center) Exclusive(goui.ContainerBase) { /*Nop*/ }
+
+func (*Center) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
 
 type centerElement struct {
 	goui.ElementBase
 }
 
-func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err error) {
+func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
 	center := widget.(*Center)
 	if center.WidthFactor < 0 {
 		return errors.New("Center.WidthFactor must be greater than or equal to 0")
@@ -84,7 +86,7 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints metrics.Constrain
 			return metrics.Size{}, err
 		}
 
-		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, constraints); err != nil {
+		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget().(goui.Widget), childSize, constraints); err != nil {
 			return
 		}
 		if center.WidthFactor == 0 {

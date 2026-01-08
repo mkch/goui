@@ -42,8 +42,10 @@ func (row *Row) NumChildren() int {
 	return len(row.Widgets)
 }
 
-func (row *Row) Child(n int) goui.Widget {
+func (row *Row) Child(n int) goui.WidgetBase {
 	return row.Widgets[n]
 }
 
-func (row *Row) Exclusive(goui.Container) { /*Nop*/ }
+func (row *Row) Exclusive(goui.ContainerBase) { /*Nop*/ }
+
+func (*Row) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
