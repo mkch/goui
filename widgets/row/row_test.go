@@ -36,8 +36,8 @@ func (l *mockLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints
 	return constraints.Clamp(l.IntrinsicSize), nil
 }
 
-func (l *mockLayouter) PositionAt(x, y metrics.DP) error {
-	l.Position = metrics.Point{X: x, Y: y}
+func (l *mockLayouter) PositionAt(pt metrics.Point) error {
+	l.Position = pt
 	return nil
 }
 
@@ -146,7 +146,7 @@ func Test_RowAlign(t *testing.T) {
 	if size.Width != 300 || size.Height != 50 {
 		t.Fatalf("Unexpected size: got %v, want Width=300 Height=50", size)
 	}
-	if err = layouter.PositionAt(0, 0); err != nil {
+	if err = layouter.PositionAt(metrics.Point{X: 0, Y: 0}); err != nil {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if y := widget1.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 0 {
@@ -175,7 +175,7 @@ func Test_RowAlign(t *testing.T) {
 	if size.Width != 300 || size.Height != 50 {
 		t.Fatalf("Unexpected size: got %v, want Width=300 Height=50", size)
 	}
-	if err = layouter.PositionAt(0, 0); err != nil {
+	if err = layouter.PositionAt(metrics.Point{X: 0, Y: 0}); err != nil {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if y := widget1.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 0 {
@@ -195,7 +195,7 @@ func Test_RowAlign(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("Layout error: %v", err)
 	}
-	if err = layouter.PositionAt(0, 0); err != nil {
+	if err = layouter.PositionAt(metrics.Point{X: 0, Y: 0}); err != nil {
 		t.Fatalf("PositionAt error: %v", err)
 	}
 	if y := widget1.Element.ElementLayouter.(*mockLayouter).Position.Y; y != 0 {

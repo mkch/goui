@@ -118,10 +118,12 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (s
 	return
 }
 
-func (l *Layouter) PositionAt(x, y metrics.DP) (err error) {
+func (l *Layouter) PositionAt(pt metrics.Point) (err error) {
 	var i = 0
 	for child := range l.Children() {
-		if err = child.PositionAt(x+l.childrenOffsets[i].Width, y+l.childrenOffsets[i].Height); err != nil {
+		if err = child.PositionAt(metrics.Point{
+			X: pt.X + l.childrenOffsets[i].Width,
+			Y: pt.Y + l.childrenOffsets[i].Height}); err != nil {
 			return
 		}
 		i++

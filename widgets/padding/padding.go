@@ -65,10 +65,12 @@ func (l *paddingLayouter) Layout(ctx *goui.Context, constraints metrics.Constrai
 	return
 }
 
-func (l *paddingLayouter) PositionAt(x, y metrics.DP) (err error) {
+func (l *paddingLayouter) PositionAt(pt metrics.Point) (err error) {
 	padding := l.Element().Widget().(*Padding)
 	for child := range l.Children() {
-		return child.PositionAt(x+padding.Left, y+padding.Top)
+		return child.PositionAt(metrics.Point{
+			X: pt.X + padding.Left,
+			Y: pt.Y + padding.Top})
 	}
 	return
 }

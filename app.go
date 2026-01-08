@@ -134,7 +134,7 @@ func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 	if err != nil {
 		return err
 	}
-	return ctx.window.Layouter.PositionAt(0, 0)
+	return ctx.window.Layouter.PositionAt(metrics.Point{X: 0, Y: 0})
 
 }
 

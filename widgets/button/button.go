@@ -119,6 +119,6 @@ func (l *buttonLayouter) Layout(ctx *goui.Context, constraints metrics.Constrain
 	return
 }
 
-func (l *buttonLayouter) PositionAt(x, y metrics.DP) (err error) {
-	return native.SetWidgetDimensions(l.Element().(*buttonElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height)
+func (l *buttonLayouter) PositionAt(pt metrics.Point) (err error) {
+	return native.SetWidgetDimensions(l.Element().(*buttonElement).Handle, pt.X, pt.Y, l.layoutSize.Width, l.layoutSize.Height)
 }

@@ -95,12 +95,12 @@ func (l *panelLayouter) Layout(ctx *goui.Context, constraints metrics.Constraint
 	return constraints.MinSize(), nil // Use min size when no child.
 }
 
-func (l *panelLayouter) PositionAt(x, y metrics.DP) (err error) {
-	if err = native.SetWidgetDimensions(l.Element().(*panelElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height); err != nil {
+func (l *panelLayouter) PositionAt(pt metrics.Point) (err error) {
+	if err = native.SetWidgetDimensions(l.Element().(*panelElement).Handle, pt.X, pt.Y, l.layoutSize.Width, l.layoutSize.Height); err != nil {
 		return
 	}
 	for child := range l.Children() {
-		return child.PositionAt(0, 0) // Position child at (0,0) relative to panel.
+		return child.PositionAt(metrics.Point{X: 0, Y: 0}) // Position child at (0,0) relative to panel.
 	}
 	return
 }

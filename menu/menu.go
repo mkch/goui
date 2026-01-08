@@ -347,7 +347,7 @@ func (l *menuLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints
 }
 
 // PositionAt implements [goui.Layouter.PositionAt].
-func (l *menuLayouter) PositionAt(x, y metrics.DP) (err error) {
+func (l *menuLayouter) PositionAt(pt metrics.Point) (err error) {
 	// Nop positioning.
 	return nil
 }

@@ -183,10 +183,10 @@ func (l *listenerLayouter) Layout(ctx *goui.Context, constraints metrics.Constra
 	return constraints.MinSize(), nil // No child, take minimum size
 }
 
-func (l *listenerLayouter) PositionAt(x, y metrics.DP) error {
-	l.Element().(*listenerElement).offset = metrics.Point{X: x, Y: y}
+func (l *listenerLayouter) PositionAt(pt metrics.Point) error {
+	l.Element().(*listenerElement).offset = pt
 	for child := range l.Children() {
-		return child.PositionAt(x, y)
+		return child.PositionAt(pt)
 	}
 	return nil
 }

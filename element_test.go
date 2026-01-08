@@ -79,7 +79,7 @@ func (l *mockLayouter) Layout(ctx *Context, constraints metrics.Constraints) (me
 	return metrics.Size{Width: 100, Height: 100}, nil
 }
 
-func (l *mockLayouter) PositionAt(x, y metrics.DP) error {
+func (l *mockLayouter) PositionAt(pt metrics.Point) error {
 	return nil
 }
 

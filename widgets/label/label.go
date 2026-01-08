@@ -129,6 +129,6 @@ func (l *labelLayouter) Layout(ctx *goui.Context, constraints metrics.Constraint
 	return
 }
 
-func (l *labelLayouter) PositionAt(x, y metrics.DP) (err error) {
-	return native.SetWidgetDimensions(l.Element().(*labelElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height)
+func (l *labelLayouter) PositionAt(pt metrics.Point) (err error) {
+	return native.SetWidgetDimensions(l.Element().(*labelElement).Handle, pt.X, pt.Y, l.layoutSize.Width, l.layoutSize.Height)
 }

@@ -79,10 +79,12 @@ func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints metrics.Const
 	return constraints.MinSize(), nil
 }
 
-func (l *visibilityLayouter) PositionAt(x, y metrics.DP) (err error) {
+func (l *visibilityLayouter) PositionAt(pt metrics.Point) (err error) {
 	for child := range l.Children() {
 		// See Layout() for the offset logic.
-		return child.PositionAt(x+l.childXOffset, y)
+		return child.PositionAt(metrics.Point{
+			X: pt.X + l.childXOffset,
+			Y: pt.Y})
 	}
 	return
 }

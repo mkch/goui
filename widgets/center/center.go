@@ -108,13 +108,13 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints metrics.Constrain
 	return
 }
 
-func (l *centerLayouter) PositionAt(x, y metrics.DP) (err error) {
-	l.pos = metrics.Point{X: x, Y: y}
+func (l *centerLayouter) PositionAt(pt metrics.Point) (err error) {
+	l.pos = pt
 	children := slices.Collect(l.Children())
 	if children == nil {
 		return nil
 	}
-	return children[0].PositionAt(x+l.childOffset.X, y+l.childOffset.Y)
+	return children[0].PositionAt(metrics.Point{X: pt.X + l.childOffset.X, Y: pt.Y + l.childOffset.Y})
 }
 
 func (l *centerLayouter) Replayer() func(ctx *goui.Context) error {
@@ -131,6 +131,6 @@ func (l *centerLayouter) Replayer() func(ctx *goui.Context) error {
 		if _, err := l.Layout(ctx, *l.lastConstraints); err != nil {
 			return err
 		}
-		return l.PositionAt(l.pos.X, l.pos.Y)
+		return l.PositionAt(l.pos)
 	}
 }

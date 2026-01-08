@@ -57,9 +57,9 @@ func (l *expandedLayouter) Layout(ctx *goui.Context, constraints metrics.Constra
 	return constraints.MaxSize(), nil
 }
 
-func (l *expandedLayouter) PositionAt(x, y metrics.DP) (err error) {
+func (l *expandedLayouter) PositionAt(pt metrics.Point) (err error) {
 	for child := range l.Children() {
-		return child.PositionAt(x, y)
+		return child.PositionAt(pt)
 	}
 	return
 }

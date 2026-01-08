@@ -32,7 +32,7 @@ type Layouter interface {
 	Layout(ctx *Context, constraints metrics.Constraints) (metrics.Size, error)
 	// PositionAt puts the element at the given position.
 	// The position is relative to the native parent element's top-left corner.
-	PositionAt(x, y metrics.DP) error
+	PositionAt(pt metrics.Point) error
 	// Replayer returns a function that can replay the last layout operations,
 	// or nil if replay is not supported (e.g., when the layout depends on children).
 	Replayer() func(*Context) error
@@ -158,12 +158,12 @@ func (l *debugLayouter) Layout(ctx *Context, constraints metrics.Constraints) (s
 	return
 }
 
-func (l *debugLayouter) PositionAt(x, y metrics.DP) (err error) {
-	err = l.Layouter.PositionAt(x, y)
+func (l *debugLayouter) PositionAt(pt metrics.Point) (err error) {
+	err = l.Layouter.PositionAt(pt)
 	if err != nil {
 		return
 	}
-	l.Pos = metrics.Point{X: x, Y: y} // Record position
+	l.Pos = pt // Record position
 	return
 }
 

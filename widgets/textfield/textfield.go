@@ -75,6 +75,6 @@ func (l *textFieldLayouter) Layout(ctx *goui.Context, constraints metrics.Constr
 	return
 }
 
-func (l *textFieldLayouter) PositionAt(x, y metrics.DP) (err error) {
-	return native.SetWidgetDimensions(l.Element().(*textFieldElement).Handle, x, y, l.layoutSize.Width, l.layoutSize.Height)
+func (l *textFieldLayouter) PositionAt(pt metrics.Point) (err error) {
+	return native.SetWidgetDimensions(l.Element().(*textFieldElement).Handle, pt.X, pt.Y, l.layoutSize.Width, l.layoutSize.Height)
 }
