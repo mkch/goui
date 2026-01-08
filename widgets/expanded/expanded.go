@@ -44,7 +44,7 @@ type expandedLayouter struct {
 	goui.LayouterHelper
 }
 
-func (l *expandedLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *expandedLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	for child := range l.Children() {
 		// Tight max constraint
 		size, err = child.Layout(ctx, constraints.TightMax())
@@ -67,13 +67,13 @@ func (l *expandedLayouter) PositionAt(x, y metrics.DP) (err error) {
 // Layout layouts the given Expanded widgets within the available space.
 // setConstraints is a function set a constraints use provided cross axis size and other
 // caller-calculated values.
-func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []goui.Layouter, setConstraints func(c *goui.Constraints, crossAxis metrics.DP)) (sizes []goui.Size, err error) {
+func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []goui.Layouter, setConstraints func(c *metrics.Constraints, crossAxis metrics.DP)) (sizes []metrics.Size, err error) {
 	if len(expandedLayouters) == 1 {
 		// Only one Expanded, occupy all available space.
 		l := expandedLayouters[0]
-		var constraints goui.Constraints
+		var constraints metrics.Constraints
 		setConstraints(&constraints, availableSpace)
-		var size goui.Size
+		var size metrics.Size
 		if size, err = l.Layout(ctx, constraints); err != nil {
 			return
 		}
@@ -92,7 +92,7 @@ func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []go
 	// Fast path: If totalFlex is zero, layout each Expanded with zero constraints.
 	if totalFlex == 0 {
 		for _, l := range expandedLayouters {
-			if _, err = l.Layout(ctx, goui.Constraints{ /*zero*/ }); err != nil {
+			if _, err = l.Layout(ctx, metrics.Constraints{ /*zero*/ }); err != nil {
 				return
 			}
 		}
@@ -104,7 +104,7 @@ func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []go
 	// Call Layout on each Expanded widget with calculated tight constraints.
 	remainingSpace := availableSpace
 	for i, l := range expandedLayouters {
-		var constraints goui.Constraints
+		var constraints metrics.Constraints
 		var size metrics.DP
 		if i == len(widgets)-1 {
 			// Give all remaining space to the last Expanded to avoid rounding errors.
@@ -118,7 +118,7 @@ func Layout(ctx *goui.Context, availableSpace metrics.DP, expandedLayouters []go
 			}
 		}
 		setConstraints(&constraints, size)
-		var layoutSize goui.Size
+		var layoutSize metrics.Size
 		layoutSize, err = l.Layout(ctx, constraints)
 		if err != nil {
 			return

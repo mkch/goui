@@ -13,30 +13,30 @@ import (
 // Layouter is a layouter for Row and Column widgets.
 type Layouter struct {
 	goui.LayouterHelper
-	childrenOffsets []goui.Size
+	childrenOffsets []metrics.Size
 
 	// Main returns the main axis value (Width for [Row], Height for [Column]) of the given [Size].
-	Main func(*goui.Size) *metrics.DP
+	Main func(*metrics.Size) *metrics.DP
 	// Cross returns the cross axis value (Height for [Row], Width for [Column]) of the given [Size].
-	Cross func(*goui.Size) *metrics.DP
+	Cross func(*metrics.Size) *metrics.DP
 	// MaxMain returns the maximum value of the main axis (Width for [Row], Height for [Column]) from the given [Constraints].
-	MaxMain func(*goui.Constraints) *metrics.DP
+	MaxMain func(*metrics.Constraints) *metrics.DP
 	// MinMain returns the minimum value of the main axis (Width for [Row], Height for [Column]) from the given [Constraints].
-	MinMain func(*goui.Constraints) *metrics.DP
+	MinMain func(*metrics.Constraints) *metrics.DP
 	// MaxCross returns the maximum value of the cross axis (Height for [Row], Width for [Column]) from the given [Constraints].
-	MaxCross func(*goui.Constraints) *metrics.DP
+	MaxCross func(*metrics.Constraints) *metrics.DP
 	// MinCross returns the minimum value of the cross axis (Height for [Row], Width for [Column]) from the given [Constraints].
-	MinCross func(*goui.Constraints) *metrics.DP
+	MinCross func(*metrics.Constraints) *metrics.DP
 
 	MainAxisSize       func() axes.Size
 	CrossAxisAlignment func() axes.Alignment
 }
 
-func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *Layouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	l.childrenOffsets = l.childrenOffsets[:0]
 	var notExpandableChildrenMain metrics.DP = 0
 	*l.Cross(&size) = *l.MinCross(&constraints)
-	var childrenSizes []goui.Size
+	var childrenSizes []metrics.Size
 	var expandedChildren []goui.Layouter
 	var expandedChildrenIndexes []int
 	for child := range l.Children() {
@@ -44,15 +44,15 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 			expandedChildren = append(expandedChildren, child)
 			expandedChildrenIndexes = append(expandedChildrenIndexes, len(childrenSizes))
 			// Placeholder size, will be calculated later.
-			childrenSizes = append(childrenSizes, goui.Size{})
+			childrenSizes = append(childrenSizes, metrics.Size{})
 			continue
 		}
-		var childConstraints goui.Constraints
+		var childConstraints metrics.Constraints
 		*l.MaxCross(&childConstraints) = *l.MaxCross(&constraints)
-		*l.MaxMain(&childConstraints) = gg.IfFunc(*l.MaxMain(&constraints) == goui.Infinity,
-			func() metrics.DP { return goui.Infinity },
+		*l.MaxMain(&childConstraints) = gg.IfFunc(*l.MaxMain(&constraints) == metrics.Infinity,
+			func() metrics.DP { return metrics.Infinity },
 			func() metrics.DP { return *l.MaxMain(&constraints) - notExpandableChildrenMain })
-		var childSize goui.Size
+		var childSize metrics.Size
 		childSize, err = child.Layout(ctx, childConstraints)
 		if err != nil {
 			return
@@ -68,8 +68,8 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 	// layout expanded children
 	if len(expandedChildren) > 0 {
 		availableSpace := *l.MaxMain(&constraints) - notExpandableChildrenMain
-		var sizes []goui.Size
-		sizes, err = expanded.Layout(ctx, availableSpace, expandedChildren, func(c *goui.Constraints, mainAxis metrics.DP) {
+		var sizes []metrics.Size
+		sizes, err = expanded.Layout(ctx, availableSpace, expandedChildren, func(c *metrics.Constraints, mainAxis metrics.DP) {
 			*l.MinMain(c) = mainAxis
 			*l.MaxMain(c) = mainAxis
 			*l.MinCross(c) = 0
@@ -88,7 +88,7 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size
 	// calculate children offsets
 	var childMain metrics.DP = 0
 	for _, childSize := range childrenSizes {
-		var offset goui.Size
+		var offset metrics.Size
 		*l.Main(&offset) = childMain
 		l.childrenOffsets = append(l.childrenOffsets, offset)
 		childMain += *l.Main(&childSize)

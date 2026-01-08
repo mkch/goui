@@ -37,14 +37,14 @@ type paddingLayouter struct {
 	goui.LayouterHelper
 }
 
-func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *paddingLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	padding := l.Element().Widget().(*Padding)
 
-	var childSize goui.Size
+	var childSize metrics.Size
 	for child := range l.Children() {
 		childMaxWidth := max(0, constraints.MaxWidth-padding.Left-padding.Right)
 		childMaxHeight := max(0, constraints.MaxHeight-padding.Top-padding.Bottom)
-		childConstraints := goui.Constraints{
+		childConstraints := metrics.Constraints{
 			MinWidth:  0,
 			MaxWidth:  childMaxWidth,
 			MinHeight: 0,
@@ -59,7 +59,7 @@ func (l *paddingLayouter) Layout(ctx *goui.Context, constraints goui.Constraints
 		}
 		break // only one child
 	}
-	size = constraints.Clamp(goui.Size{
+	size = constraints.Clamp(metrics.Size{
 		Width:  childSize.Width + padding.Left + padding.Right,
 		Height: childSize.Height + padding.Top + padding.Bottom})
 	return

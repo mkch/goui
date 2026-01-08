@@ -13,6 +13,7 @@ import (
 	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/menu"
 	"github.com/mkch/goui/messagebox"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/listener"
 )
@@ -36,7 +37,7 @@ func main() {
 			OnPointerUp: func(ctx *goui.Context, event *listener.PointerEvent) {
 				var spec *menu.PopupSpec
 				if screenCoord {
-					spec = &menu.PopupSpec{Pos: goui.Point{X: 10, Y: 20}}
+					spec = &menu.PopupSpec{Pos: metrics.Point{X: 10, Y: 20}}
 				}
 				if event.Button&listener.SecondaryMouseButton != 0 {
 					err := menu.Popup(ctx, &menu.Menu{Items: []goui.Widget{

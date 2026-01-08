@@ -125,7 +125,7 @@ func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 	if ctx.window.Layouter == nil {
 		return nil
 	}
-	_, err = ctx.window.Layouter.Layout(ctx, Constraints{
+	_, err = ctx.window.Layouter.Layout(ctx, metrics.Constraints{
 		MinWidth:  0,
 		MinHeight: 0,
 		MaxWidth:  width,

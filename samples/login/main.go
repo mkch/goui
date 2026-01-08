@@ -9,6 +9,7 @@ import (
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/messagebox"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 )
@@ -49,7 +50,7 @@ func rootWidget() goui.Widget {
 					Widgets: []goui.Widget{
 						&widgets.Button{
 							Label:   "Login",
-							Padding: &goui.Size{Width: 120, Height: 20},
+							Padding: &metrics.Size{Width: 120, Height: 20},
 							OnClick: func(ctx *goui.Context) {
 								doLogin(ctx, &userNameCtrl, &passwordCtrl)
 							},

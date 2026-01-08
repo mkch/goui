@@ -1,0 +1,132 @@
+package metrics
+
+import (
+	"fmt"
+	"math"
+)
+
+// Infinity represents an infinite size(unbounded) constraint.
+const Infinity = math.MaxFloat64
+
+type Size struct {
+	Width  DP
+	Height DP
+}
+
+func (s *Size) String() string {
+	return fmt.Sprintf("{Width: %v, Height: %v}", s.Width, s.Height)
+}
+
+type Point struct {
+	X, Y DP
+}
+
+func (pt Point) String() string {
+	return fmt.Sprintf("{X: %v, Y: %v}", pt.X, pt.Y)
+}
+
+type Rect struct {
+	Left, Top, Right, Bottom DP
+}
+
+func (r *Rect) Width() DP {
+	return r.Right - r.Left
+}
+
+func (r *Rect) Height() DP {
+	return r.Bottom - r.Top
+}
+
+func (r *Rect) TopLeft() Point {
+	return Point{X: r.Left, Y: r.Top}
+}
+
+func (r *Rect) BottomRight() Point {
+	return Point{X: r.Right, Y: r.Bottom}
+}
+
+// Constraints represents layout constraints.
+type Constraints struct {
+	MinWidth  DP
+	MinHeight DP
+	MaxWidth  DP
+	MaxHeight DP
+}
+
+func (c *Constraints) String() string {
+	return fmt.Sprintf("{MinWidth: %v, MinHeight: %v, MaxWidth: %v, MaxHeight: %v}",
+		c.MinWidth, c.MinHeight, c.MaxWidth, c.MaxHeight)
+}
+
+// TightWidth returns true if the constraint has a finite and equal min and max width.
+func (c *Constraints) TightWidth() bool {
+	return c.MinWidth == c.MaxWidth && c.MinWidth != Infinity
+}
+
+// TightHeight returns true if the constraint has a finite and equal min and max height.
+func (c *Constraints) TightHeight() bool {
+	return c.MinHeight == c.MaxHeight && c.MinHeight != Infinity
+}
+
+// UnboundWidth returns true if no constraint is imposed on width.
+func (c *Constraints) UnboundWidth() bool {
+	return c.MaxWidth == Infinity
+}
+
+// UnboundHeight returns true if no constraint is imposed on height.
+func (c *Constraints) UnboundHeight() bool {
+	return c.MaxHeight == Infinity
+}
+
+// MinSize returns the minimum size allowed by the constraints.
+func (c *Constraints) MinSize() Size {
+	return Size{Width: c.MinWidth, Height: c.MinHeight}
+}
+
+// MaxSize returns the maximum size allowed by the constraints.
+func (c *Constraints) MaxSize() Size {
+	return Size{Width: c.MaxWidth, Height: c.MaxHeight}
+}
+
+// Clamp clamps the given size between the constraints.
+func (c *Constraints) Clamp(size Size) Size {
+	return Size{
+		Width:  clamp(size.Width, c.MinWidth, c.MaxWidth),
+		Height: clamp(size.Height, c.MinHeight, c.MaxHeight),
+	}
+}
+
+// ClampHeight clamps height between the constraints.
+func (c *Constraints) ClampWidth(width DP) DP {
+	return clamp(width, c.MinWidth, c.MaxWidth)
+}
+
+// ClampHeight clamps height between the constraints.
+func (c *Constraints) ClampHeight(height DP) DP {
+	return clamp(height, c.MinHeight, c.MaxHeight)
+}
+
+// TightMax returns a new Constraints with tight max constraints.
+func (c *Constraints) TightMax() Constraints {
+	return Constraints{
+		MinWidth:  c.MaxWidth,
+		MinHeight: c.MaxHeight,
+		MaxWidth:  c.MaxWidth,
+		MaxHeight: c.MaxHeight,
+	}
+}
+
+// TightMin returns a new Constraints with tight min constraints.
+func (c *Constraints) TightMin() Constraints {
+	return Constraints{
+		MinWidth:  c.MinWidth,
+		MinHeight: c.MinHeight,
+		MaxWidth:  c.MinWidth,
+		MaxHeight: c.MinHeight,
+	}
+}
+
+// clamp clamps value between min and max.
+func clamp(value, minBound, maxBound DP) DP {
+	return min(max(value, minBound), maxBound)
+}

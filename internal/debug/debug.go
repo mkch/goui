@@ -7,6 +7,7 @@ import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/tricks"
+	"github.com/mkch/goui/metrics"
 )
 
 //go:linkname debug
@@ -17,7 +18,7 @@ func debug(ctx *goui.Context) *tricks.Debug
 // CheckLayoutOverflow returns an [goui.OverflowConstraintsError] if the given size exceeds the given constraints.
 // Widget can be nil and if widget is not nil, it is included in the error for better debugging.
 // This function is intended to be used when
-func CheckLayoutOverflow(ctx *goui.Context, widget goui.Widget, size goui.Size, constraints goui.Constraints) error {
+func CheckLayoutOverflow(ctx *goui.Context, widget goui.Widget, size metrics.Size, constraints metrics.Constraints) error {
 	if debug(ctx) == nil {
 		return nil
 	}

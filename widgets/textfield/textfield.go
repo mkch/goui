@@ -60,17 +60,17 @@ func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err
 
 type textFieldLayouter struct {
 	goui.LayouterHelper
-	layoutSize goui.Size
+	layoutSize metrics.Size
 }
 
-func (l *textFieldLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *textFieldLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	if constraints.TightWidth() && constraints.TightHeight() {
 		size = constraints.MinSize()
 		l.layoutSize = size
 		return
 	}
 	intrinsicWidth, intrinsicHeight := metrics.DP(330), metrics.DP(50) // Default size for text field
-	size = constraints.Clamp(goui.Size{Width: intrinsicWidth, Height: intrinsicHeight})
+	size = constraints.Clamp(metrics.Size{Width: intrinsicWidth, Height: intrinsicHeight})
 	l.layoutSize = size
 	return
 }

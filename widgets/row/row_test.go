@@ -28,16 +28,16 @@ type mockElement struct {
 
 type mockLayouter struct {
 	goui.LayouterHelper
-	IntrinsicSize goui.Size
-	Position      goui.Point
+	IntrinsicSize metrics.Size
+	Position      metrics.Point
 }
 
-func (l *mockLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *mockLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	return constraints.Clamp(l.IntrinsicSize), nil
 }
 
 func (l *mockLayouter) PositionAt(x, y metrics.DP) error {
-	l.Position = goui.Point{X: x, Y: y}
+	l.Position = metrics.Point{X: x, Y: y}
 	return nil
 }
 
@@ -48,7 +48,7 @@ func Test_RowSize(t *testing.T) {
 		Element: mockElement{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: &mockLayouter{
-					IntrinsicSize: goui.Size{Width: 100, Height: 50},
+					IntrinsicSize: metrics.Size{Width: 100, Height: 50},
 				},
 			},
 		},
@@ -59,7 +59,7 @@ func Test_RowSize(t *testing.T) {
 		Element: mockElement{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: &mockLayouter{
-					IntrinsicSize: goui.Size{Width: 200, Height: 30},
+					IntrinsicSize: metrics.Size{Width: 200, Height: 30},
 				},
 			},
 		},
@@ -73,7 +73,7 @@ func Test_RowSize(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildElementTree error: %v", err)
 	}
-	size, err := layouter.Layout(ctx, goui.Constraints{
+	size, err := layouter.Layout(ctx, metrics.Constraints{
 		MinWidth: 150, MinHeight: 40,
 		MaxWidth: 300, MaxHeight: 200,
 	})
@@ -92,7 +92,7 @@ func Test_RowSize(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildElementTree error: %v", err)
 	}
-	size, err = layouter.Layout(ctx, goui.Constraints{
+	size, err = layouter.Layout(ctx, metrics.Constraints{
 		MinWidth: 150, MinHeight: 40,
 		MaxWidth: 300, MaxHeight: 200,
 	})
@@ -111,7 +111,7 @@ func Test_RowAlign(t *testing.T) {
 		Element: mockElement{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: &mockLayouter{
-					IntrinsicSize: goui.Size{Width: 100, Height: 50},
+					IntrinsicSize: metrics.Size{Width: 100, Height: 50},
 				},
 			},
 		},
@@ -122,7 +122,7 @@ func Test_RowAlign(t *testing.T) {
 		Element: mockElement{
 			ElementBase: goui.ElementBase{
 				ElementLayouter: &mockLayouter{
-					IntrinsicSize: goui.Size{Width: 200, Height: 30},
+					IntrinsicSize: metrics.Size{Width: 200, Height: 30},
 				},
 			},
 		},
@@ -136,7 +136,7 @@ func Test_RowAlign(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildElementTree error: %v", err)
 	}
-	size, err := layouter.Layout(ctx, goui.Constraints{
+	size, err := layouter.Layout(ctx, metrics.Constraints{
 		MinWidth: 150, MinHeight: 40,
 		MaxWidth: 300, MaxHeight: 200,
 	})
@@ -165,7 +165,7 @@ func Test_RowAlign(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildElementTree error: %v", err)
 	}
-	size, err = layouter.Layout(ctx, goui.Constraints{
+	size, err = layouter.Layout(ctx, metrics.Constraints{
 		MinWidth: 150, MinHeight: 40,
 		MaxWidth: 300, MaxHeight: 200,
 	})
@@ -189,7 +189,7 @@ func Test_RowAlign(t *testing.T) {
 	if _, layouter, err = widgetstest.BuildElementTree(ctx, column, nil); err != nil {
 		t.Fatalf("BuildElementTree error: %v", err)
 	}
-	if _, err = layouter.Layout(ctx, goui.Constraints{
+	if _, err = layouter.Layout(ctx, metrics.Constraints{
 		MinWidth: 150, MinHeight: 40,
 		MaxWidth: 300, MaxHeight: 200,
 	}); err != nil {

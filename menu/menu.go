@@ -342,7 +342,7 @@ type menuLayouter struct {
 }
 
 // Layout implements [goui.Layouter.Layout].
-func (l *menuLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (goui.Size, error) {
+func (l *menuLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (metrics.Size, error) {
 	return constraints.MinSize(), nil
 }
 

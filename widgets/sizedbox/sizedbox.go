@@ -37,22 +37,22 @@ func (s *SizedBox) Exclusive(goui.Container) { /*Nop*/ }
 
 type sizedBoxLayouter struct {
 	goui.LayouterHelper
-	lastConstraints *goui.Constraints
-	pos             goui.Point
+	lastConstraints *metrics.Constraints
+	pos             metrics.Point
 }
 
-func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	l.lastConstraints = &constraints
 	sizedBox := l.Element().Widget().(*SizedBox)
-	size = constraints.Clamp(goui.Size{Width: sizedBox.Width, Height: sizedBox.Height})
+	size = constraints.Clamp(metrics.Size{Width: sizedBox.Width, Height: sizedBox.Height})
 	for child := range l.Children() {
-		childConstraints := goui.Constraints{
+		childConstraints := metrics.Constraints{
 			MinWidth:  size.Width,
 			MinHeight: size.Height,
 			MaxWidth:  size.Width,
 			MaxHeight: size.Height,
 		}
-		var childSize goui.Size
+		var childSize metrics.Size
 		childSize, err = child.Layout(ctx, childConstraints)
 		if err != nil {
 			return
@@ -64,7 +64,7 @@ func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 }
 
 func (l *sizedBoxLayouter) PositionAt(x, y metrics.DP) (err error) {
-	l.pos = goui.Point{X: x, Y: y}
+	l.pos = metrics.Point{X: x, Y: y}
 	for child := range l.Children() {
 		return child.PositionAt(x, y)
 	}

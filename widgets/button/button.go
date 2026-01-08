@@ -10,7 +10,7 @@ import (
 type Button struct {
 	ID       goui.ID
 	Label    string
-	Padding  *goui.Size // Padding around the label text. If nil, default padding is used.
+	Padding  *metrics.Size // Padding around the label text. If nil, default padding is used.
 	Disabled bool
 
 	OnClick func(*goui.Context)
@@ -90,15 +90,15 @@ func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err er
 
 type buttonLayouter struct {
 	goui.LayouterHelper
-	layoutSize goui.Size
+	layoutSize metrics.Size
 }
 
-var defaultButtonPadding = goui.Size{Width: 30, Height: 20}
+var defaultButtonPadding = metrics.Size{Width: 30, Height: 20}
 
-func (l *buttonLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *buttonLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	elem := l.Element().(*buttonElement)
 	if constraints.TightWidth() && constraints.TightHeight() {
-		size = goui.Size{
+		size = metrics.Size{
 			Width:  constraints.MinWidth,
 			Height: constraints.MinHeight,
 		}
@@ -114,7 +114,7 @@ func (l *buttonLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 	if err != nil {
 		return
 	}
-	size = constraints.Clamp(goui.Size{Width: intrinsicWidth + padding.Width, Height: intrinsicHeight + padding.Height})
+	size = constraints.Clamp(metrics.Size{Width: intrinsicWidth + padding.Width, Height: intrinsicHeight + padding.Height})
 	l.layoutSize = size
 	return
 }

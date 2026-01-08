@@ -47,7 +47,7 @@ type visibilityLayouter struct {
 	childXOffset metrics.DP
 }
 
-func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	elem := l.Element()
 	visibility := elem.Widget().(*Visibility)
 	for child := range l.Children() {

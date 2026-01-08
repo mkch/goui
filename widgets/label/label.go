@@ -106,13 +106,13 @@ func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err err
 
 type labelLayouter struct {
 	goui.LayouterHelper
-	layoutSize goui.Size
+	layoutSize metrics.Size
 }
 
-func (l *labelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *labelLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	elem := l.Element().(*labelElement)
 	if constraints.TightWidth() && constraints.TightHeight() {
-		size = goui.Size{
+		size = metrics.Size{
 			Width:  constraints.MinWidth,
 			Height: constraints.MinHeight,
 		}
@@ -124,7 +124,7 @@ func (l *labelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) 
 	if err != nil {
 		return
 	}
-	size = constraints.Clamp(goui.Size{Width: intrinsicWidth, Height: intrinsicHeight})
+	size = constraints.Clamp(metrics.Size{Width: intrinsicWidth, Height: intrinsicHeight})
 	l.layoutSize = size
 	return
 }

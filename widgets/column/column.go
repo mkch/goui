@@ -26,12 +26,12 @@ func (c *Column) WidgetID() goui.ID {
 func (c *Column) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &goui.ElementBase{
 		ElementLayouter: &rowcol.Layouter{
-			Main:               func(s *goui.Size) *metrics.DP { return &s.Height },
-			Cross:              func(s *goui.Size) *metrics.DP { return &s.Width },
-			MaxMain:            func(c *goui.Constraints) *metrics.DP { return &c.MaxHeight },
-			MinMain:            func(c *goui.Constraints) *metrics.DP { return &c.MinHeight },
-			MaxCross:           func(c *goui.Constraints) *metrics.DP { return &c.MaxWidth },
-			MinCross:           func(c *goui.Constraints) *metrics.DP { return &c.MinWidth },
+			Main:               func(s *metrics.Size) *metrics.DP { return &s.Height },
+			Cross:              func(s *metrics.Size) *metrics.DP { return &s.Width },
+			MaxMain:            func(c *metrics.Constraints) *metrics.DP { return &c.MaxHeight },
+			MinMain:            func(c *metrics.Constraints) *metrics.DP { return &c.MinHeight },
+			MaxCross:           func(c *metrics.Constraints) *metrics.DP { return &c.MaxWidth },
+			MinCross:           func(c *metrics.Constraints) *metrics.DP { return &c.MinWidth },
 			MainAxisSize:       func() axes.Size { return c.MainAxisSize },
 			CrossAxisAlignment: func() axes.Alignment { return c.CrossAxisAlignment },
 		},

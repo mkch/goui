@@ -3,13 +3,14 @@ package menu
 import (
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/check"
+	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
 type PopupSpec struct {
 	// Position where the track popup should appear.
 	// In screen coordinates.
-	Pos goui.Point
+	Pos metrics.Point
 }
 
 // Popup displays the given menu as a popup menu.

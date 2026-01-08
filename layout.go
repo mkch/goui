@@ -3,7 +3,6 @@ package goui
 import (
 	"fmt"
 	"iter"
-	"math"
 	"slices"
 	"time"
 
@@ -15,8 +14,8 @@ import (
 // Widget can be nil and if it is not nil, it is included in the error message for better debugging.
 type OverflowConstraintsError struct {
 	Widget      Widget
-	Size        Size
-	Constraints Constraints
+	Size        metrics.Size
+	Constraints metrics.Constraints
 }
 
 func (e *OverflowConstraintsError) Error() string {
@@ -27,146 +26,10 @@ func (e *OverflowConstraintsError) Error() string {
 		e.Widget, e.Widget.WidgetID(), &e.Size, &e.Constraints)
 }
 
-// Infinity represents an infinite size(unbounded) constraint.
-const Infinity = math.MaxFloat64
-
-// Constraints represents layout constraints.
-type Constraints struct {
-	MinWidth  metrics.DP
-	MinHeight metrics.DP
-	MaxWidth  metrics.DP
-	MaxHeight metrics.DP
-}
-
-func (c *Constraints) String() string {
-	return fmt.Sprintf("{MinWidth: %v, MinHeight: %v, MaxWidth: %v, MaxHeight: %v}",
-		c.MinWidth, c.MinHeight, c.MaxWidth, c.MaxHeight)
-}
-
-// TightWidth returns true if the constraint has a finite and equal min and max width.
-func (c *Constraints) TightWidth() bool {
-	return c.MinWidth == c.MaxWidth && c.MinWidth != Infinity
-}
-
-// TightHeight returns true if the constraint has a finite and equal min and max height.
-func (c *Constraints) TightHeight() bool {
-	return c.MinHeight == c.MaxHeight && c.MinHeight != Infinity
-}
-
-// UnboundWidth returns true if no constraint is imposed on width.
-func (c *Constraints) UnboundWidth() bool {
-	return c.MaxWidth == Infinity
-}
-
-// UnboundHeight returns true if no constraint is imposed on height.
-func (c *Constraints) UnboundHeight() bool {
-	return c.MaxHeight == Infinity
-}
-
-// MinSize returns the minimum size allowed by the constraints.
-func (c *Constraints) MinSize() Size {
-	return Size{Width: c.MinWidth, Height: c.MinHeight}
-}
-
-// MaxSize returns the maximum size allowed by the constraints.
-func (c *Constraints) MaxSize() Size {
-	return Size{Width: c.MaxWidth, Height: c.MaxHeight}
-}
-
-// Clamp clamps the given size between the constraints.
-func (c *Constraints) Clamp(size Size) Size {
-	return Size{
-		Width:  clamp(size.Width, c.MinWidth, c.MaxWidth),
-		Height: clamp(size.Height, c.MinHeight, c.MaxHeight),
-	}
-}
-
-// ClampHeight clamps height between the constraints.
-func (c *Constraints) ClampWidth(width metrics.DP) metrics.DP {
-	return clamp(width, c.MinWidth, c.MaxWidth)
-}
-
-// ClampHeight clamps height between the constraints.
-func (c *Constraints) ClampHeight(height metrics.DP) metrics.DP {
-	return clamp(height, c.MinHeight, c.MaxHeight)
-}
-
-// TightMax returns a new Constraints with tight max constraints.
-func (c *Constraints) TightMax() Constraints {
-	return Constraints{
-		MinWidth:  c.MaxWidth,
-		MinHeight: c.MaxHeight,
-		MaxWidth:  c.MaxWidth,
-		MaxHeight: c.MaxHeight,
-	}
-}
-
-// TightMin returns a new Constraints with tight min constraints.
-func (c *Constraints) TightMin() Constraints {
-	return Constraints{
-		MinWidth:  c.MinWidth,
-		MinHeight: c.MinHeight,
-		MaxWidth:  c.MinWidth,
-		MaxHeight: c.MinHeight,
-	}
-}
-
-// clamp clamps value between min and max.
-func clamp(value, minBound, maxBound metrics.DP) metrics.DP {
-	return min(max(value, minBound), maxBound)
-}
-
-type Size struct {
-	Width  metrics.DP
-	Height metrics.DP
-}
-
-func (s *Size) String() string {
-	return fmt.Sprintf("{Width: %v, Height: %v}", s.Width, s.Height)
-}
-
-type Point struct {
-	X, Y metrics.DP
-}
-
-func (pt Point) String() string {
-	return fmt.Sprintf("{X: %v, Y: %v}", pt.X, pt.Y)
-}
-
-type Rect struct {
-	Left, Top, Right, Bottom metrics.DP
-}
-
-func (r *Rect) Width() metrics.DP {
-	return r.Right - r.Left
-}
-
-func (r *Rect) Height() metrics.DP {
-	return r.Bottom - r.Top
-}
-
-func (r *Rect) TopLeft() Point {
-	return Point{X: r.Left, Y: r.Top}
-}
-
-func (r *Rect) BottomRight() Point {
-	return Point{X: r.Right, Y: r.Bottom}
-}
-
-// WindowClientToScreenPt converts a point in window client coordinates to screen coordinates.
-func WindowClientToScreenPt(ctx *Context, pt Point) (screenPt Point, err error) {
-	screenX, screenY, err := native.ClientToScreen(ctx.NativeWindow(), pt.X, pt.Y)
-	if err != nil {
-		return
-	}
-	screenPt = Point{X: screenX, Y: screenY}
-	return
-}
-
 // Layouter is the interface for laying out elements.
 type Layouter interface {
 	// Layout computes the size of the element given the constraints.
-	Layout(ctx *Context, constraints Constraints) (Size, error)
+	Layout(ctx *Context, constraints metrics.Constraints) (metrics.Size, error)
 	// PositionAt puts the element at the given position.
 	// The position is relative to the native parent element's top-left corner.
 	PositionAt(x, y metrics.DP) error
@@ -237,14 +100,14 @@ type debugLayouterVer struct {
 // debugLayouter is a [Layouter] wrapper that records debugging information.
 type debugLayouter struct {
 	Layouter
-	Size                 Size                // Last computed size
-	Pos                  Point               // Last computed position
+	Size                 metrics.Size        // Last computed size
+	Pos                  metrics.Point       // Last computed position
 	Highlight            bool                // Whether to highlight the outline of this layouter
 	highlightVer         uintptr             // Version of the highlight, used to avoid redundant redraws
 	cancelHighlightBatch *[]debugLayouterVer // Batch of layouters to cancel highlight together
 }
 
-func (l *debugLayouter) Layout(ctx *Context, constraints Constraints) (size Size, err error) {
+func (l *debugLayouter) Layout(ctx *Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	l.Highlight = true // Mark to highlight
 	l.highlightVer++
 
@@ -300,7 +163,7 @@ func (l *debugLayouter) PositionAt(x, y metrics.DP) (err error) {
 	if err != nil {
 		return
 	}
-	l.Pos = Point{X: x, Y: y} // Record position
+	l.Pos = metrics.Point{X: x, Y: y} // Record position
 	return
 }
 
@@ -314,9 +177,9 @@ func allLayouterDebugOutlines(root Layouter) iter.Seq[native.DebugRect] {
 		// Use a stack to avoid recursive iterator calls
 		type frame struct {
 			layouters []Layouter
-			offset    Point
+			offset    metrics.Point
 		}
-		stack := []frame{{layouters: []Layouter{root}, offset: Point{}}}
+		stack := []frame{{layouters: []Layouter{root}, offset: metrics.Point{}}}
 		for len(stack) > 0 {
 			current := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]

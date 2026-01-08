@@ -68,20 +68,20 @@ func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err er
 
 type centerLayouter struct {
 	goui.LayouterHelper
-	lastConstraints *goui.Constraints // For replaying
-	childOffset     goui.Point
-	pos             goui.Point
+	lastConstraints *metrics.Constraints // For replaying
+	childOffset     metrics.Point
+	pos             metrics.Point
 }
 
-func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *centerLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	l.lastConstraints = &constraints
 
 	center := l.Element().Widget().(*Center)
 	for child := range l.Children() {
-		var childSize goui.Size
+		var childSize metrics.Size
 		childSize, err = child.Layout(ctx, constraints)
 		if err != nil {
-			return goui.Size{}, err
+			return metrics.Size{}, err
 		}
 
 		if err = debug.CheckLayoutOverflow(ctx, child.Element().Widget(), childSize, constraints); err != nil {
@@ -109,7 +109,7 @@ func (l *centerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints)
 }
 
 func (l *centerLayouter) PositionAt(x, y metrics.DP) (err error) {
-	l.pos = goui.Point{X: x, Y: y}
+	l.pos = metrics.Point{X: x, Y: y}
 	children := slices.Collect(l.Children())
 	if children == nil {
 		return nil

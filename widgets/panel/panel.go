@@ -80,10 +80,10 @@ func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Widget) (err 
 
 type panelLayouter struct {
 	goui.LayouterHelper
-	layoutSize goui.Size
+	layoutSize metrics.Size
 }
 
-func (l *panelLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *panelLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	defer func() { l.layoutSize = size }()
 	for child := range l.Children() {
 		size, err = child.Layout(ctx, constraints) // Use child's size as is.

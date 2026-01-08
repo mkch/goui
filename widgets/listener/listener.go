@@ -33,9 +33,9 @@ const (
 type PointerEvent struct {
 	Kind   PointerKind
 	Button ButtonMask
-	Pos    goui.Point // Listener-local position
+	Pos    metrics.Point // Listener-local position
 
-	listenerOffset goui.Point
+	listenerOffset metrics.Point
 	nativeParent   native.Handle
 	nativeWindow   native.Handle
 }
@@ -45,13 +45,13 @@ func (evt *PointerEvent) String() string {
 }
 
 // WindowClientPos returns the position of the pointer event in the coordinate system of the native window's client area.
-func (evt *PointerEvent) WindowClientPos() (pos goui.Point, err error) {
+func (evt *PointerEvent) WindowClientPos() (pos metrics.Point, err error) {
 	x, y, err := native.ClientCoordinatesConv(evt.nativeParent, evt.nativeWindow,
 		evt.listenerOffset.X+evt.Pos.X, evt.listenerOffset.Y+evt.Pos.Y)
 	if err != nil {
 		return
 	}
-	pos = goui.Point{X: x, Y: y}
+	pos = metrics.Point{X: x, Y: y}
 	return
 }
 
@@ -96,8 +96,8 @@ func (l *Listener) CreateElement(ctx *goui.Context, parent goui.Element) (elemen
 
 type listenerElement struct {
 	goui.ElementBase
-	offset goui.Point // offset within native parent
-	size   goui.Size  // size of the element
+	offset metrics.Point // offset within native parent
+	size   metrics.Size  // size of the element
 	ctx    *goui.Context
 
 	remove func() // removal function from native listeners
@@ -132,7 +132,7 @@ func (e *listenerElement) callPointerEventMethod(method func(ctx *goui.Context, 
 		method(e.ctx, &PointerEvent{
 			Kind:           Mouse,
 			Button:         button,
-			Pos:            goui.Point{X: x - e.offset.X, Y: y - e.offset.Y},
+			Pos:            metrics.Point{X: x - e.offset.X, Y: y - e.offset.Y},
 			listenerOffset: e.offset,
 			nativeParent:   parent,
 			nativeWindow:   e.ctx.NativeWindow(),
@@ -173,7 +173,7 @@ type listenerLayouter struct {
 }
 
 // Layout implements [goui.Layouter.Layout]
-func (l *listenerLayouter) Layout(ctx *goui.Context, constraints goui.Constraints) (size goui.Size, err error) {
+func (l *listenerLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (size metrics.Size, err error) {
 	defer func() {
 		l.Element().(*listenerElement).size = size
 	}()
@@ -184,7 +184,7 @@ func (l *listenerLayouter) Layout(ctx *goui.Context, constraints goui.Constraint
 }
 
 func (l *listenerLayouter) PositionAt(x, y metrics.DP) error {
-	l.Element().(*listenerElement).offset = goui.Point{X: x, Y: y}
+	l.Element().(*listenerElement).offset = metrics.Point{X: x, Y: y}
 	for child := range l.Children() {
 		return child.PositionAt(x, y)
 	}
