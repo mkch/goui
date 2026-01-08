@@ -7,6 +7,7 @@ import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -23,7 +24,7 @@ func (p *Panel) WidgetID() goui.ID {
 }
 
 func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
-	parentHandle, err := goui.LookupNativeParent(ctx, parent)
+	parentHandle, err := goui.WidgetNativeParent(ctx, parent)
 	if err != nil {
 		err = errortrace.ErrorfStack("Create Panel failed: %w", err)
 		return
@@ -53,9 +54,8 @@ func (p *Panel) Child(n int) goui.WidgetBase {
 	return p.Widget
 }
 
-func (p *Panel) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-func (*Panel) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*Panel) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
+func (*Panel) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 type panelElement struct {
 	goui.ControlElementBase

@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/messagebox"
@@ -59,7 +60,7 @@ func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidg
 		updater = goui.NewStateUpdater(ctx)
 		return goui.NewState(ctx, func() goui.Widget {
 			return &widgets.Button{
-				Label:    label,
+				Label:    gg.If(enabled, label, label+" (Disabled)"),
 				Disabled: !enabled,
 				OnClick: func(ctx *goui.Context) {
 					onClick()

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/widgets/widgetstest"
 )
 
@@ -33,7 +34,7 @@ func (w *mockWidget) Child(n int) goui.WidgetBase {
 	return w.child
 }
 
-func (w *mockWidget) Exclusive(goui.ContainerBase) {}
+func (*mockWidget) ExclusiveKind(marker.KindContainer) {}
 
 func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &goui.ElementBase{}, nil

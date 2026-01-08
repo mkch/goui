@@ -7,6 +7,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 )
 
@@ -49,9 +50,8 @@ func (c *Center) Child(n int) goui.WidgetBase {
 	return c.Widget
 }
 
-func (c *Center) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-func (*Center) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*Center) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
+func (*Center) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 type centerElement struct {
 	goui.ElementBase

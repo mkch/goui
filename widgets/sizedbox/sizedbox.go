@@ -4,6 +4,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 )
 
@@ -33,9 +34,8 @@ func (s *SizedBox) Child(n int) goui.WidgetBase {
 	return s.Widget
 }
 
-func (s *SizedBox) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-func (*SizedBox) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*SizedBox) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
+func (*SizedBox) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 type sizedBoxLayouter struct {
 	goui.LayouterHelper

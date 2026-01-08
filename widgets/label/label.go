@@ -5,6 +5,7 @@ import (
 
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -33,7 +34,7 @@ func (btn *Label) WidgetID() goui.ID {
 }
 
 func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
-	parentHandle, err := goui.LookupNativeParent(ctx, parent)
+	parentHandle, err := goui.WidgetNativeParent(ctx, parent)
 	if err != nil {
 		err = errortrace.ErrorfStack("Create Label failed: %w", err)
 		return
@@ -56,7 +57,7 @@ func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (element
 	return
 }
 
-func (*Label) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*Label) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type labelElement struct {
 	goui.ControlElementBase

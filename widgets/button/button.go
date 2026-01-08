@@ -3,6 +3,7 @@ package button
 import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -21,7 +22,7 @@ func (btn *Button) WidgetID() goui.ID {
 }
 
 func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
-	parentHandle, err := goui.LookupNativeParent(ctx, parent)
+	parentHandle, err := goui.WidgetNativeParent(ctx, parent)
 	if err != nil {
 		err = errortrace.ErrorfStack("Create Button failed: %w", err)
 		return
@@ -50,7 +51,7 @@ func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (elemen
 	return
 }
 
-func (*Button) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*Button) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type buttonElement struct {
 	goui.ControlElementBase

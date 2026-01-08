@@ -2,6 +2,7 @@ package row
 
 import (
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/internal/rowcol"
@@ -46,6 +47,5 @@ func (row *Row) Child(n int) goui.WidgetBase {
 	return row.Widgets[n]
 }
 
-func (row *Row) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-func (*Row) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*Row) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
+func (*Row) ExclusiveKind(marker.KindContainer) { /*Nop*/ }

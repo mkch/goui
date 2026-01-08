@@ -5,6 +5,7 @@ import (
 	"github.com/mkch/gg/slices2"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 )
 
@@ -38,9 +39,8 @@ func (p *Expanded) Child(n int) goui.WidgetBase {
 	return p.Widget
 }
 
-func (p *Expanded) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-func (*Expanded) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*Expanded) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
+func (*Expanded) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 type expandedLayouter struct {
 	goui.LayouterHelper

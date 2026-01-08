@@ -1,17 +1,18 @@
 package goui
 
+import "github.com/mkch/goui/marker"
+
 // StatelessWidgetBase is a [WidgetBase] that builds its UI using a builder function.
 type StatelessWidgetBase interface {
 	WidgetBase
 	Build(ctx *Context) WidgetBase
-	// Exclusive is a marker method to distinguish StatelessWidgetBase, StatefulWidgetBase and ContainerBase.
-	Exclusive(StatelessWidgetBase)
+	ExclusiveKind(marker.KindStateless)
 }
 
 // StatelessWidget is a [Widget] that builds its UI using a builder function.
 type StatelessWidget interface {
 	StatelessWidgetBase
-	ExclusiveWidgetMenu(Widget)
+	ExclusiveType(marker.TypeWidget)
 }
 
 // StatelessHelper is a helper to implement concrete stateless widgets.
@@ -32,8 +33,7 @@ func (w *StatelessHelper) Build(ctx *Context) WidgetBase {
 	return w.Builder(ctx)
 }
 
-// Exclusive is a marker method to distinguish [StatelessWidget], [StatefulWidget] and [Container].
-func (*StatelessHelper) Exclusive(StatelessWidgetBase) { /*Nop*/ }
+func (*StatelessHelper) ExclusiveKind(marker.KindStateless) { /*Nop*/ }
 
 func createStatelessElement(*Context, Element) (Element, error) {
 	return &ElementBase{}, nil
@@ -43,7 +43,7 @@ type stateless struct {
 	StatelessHelper
 }
 
-func (*stateless) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
+func (*stateless) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 // NewStatelessWidget creates a new [StatelessWidget] with the given ID and builder function.
 func NewStatelessWidget(ID ID, builder func(ctx *Context) Widget) StatelessWidget {
@@ -71,6 +71,5 @@ func (f StatelessWidgetFunc) Build(ctx *Context) WidgetBase {
 	return f(ctx)
 }
 
-func (StatelessWidgetFunc) Exclusive(StatelessWidgetBase) { /*Nop*/ }
-
-func (StatelessWidgetFunc) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
+func (StatelessWidgetFunc) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
+func (StatelessWidgetFunc) ExclusiveKind(marker.KindStateless) { /*Nop*/ }

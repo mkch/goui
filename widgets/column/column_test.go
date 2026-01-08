@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/widgetstest"
@@ -22,7 +23,7 @@ func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui
 	return &w.Element, nil
 }
 
-func (*mockWidget) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*mockWidget) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type mockElement struct {
 	goui.ElementBase

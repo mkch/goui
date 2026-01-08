@@ -9,6 +9,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -84,10 +85,8 @@ func (l *Listener) Child(index int) goui.WidgetBase {
 	return l.Widget
 }
 
-// Exclusive implements [goui.Container.Exclusive]
-func (l *Listener) Exclusive(goui.ContainerBase) { /*NOP*/ }
-
-func (*Listener) ExclusiveWidgetMenu(goui.Widget) { /*NOP*/ }
+func (*Listener) ExclusiveType(marker.TypeWidget)    { /*NOP*/ }
+func (*Listener) ExclusiveKind(marker.KindContainer) { /*NOP*/ }
 
 // CreateElement implements [goui.Widget.CreateElement]
 func (l *Listener) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
@@ -106,18 +105,21 @@ type listenerElement struct {
 }
 
 // SetWidget implements [goui.Element.SetWidget]
-func (l *listenerElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) error {
-	l.ctx = ctx
-	if l.remove != nil {
-		l.remove()
-		l.remove = nil
+func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) error {
+	if e.Widget() == widget {
+		return nil // No change
 	}
-	parent, err := goui.LookupNativeParent(ctx, l)
+	e.ctx = ctx
+	if e.remove != nil {
+		e.remove()
+		e.remove = nil
+	}
+	parent, err := goui.WidgetNativeParent(ctx, e.Parent())
 	if err != nil {
-		return errortrace.ErrorfStack("Configure Listener failed: %w", err)
+		return errortrace.ErrorfStack("configure Listener failed: %w", err)
 	}
-	l.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, l)
-	return l.ElementBase.SetWidget(ctx, widget)
+	e.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, e)
+	return e.ElementBase.SetWidget(ctx, widget)
 }
 
 // Destroy implements [goui.Element.Destroy]

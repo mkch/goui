@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -28,7 +29,7 @@ func (w *mockWidget) CreateElement(ctx *Context, parent Element) (Element, error
 	return w.element, nil
 }
 
-func (*mockWidget) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
+func (*mockWidget) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 func TestBuildElementTree_CreateElementError(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
@@ -206,9 +207,9 @@ func (c *mockContainer) Child(n int) WidgetBase {
 	return c.Children[n]
 }
 
-func (c *mockContainer) Exclusive(ContainerBase) { /*Nop*/ }
+func (*mockContainer) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
-func (*mockContainer) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
+func (*mockContainer) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 func TestBuildElementTree_Container(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
@@ -612,9 +613,9 @@ func (m *mockMenu) Child(n int) Widget {
 	return m.Widget
 }
 
-func (m *mockMenu) Exclusive(ContainerBase) { /*Nop*/ }
+func (*mockMenu) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
-func (m *mockMenu) ExclusiveWidgetMenu(Menu) { /*Nop*/ }
+func (*mockMenu) ExclusiveType(marker.TypeMenu) { /*Nop*/ }
 
 type mockMenuElement struct {
 	ElementBase
@@ -634,7 +635,7 @@ func (c *mockControl) WidgetID() ID {
 }
 
 func (c *mockControl) CreateElement(ctx *Context, parent Element) (Element, error) {
-	nativeParent, err := LookupNativeParent(ctx, parent)
+	nativeParent, err := WidgetNativeParent(ctx, parent)
 	if err != nil {
 		return nil, fmt.Errorf("Create mock control failed: %w", err)
 	}

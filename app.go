@@ -232,13 +232,16 @@ func (app *App) CreateWindow(config *Window) (err error) {
 
 // unwrapNativeMenu unwraps the given Element to find the nearest underlying [NativeMenuElement].
 // If such a NativeMenuElement is found, its native.Handle is returned.
-// Any wrapper that is not [StatelessWidget] or [StatefulWidget] are skipped.
+// Any wrapper that is not [StatelessWidgetBase] or [StatefulWidgetBase] are skipped.
 func unwrapNativeMenu(element Element) native.Handle {
 	h, found := LookupChild(element, func(e Element) (native.Handle, bool) {
 		if nativeMenu, ok := e.(NativeMenuElement); ok {
 			return nativeMenu.NativeMenu(), true // Found a menu
 		}
 		widget := e.Widget()
+		// More precisely, [menu.StatelessMenu] and [menu.StatefulMenu] are expected here,
+		// but we use the base interfaces [goui.StatelessWidgetBase] and [goui.StatefulWidgetBase]
+		// to avoid import cycle.
 		if _, isStateless := widget.(StatelessWidgetBase); isStateless {
 			return nil, false // May contain a menu, continue searching
 		}
@@ -289,6 +292,8 @@ func LookupChild[T any](element Element, predicate func(Element) (value T, satis
 	return
 }
 
+// ErrNoSuchWindow is returned when trying to access a window using
+// an ID that does not exist.
 var ErrNoSuchWindow = errors.New("no such window exists")
 
 // CloseWindow closes the window with the given ID.

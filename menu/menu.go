@@ -5,6 +5,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -28,14 +29,15 @@ func (m *Menu) CreateElement(ctx *goui.Context, parent goui.Element) (element go
 	return createMenuElement(parent, true)
 }
 
-func (*Menu) ExclusiveWidgetMenu(goui.Menu) { /*Nop*/ }
+func (*Menu) ExclusiveType(marker.TypeMenu)      { /*Nop*/ }
+func (*Menu) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
-// lookupNativeItemParent searches the element and its ancestors for the nearest [*nativeItemElement]
+// nativeItemParent searches the element and its ancestors for the nearest [goui.NativeMenuItemElement]
 // and returns its handle, or nil if not found.
-// The search stops and returns ErrWrongParent error when encountering an element whose widget is neither
-// [goui.StatelessWidget], [goui.StatefulWidget] nor [*nativeItemElement].
-func lookupNativeItemParent(element goui.Element) (native.Handle, error) {
-	item, err := lookupNativeParent[goui.NativeMenuItemElement, StatelessMenu, StatefulMenu](element)
+// The search stops and returns [ErrWrongParent] error when encountering an element is of type
+// [goui.NativeMenuItemElement]  and whose widget is neither a [StatelessMenu] or [StatefulMenu].
+func nativeItemParent(element goui.Element) (native.Handle, error) {
+	item, err := nativeParent[goui.NativeMenuItemElement, StatelessMenu, StatefulMenu](element)
 	if err != nil {
 		return nil, err
 	}
@@ -45,12 +47,12 @@ func lookupNativeItemParent(element goui.Element) (native.Handle, error) {
 	return item.NativeMenuItem(), nil
 }
 
-// lookupNativeMenuParent searches the element and its ancestors for the nearest [*nativeMenuElement]
+// nativeMenuParent searches the element and its ancestors for the nearest [goui.NativeMenuElement]
 // and returns its handle, or nil if not found.
-// The search stops and returns ErrWrongParent error when encountering an element whose widget is neither
-// [goui.StatelessWidget], [goui.StatefulWidget] nor [*nativeMenuElement].
-func lookupNativeMenuParent(element goui.Element) (native.Handle, error) {
-	menu, err := lookupNativeParent[goui.NativeMenuElement, StatelessItem, StatefulItem](element)
+// The search stops and returns [ErrWrongParent] error when encountering an element is of type
+// [goui.NativeMenuElement]  and whose widget is neither a [StatelessItem] or [StatefulItem].
+func nativeMenuParent(element goui.Element) (native.Handle, error) {
+	menu, err := nativeParent[goui.NativeMenuElement, StatelessItem, StatefulItem](element)
 	if err != nil {
 		return nil, err
 	}
@@ -60,13 +62,12 @@ func lookupNativeMenuParent(element goui.Element) (native.Handle, error) {
 	return menu.NativeMenu(), nil
 }
 
-// lookupNativeParent is a helper function for [lookupNativeMenuParent] and [lookupNativeItemParent].
-// It searches the element and its ancestors for the nearest element of type T
+// nativeParent is a helper function for [nativeMenuParent] and [nativeItemParent].
+// It searches the element and its ancestors for the nearest element of type ElementType.
 // and returns it via ret, or nil if not found.
-// The search stops and returns ErrWrongParent error when encountering an element whose widget is neither
-// StatelessType, StatefulType nor T.
-// StatelessType and StatefulType should be the stateless and stateful version of counter T.
-func lookupNativeParent[
+// The search stops and returns goui.ErrWrongParent error when encountering an element whose type
+// is not T and whose widget is neither a [StatelessType] or [StatefulType].
+func nativeParent[
 	ElementType goui.Element,
 	StatelessType goui.StatelessWidgetBase,
 	StatefulType goui.StatefulWidgetBase,
@@ -103,7 +104,7 @@ func createMenuElement(parent goui.Element, popup bool) (element goui.Element, e
 		// If parent is given, it must represent a opener
 		// menu item to which this menu is a submenu.
 		var opener native.Handle
-		if opener, err = lookupNativeItemParent(parent); err != nil {
+		if opener, err = nativeItemParent(parent); err != nil {
 			err = errortrace.ErrorfStack("create menu failed: %w", err)
 			return
 		}
@@ -131,9 +132,6 @@ func (m *Menu) Child(index int) goui.WidgetBase {
 	return m.Items[index]
 }
 
-// Exclusive implements [goui.Container.Exclusive].
-func (m *Menu) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
 // WindowMenu is a [Menu] that is suitable for use as a window menu.
 // Use this type for window menus and [Menu] for submenus/popups;
 // mixing them incorrectly may cause platform-specific issues.
@@ -159,11 +157,8 @@ func (m *WindowMenu) Child(index int) goui.WidgetBase {
 	return m.Items[index]
 }
 
-// Exclusive implements [goui.Container.Exclusive].
-func (m *WindowMenu) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-// Exclusive implements [goui.Widget.ExclusiveWidgetMenu].
-func (*WindowMenu) ExclusiveWidgetMenu(goui.Menu) { /*Nop*/ }
+func (*WindowMenu) ExclusiveType(marker.TypeMenu)      { /*Nop*/ }
+func (*WindowMenu) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 // nativeMenuElement is an implementation of [goui.NativeMenuElement]
 // that represents a native menu.
@@ -212,11 +207,8 @@ func (item *Item) Child(index int) goui.WidgetBase {
 	return item.Submenu
 }
 
-// Exclusive implements [goui.Container.Exclusive].
-func (item *Item) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-// Exclusive implements [goui.Widget.ExclusiveWidgetMenu].
-func (*Item) ExclusiveWidgetMenu(goui.MenuItem) { /*Nop*/ }
+func (*Item) ExclusiveType(marker.TypeMenuItem)  { /*Nop*/ }
+func (*Item) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
@@ -236,7 +228,7 @@ func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element
 // createItem is a helper function to create a menu item under the given parent element.
 // If separator is true, a separator item is created.
 func createItem(parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
-	parentMenu, err := lookupNativeMenuParent(parent)
+	parentMenu, err := nativeMenuParent(parent)
 	if err == nil && parentMenu == nil {
 		// Menu item must have a parent menu
 		err = goui.ErrWrongParent
@@ -330,7 +322,7 @@ func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (ele
 	return
 }
 
-func (*Separator) ExclusiveWidgetMenu(goui.MenuItem) { /*Nop*/ }
+func (*Separator) ExclusiveType(marker.TypeMenuItem) { /*Nop*/ }
 
 type separatorElement struct {
 	goui.ElementBase
@@ -378,14 +370,14 @@ func (l *menuLayouter) Replayer() func(*goui.Context) error {
 
 type StatefulMenu interface {
 	goui.StatefulWidgetBase
-	ExclusiveWidgetMenu(goui.Menu)
+	ExclusiveType(marker.TypeMenu)
 }
 
 type statefulMenu struct {
 	goui.StatefulHelper
 }
 
-func (*statefulMenu) ExclusiveWidgetMenu(goui.Menu) { /*Nop*/ }
+func (*statefulMenu) ExclusiveType(marker.TypeMenu) { /*Nop*/ }
 
 // MenuState is the state associated with a [StatefulItem].
 // See [goui.State] for more details.
@@ -435,14 +427,14 @@ func NewStatefulMenu(ID goui.ID, stateCreator func(ctx *goui.StateContext) MenuS
 
 type StatefulItem interface {
 	goui.StatefulWidgetBase
-	ExclusiveWidgetMenu(goui.MenuItem)
+	ExclusiveType(marker.TypeMenuItem)
 }
 
 type statefulItem struct {
 	goui.StatefulHelper
 }
 
-func (*statefulItem) ExclusiveWidgetMenu(goui.MenuItem) { /*Nop*/ }
+func (*statefulItem) ExclusiveType(marker.TypeMenuItem) { /*Nop*/ }
 
 // ItemState is the state associated with a [StatefulItem].
 // See [goui.State] for more details.
@@ -505,14 +497,14 @@ func NewStatefulItem(ID goui.ID, stateCreator func(ctx *goui.StateContext) ItemS
 
 type StatelessMenu interface {
 	goui.StatelessWidgetBase
-	ExclusiveWidgetMenu(goui.Menu)
+	ExclusiveType(marker.TypeMenu)
 }
 
 type statelessMenu struct {
 	goui.StatelessHelper
 }
 
-func (*statelessMenu) ExclusiveWidgetMenu(goui.Menu) { /*Nop*/ }
+func (*statelessMenu) ExclusiveType(marker.TypeMenu) { /*Nop*/ }
 
 func NewStatelessMenu(ID goui.ID, builder func(ctx *goui.Context) goui.Menu) StatelessMenu {
 	return &statelessMenu{
@@ -525,14 +517,14 @@ func NewStatelessMenu(ID goui.ID, builder func(ctx *goui.Context) goui.Menu) Sta
 
 type StatelessItem interface {
 	goui.StatelessWidgetBase
-	ExclusiveWidgetMenu(goui.MenuItem)
+	ExclusiveType(marker.TypeMenuItem)
 }
 
 type statelessItem struct {
 	goui.StatelessHelper
 }
 
-func (*statelessItem) ExclusiveWidgetMenu(goui.MenuItem) { /*Nop*/ }
+func (*statelessItem) ExclusiveType(marker.TypeMenuItem) { /*Nop*/ }
 
 func NewStatelessItem(ID goui.ID, builder func(ctx *goui.Context) goui.MenuItem) StatelessItem {
 	return &statelessItem{

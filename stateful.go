@@ -2,8 +2,8 @@ package goui
 
 import (
 	"errors"
-	"fmt"
 
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/native"
 )
 
@@ -13,14 +13,13 @@ import (
 type StatefulWidgetBase interface {
 	WidgetBase
 	CreateState(ctx *StateContext) StateBase
-	// Exclusive is a marker method to distinguish StatefulWidgetBase, StatelessWidgetBase and ContainerBase.
-	Exclusive(StatefulWidgetBase)
+	ExclusiveKind(marker.KindStateful)
 }
 
 // StatefulWidgets is a [Widget] that has mutable state.
 type StatefulWidget interface {
 	StatefulWidgetBase
-	ExclusiveWidgetMenu(Widget)
+	ExclusiveType(marker.TypeWidget)
 }
 
 // StatefulHelper is a helper to implement concrete state widgets.
@@ -42,13 +41,13 @@ func (w *StatefulHelper) CreateState(ctx *StateContext) StateBase {
 	return w.StateCreator(ctx)
 }
 
-func (*StatefulHelper) Exclusive(StatefulWidgetBase) { /*Nop*/ }
+func (*StatefulHelper) ExclusiveKind(marker.KindStateful) { /*Nop*/ }
 
 type stateful struct {
 	StatefulHelper
 }
 
-func (*stateful) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
+func (*stateful) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 // fromStateAdapter adapts a State to an StateBase.
 type fromStateAdapter struct {
@@ -85,9 +84,9 @@ func (f StatefulWidgetFunc) CreateState(ctx *StateContext) StateBase {
 	return &fromStateAdapter{State: f(ctx)}
 }
 
-func (f StatefulWidgetFunc) Exclusive(StatefulWidgetBase) { /*Nop*/ }
+func (StatefulWidgetFunc) ExclusiveKind(marker.KindStateful) { /*Nop*/ }
 
-func (f StatefulWidgetFunc) ExclusiveWidgetMenu(Widget) { /*Nop*/ }
+func (StatefulWidgetFunc) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type statefulElement struct {
 	ElementBase
@@ -206,11 +205,11 @@ func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement)
 	}
 
 	attachment := elementAttachedToWindow(ctx, statefulElement)
-	if attachment == None {
+	if attachment == attachNone {
 		return nil
 	}
 
-	if attachment == IsWindowMenu {
+	if attachment == attachAsWindowMenu {
 		return native.RefreshWindowMenu(ctx.NativeWindow())
 	}
 
@@ -233,123 +232,56 @@ func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement)
 type windowAttachment int
 
 const (
-	None windowAttachment = iota
-	InWidgetTree
-	IsWindowMenu
+	attachNone windowAttachment = iota
+	attachToWidgetTree
+	attachAsWindowMenu
 )
 
 // elementAttachedToWindow checks whether the given element is attached to the window.
-// Returns IsWindowMenu only if element itself is the window menu or element's direct
+// Returns [attachAsWindowMenu] only if element itself is the window menu or element's direct
 // native parent is the window menu.
-// Returns InWidgetTree if the element is in the window's main widget tree.
+// Returns [attachToWidgetTree] if the element is part of the window's widget tree.
 // Returns None otherwise.
 func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
-	const (
-		stateInitial = iota
-		stateInWidgetTree
-		stateInMenuTree
-	)
-
-	state := stateInitial
-
-	for elem := element; elem != nil; elem = elem.Parent() {
-		switch state {
-		case stateInitial:
-			// Check for window menu or root
-			if elem == ctx.window.Menu {
-				return IsWindowMenu
+	// Check or window menu
+	if _, isMenu := element.Widget().(interface{ ExclusiveType(marker.TypeMenu) }); isMenu {
+		attachment, _ := LookupParent(element, func(e Element) (attachment windowAttachment, stop bool) {
+			if e == ctx.window.Menu {
+				return attachAsWindowMenu, true // Is window menu
 			}
-			if elem == ctx.window.Root {
-				return InWidgetTree
+			widget := e.Widget()
+			if _, ok := widget.(interface {
+				ExclusiveType(marker.TypeMenu)
+				ExclusiveKind(marker.KindStateless)
+			}); ok {
+				return attachNone, false // Continue searching
 			}
-
-			if _, ok := elem.(NativeMenuElement); ok {
-				// Non-window menu, not attached to window
-				return None
+			if _, ok := widget.(interface {
+				ExclusiveType(marker.TypeMenu)
+				ExclusiveKind(marker.KindStateful)
+			}); ok {
+				return attachNone, false // Continue searching
 			}
-
-			// Check for menu item, enter menu tree state
-			if _, ok := elem.(NativeMenuItemElement); ok {
-				// May be an item of the window menu
-				state = stateInMenuTree
-				continue
-			}
-
-			// Skip transparent widgets (StatefulWidget and StatelessWidget)
-			widget := elem.Widget()
-			if _, ok := widget.(StatefulWidget); ok {
-				continue
-			}
-			if _, ok := widget.(StatelessWidget); ok {
-				continue
-			}
-
-			// Encountered non-transparent widget (Container or other), enter widget tree state
-			state = stateInWidgetTree
-
-		case stateInWidgetTree:
-			// Check for root widget
-			if elem == ctx.window.Root {
-				return InWidgetTree
-			}
-
-			// Skip transparent widgets and containers
-			widget := elem.Widget()
-			if _, ok := widget.(StatefulWidget); ok {
-				continue
-			}
-			if _, ok := widget.(StatelessWidget); ok {
-				continue
-			}
-			if _, ok := widget.(Container); ok {
-				continue
-			}
-
-			if ctx.app.debug != nil {
-				if _, ok := widget.(NativeMenuElement); ok {
-					panic("invalid element tree: widget tree contains menu element")
-				}
-				if _, ok := widget.(NativeMenuItemElement); ok {
-					panic("invalid element tree: widget tree contains menu item element")
-				}
-			}
-
-			// Encountered other element, not in window widget tree
-			return None
-
-		case stateInMenuTree:
-			// Check for window menu
-			if elem == ctx.window.Menu {
-				return IsWindowMenu
-			}
-
-			if _, ok := elem.(NativeMenuElement); ok {
-				// Non-window menu, not attached to window
-				return None
-			}
-
-			// Skip transparent widgets
-			widget := elem.Widget()
-			if _, ok := widget.(StatefulWidget); ok {
-				continue
-			}
-			if _, ok := widget.(StatelessWidget); ok {
-				continue
-			}
-
-			// If it's neither transparent widget nor menu, the element tree
-			// is illegal.
-			if ctx.app.debug != nil {
-				panic(fmt.Sprintf("invalid element tree: menu tree contains non-menu element %T", elem))
-			}
-			return None
-		}
+			return attachNone, true // Not in window menu tree
+		})
+		return attachment
 	}
-
-	// Reached end of parent chain without finding root or window menu
-	return None
+	if _, isMenuitem := element.Widget().(interface{ ExclusiveType(marker.TypeMenuItem) }); isMenuitem {
+		// MenuItem must have a menu parent, check it
+		return elementAttachedToWindow(ctx, element.Parent())
+	}
+	// Check for window widget tree
+	attachment, _ := LookupParent(element, func(e Element) (attachment windowAttachment, stop bool) {
+		if e == ctx.window.Root {
+			return attachToWidgetTree, true // In widget tree
+		}
+		return attachNone, false // Continue searching
+	})
+	return attachment
 }
 
+// errNotReplayable is returned when the parent layouter does not support replaying.
+// errNotReplayable is a sentinel error.
 var errNotReplayable = errors.New("the parent layouter does not support replaying")
 
 // replayParentLayouter replays the laying out of the nearest recursive parent

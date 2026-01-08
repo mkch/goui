@@ -2,6 +2,7 @@ package textfield
 
 import (
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -41,7 +42,7 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 	return elem, nil
 }
 
-func (*TextField) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*TextField) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type textFieldElement struct {
 	goui.ControlElementBase

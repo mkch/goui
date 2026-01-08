@@ -4,6 +4,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -38,9 +39,8 @@ func (p *Visibility) Child(n int) goui.WidgetBase {
 	return p.Widget
 }
 
-func (p *Visibility) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-func (Visibility) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (Visibility) ExclusiveType(marker.TypeWidget)     { /*Nop*/ }
+func (*Visibility) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 type visibilityLayouter struct {
 	goui.LayouterHelper
@@ -56,7 +56,7 @@ func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints metrics.Const
 		if !visibility.Visible {
 			// Set the offset beyond the right edge of the window.
 			var parentHandle native.Handle
-			parentHandle, err = goui.LookupNativeParent(ctx, elem.Parent())
+			parentHandle, err = goui.WidgetNativeParent(ctx, elem.Parent())
 			if err != nil {
 				err = errortrace.ErrorfStack("Layout Visibility failed: %w", err)
 				return

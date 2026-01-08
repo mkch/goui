@@ -4,6 +4,7 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 )
 
@@ -31,9 +32,8 @@ func (p *Padding) Child(n int) goui.WidgetBase {
 	return p.Widget
 }
 
-func (p *Padding) Exclusive(goui.ContainerBase) { /*Nop*/ }
-
-func (*Padding) ExclusiveWidgetMenu(goui.Widget) { /*Nop*/ }
+func (*Padding) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
+func (*Padding) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 type paddingLayouter struct {
 	goui.LayouterHelper

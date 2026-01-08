@@ -1,5 +1,7 @@
 package goui
 
+import "github.com/mkch/goui/marker"
+
 type WidgetBase interface {
 	WidgetID() ID
 	CreateElement(ctx *Context, parent Element) (Element, error)
@@ -7,31 +9,27 @@ type WidgetBase interface {
 
 type Widget interface {
 	WidgetBase
-	// Exclusive is a marker method to distinguish [Widget], [Menu] and [MenuItem].
-	ExclusiveWidgetMenu(Widget)
+	ExclusiveType(marker.TypeWidget)
 }
 
 type Menu interface {
 	WidgetBase
-	// Exclusive is a marker method to distinguish [Widget], [Menu] and [MenuItem].
-	ExclusiveWidgetMenu(Menu)
+	ExclusiveType(marker.TypeMenu)
 }
 
 type MenuItem interface {
 	WidgetBase
-	// Exclusive is a marker method to distinguish [Widget], [Menu] and [MenuItem].
-	ExclusiveWidgetMenu(MenuItem)
+	ExclusiveType(marker.TypeMenuItem)
 }
 
 type ContainerBase interface {
 	WidgetBase
 	NumChildren() int
 	Child(n int) WidgetBase
-	// Exclusive is a marker method to distinguish StatefulWidgetBase, StatelessWidgetBase and ContainerBase.
-	Exclusive(ContainerBase)
+	ExclusiveKind(marker.KindContainer)
 }
 
 type Container interface {
 	ContainerBase
-	ExclusiveWidgetMenu(Widget)
+	ExclusiveType(marker.TypeWidget)
 }
