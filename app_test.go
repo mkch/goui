@@ -96,7 +96,7 @@ func TestUnwrapNativeMenu_WrappedInStatefulWidget(t *testing.T) {
 		elem: menuElem,
 	}
 
-	statefulWidget := &StatefulWidget{
+	statefulWidget := &Stateful{
 		ID: ValueID("stateful_wrapper"),
 		StateCreator: func(ctx *StateContext) State {
 			return NewState(ctx, func() Widget {
@@ -128,7 +128,7 @@ func TestUnwrapNativeMenu_StatefulInStateless(t *testing.T) {
 	}
 
 	// Create a StatefulWidget that has the menu
-	statefulWidget := &StatefulWidget{
+	statefulWidget := &Stateful{
 		ID: ValueID("stateful_inner"),
 		StateCreator: func(ctx *StateContext) State {
 			return NewState(ctx, func() Widget {
@@ -176,7 +176,7 @@ func TestUnwrapNativeMenu_StatelessInStateful(t *testing.T) {
 	}
 
 	// Create a StatefulWidget that contains the StatelessWidget
-	statefulWidget := &StatefulWidget{
+	statefulWidget := &Stateful{
 		ID: ValueID("stateful_outer"),
 		StateCreator: func(ctx *StateContext) State {
 			return NewState(ctx, func() Widget {

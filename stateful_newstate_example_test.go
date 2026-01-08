@@ -10,7 +10,7 @@ import (
 func ExampleNewState() {
 	// counterButton is a stateful widget that displays a button showing the click count.
 	// Each time the button is clicked, the click count increases by one.
-	var counterButton goui.Widget = &goui.StatefulWidget{
+	var counterButton goui.Widget = &goui.Stateful{
 		ID: goui.ValueID(123),
 		StateCreator: func(ctx *goui.StateContext) (state goui.State) {
 			var count int // Click count, the actual state.

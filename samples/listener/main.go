@@ -28,7 +28,7 @@ func main() {
 		Width: 1200, Height: 400,
 		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
 		Root: &widgets.Center{
-			Widget: &goui.StatefulWidget{StateCreator: func(ctx *goui.StateContext) goui.State {
+			Widget: &goui.Stateful{StateCreator: func(ctx *goui.StateContext) goui.State {
 				return &ListenerLabelState{
 					StateUpdater: goui.NewStateUpdater(ctx),
 				}

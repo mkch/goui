@@ -7,29 +7,35 @@ import (
 	"github.com/mkch/goui/native"
 )
 
-// StatefulWidget is a widget that has mutable state.
+type StatefulWidget interface {
+	Widget
+	CreateState(ctx *StateContext) State
+	// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
+	Exclusive(StatefulWidget)
+}
+
+// Stateful is a widget that has mutable state.
 // The state is stored in a separate State object associated with the widget.
 // The state can be updated via [State].Update method, which triggers a rebuild of the widget tree.
-type StatefulWidget struct {
+type Stateful struct {
 	ID ID
 	// StateCreator creates the state associated with this widget.
 	StateCreator func(ctx *StateContext) State
 }
 
-func (w *StatefulWidget) WidgetID() ID {
+func (w *Stateful) WidgetID() ID {
 	return w.ID
 }
 
-func (w *StatefulWidget) CreateElement(ctx *Context, parent Element) (Element, error) {
+func (w *Stateful) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatefulElement(ctx), nil
 }
 
-func (w *StatefulWidget) CreateState(ctx *StateContext) State {
+func (w *Stateful) CreateState(ctx *StateContext) State {
 	return w.StateCreator(ctx)
 }
 
-// Exclusive is a marker method to distinguish StatefulWidget, StatelessWidget and Container.
-func (w *StatefulWidget) Exclusive(StatefulWidget) { /*Nop*/ }
+func (w *Stateful) Exclusive(StatefulWidget) { /*Nop*/ }
 
 type statefulElement struct {
 	ElementBase
@@ -212,7 +218,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 
 			// Skip transparent widgets (StatefulWidget and StatelessWidget)
 			widget := elem.Widget()
-			if _, ok := widget.(*StatefulWidget); ok {
+			if _, ok := widget.(StatefulWidget); ok {
 				continue
 			}
 			if _, ok := widget.(*StatelessWidget); ok {
@@ -230,7 +236,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 
 			// Skip transparent widgets and containers
 			widget := elem.Widget()
-			if _, ok := widget.(*StatefulWidget); ok {
+			if _, ok := widget.(StatefulWidget); ok {
 				continue
 			}
 			if _, ok := widget.(*StatelessWidget); ok {
@@ -265,7 +271,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 
 			// Skip transparent widgets
 			widget := elem.Widget()
-			if _, ok := widget.(*StatefulWidget); ok {
+			if _, ok := widget.(StatefulWidget); ok {
 				continue
 			}
 			if _, ok := widget.(*StatelessWidget); ok {

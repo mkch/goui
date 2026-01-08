@@ -71,7 +71,7 @@ func main() {
 var showHelp = true
 var screenCoord = false // Use screen coordinates for menu popup
 
-var MainMenu = &goui.StatefulWidget{
+var MainMenu = &goui.Stateful{
 	StateCreator: func(ctx *goui.StateContext) (state goui.State) {
 		state = goui.NewState(ctx, func() goui.Widget {
 			m := &menu.WindowMenu{
@@ -131,7 +131,7 @@ func (s *CountState) Build() goui.Widget {
 	}
 }
 
-var CounterItem = &goui.StatefulWidget{
+var CounterItem = &goui.Stateful{
 	StateCreator: func(ctx *goui.StateContext) goui.State {
 		return &CountState{
 			StateUpdater: goui.NewStateUpdater(ctx),

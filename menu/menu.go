@@ -76,7 +76,7 @@ func lookupNativeParent[T *nativeItemElement | *nativeMenuElement](element goui.
 		if _, isStateless := widget.(*goui.StatelessWidget); isStateless {
 			return R{}, false // Continue searching
 		}
-		if _, isStateful := widget.(*goui.StatefulWidget); isStateful {
+		if _, isStateful := widget.(goui.StatefulWidget); isStateful {
 			return R{}, false // Continue searching
 		}
 		return R{nil, errortrace.WithStack(goui.ErrWrongParent)}, true // Wrong parent

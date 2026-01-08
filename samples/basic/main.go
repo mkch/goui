@@ -60,7 +60,7 @@ func main() {
 	app.Run()
 }
 
-var counterButton = &goui.StatefulWidget{
+var counterButton = &goui.Stateful{
 	StateCreator: func(ctx *goui.StateContext) (state goui.State) {
 		// Click count, the real state.
 		var count int

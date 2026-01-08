@@ -259,7 +259,7 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Widget) (Element,
 		return nil, err
 	}
 
-	if statefulWidget, ok := widget.(*StatefulWidget); ok {
+	if statefulWidget, ok := widget.(StatefulWidget); ok {
 		return buildStatefulElement(ctx, elem, statefulWidget)
 	}
 	if statelessWidget, ok := widget.(*StatelessWidget); ok {
@@ -292,7 +292,7 @@ func buildStatelessElement(ctx *Context, elem Element, statelessWidget *Stateles
 	return elem, nil
 }
 
-func buildStatefulElement(ctx *Context, elem Element, statefulWidget *StatefulWidget) (Element, error) {
+func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulWidget) (Element, error) {
 	statefulElement := elem.(*statefulElement)
 	statefulElement.state = statefulWidget.CreateState(&StateContext{ctx, statefulElement})
 	// The child element is already appended to elem in buildElementTreeImpl.
@@ -314,7 +314,7 @@ func updateElementTree(ctx *Context, elem Element, widget Widget) (err error) {
 	if container, ok := widget.(Container); ok {
 		return updateContainerElement(ctx, elem, container)
 	}
-	if _, ok := widget.(*StatefulWidget); ok {
+	if _, ok := widget.(StatefulWidget); ok {
 		return updateStatefulWidget(ctx, elem)
 	}
 	if statelessWidget, ok := widget.(*StatelessWidget); ok {

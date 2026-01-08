@@ -107,7 +107,7 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&goui.StatefulWidget{
+			&goui.Stateful{
 				ID: goui.ValueID("stateful"),
 				StateCreator: func(ctx *goui.StateContext) goui.State {
 					return goui.NewState(ctx, func() goui.Widget {
@@ -185,7 +185,7 @@ func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
 			&Item{
 				ID:    goui.ValueID("item"),
 				Title: "Item",
-				Submenu: &goui.StatefulWidget{
+				Submenu: &goui.Stateful{
 					ID: goui.ValueID("stateful"),
 					StateCreator: func(ctx *goui.StateContext) goui.State {
 						return goui.NewState(ctx, func() goui.Widget {
@@ -243,7 +243,7 @@ func TestBuildSuccess_MixedWrappers(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&goui.StatefulWidget{
+			&goui.Stateful{
 				ID: goui.ValueID("stateful"),
 				StateCreator: func(ctx *goui.StateContext) goui.State {
 					return goui.NewState(ctx, func() goui.Widget {

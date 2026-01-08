@@ -106,7 +106,7 @@ func (s *State) Build() goui.Widget {
 }
 
 func Root() goui.Widget {
-	return &goui.StatefulWidget{
+	return &goui.Stateful{
 		StateCreator: func(ctx *goui.StateContext) goui.State {
 			return NewState(ctx)
 		},
@@ -139,7 +139,7 @@ func NewPersonState(ctx *goui.StateContext, person *Person) goui.State {
 }
 
 func NewPersonWidget(person Person) goui.Widget {
-	return &goui.StatefulWidget{
+	return &goui.Stateful{
 		ID: goui.ValueID(person.ID),
 		StateCreator: func(ctx *goui.StateContext) goui.State {
 			return NewPersonState(ctx, &person)

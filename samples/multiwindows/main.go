@@ -52,10 +52,10 @@ func main() {
 	app.Run()
 }
 
-func newEnableDisableButton(label string, onClick func()) (btn *goui.StatefulWidget, setEnabled func(bool)) {
+func newEnableDisableButton(label string, onClick func()) (btn *goui.Stateful, setEnabled func(bool)) {
 	var enabled bool = true
 	var updater goui.StateUpdater
-	btn = &goui.StatefulWidget{
+	btn = &goui.Stateful{
 		StateCreator: func(ctx *goui.StateContext) goui.State {
 			updater = goui.NewStateUpdater(ctx)
 			return goui.NewState(ctx, func() goui.Widget {
@@ -90,8 +90,8 @@ func createWindow2() {
 	})
 }
 
-func newCountButton() *goui.StatefulWidget {
-	return &goui.StatefulWidget{
+func newCountButton() *goui.Stateful {
+	return &goui.Stateful{
 		StateCreator: func(ctx *goui.StateContext) goui.State {
 			var count int
 			var updater = goui.NewStateUpdater(ctx)

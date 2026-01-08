@@ -118,7 +118,7 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
 
-	widget := &StatefulWidget{
+	widget := &Stateful{
 		ID: ValueID("stateful"),
 		StateCreator: func(ctx *StateContext) State {
 			return NewState(ctx, func() Widget { return childWidget }, nil)
@@ -407,12 +407,12 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child1,
-			&StatefulWidget{
+			&Stateful{
 				StateCreator: func(ctx *StateContext) State {
 					return NewState(ctx, func() Widget { return child2 }, nil)
 				},
 			},
-			&StatefulWidget{
+			&Stateful{
 				ID: ValueID("no-change"),
 				StateCreator: func(ctx *StateContext) State {
 					return NewState(ctx, func() Widget { return child3 }, nil)
@@ -437,13 +437,13 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		ID: ValueID("container"),
 		Children: []Widget{
 			child4, // Match old #0, update in-place.
-			&StatefulWidget{
+			&Stateful{
 				ID: ValueID("parent-of-child5"),
 				StateCreator: func(ctx *StateContext) State { // No match, recrated
 					return NewState(ctx, func() Widget { return child5 }, nil)
 				},
 			},
-			&StatefulWidget{
+			&Stateful{
 				ID: ValueID("no-change"),
 				StateCreator: func(ctx *StateContext) State { // Match old #2, update in-place and createState will not be called.
 					return NewState(ctx, func() Widget { return child3 }, nil)

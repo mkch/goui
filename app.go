@@ -255,7 +255,7 @@ func unwrapNativeMenu(element Element) native.Handle {
 		if _, isStateless := widget.(*StatelessWidget); isStateless {
 			return nil, false // May contain a menu, continue searching
 		}
-		if _, isStateful := widget.(*StatefulWidget); isStateful {
+		if _, isStateful := widget.(StatefulWidget); isStateful {
 			return nil, false // May contain a menu, continue searching
 		}
 		// Can't contain a menu. Found a `Not Found`(nil).

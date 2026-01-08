@@ -81,7 +81,7 @@ func (s *numberState) Inc() {
 
 var state *numberState
 
-var stateful = &goui.StatefulWidget{
+var stateful = &goui.Stateful{
 	StateCreator: func(ctx *goui.StateContext) goui.State {
 		state = NewState(ctx)
 		return state
