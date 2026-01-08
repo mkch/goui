@@ -7,6 +7,9 @@ import (
 	"github.com/mkch/goui/native"
 )
 
+// StatefulWidget is a widget that has mutable state.
+// The state is stored in a separate State object associated with the widget.
+// The state can be updated via [State].Update method, which triggers a rebuild of the widget tree.
 type StatefulWidget interface {
 	Widget
 	CreateState(ctx *StateContext) State
@@ -14,9 +17,7 @@ type StatefulWidget interface {
 	Exclusive(StatefulWidget)
 }
 
-// Stateful is a widget that has mutable state.
-// The state is stored in a separate State object associated with the widget.
-// The state can be updated via [State].Update method, which triggers a rebuild of the widget tree.
+// Stateful implements a [StatefulWidget].
 type Stateful struct {
 	ID ID
 	// StateCreator creates the state associated with this widget.
@@ -221,7 +222,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 			if _, ok := widget.(StatefulWidget); ok {
 				continue
 			}
-			if _, ok := widget.(*StatelessWidget); ok {
+			if _, ok := widget.(StatelessWidget); ok {
 				continue
 			}
 
@@ -239,7 +240,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 			if _, ok := widget.(StatefulWidget); ok {
 				continue
 			}
-			if _, ok := widget.(*StatelessWidget); ok {
+			if _, ok := widget.(StatelessWidget); ok {
 				continue
 			}
 			if _, ok := widget.(Container); ok {
@@ -274,7 +275,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 			if _, ok := widget.(StatefulWidget); ok {
 				continue
 			}
-			if _, ok := widget.(*StatelessWidget); ok {
+			if _, ok := widget.(StatelessWidget); ok {
 				continue
 			}
 

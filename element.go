@@ -262,7 +262,7 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Widget) (Element,
 	if statefulWidget, ok := widget.(StatefulWidget); ok {
 		return buildStatefulElement(ctx, elem, statefulWidget)
 	}
-	if statelessWidget, ok := widget.(*StatelessWidget); ok {
+	if statelessWidget, ok := widget.(StatelessWidget); ok {
 		return buildStatelessElement(ctx, elem, statelessWidget)
 	}
 	if container, ok := widget.(Container); ok {
@@ -283,7 +283,7 @@ func buildContainerElement(ctx *Context, elem Element, container Container) (Ele
 	return elem, nil
 }
 
-func buildStatelessElement(ctx *Context, elem Element, statelessWidget *StatelessWidget) (Element, error) {
+func buildStatelessElement(ctx *Context, elem Element, statelessWidget StatelessWidget) (Element, error) {
 	// The child element is already appended to elem in buildElementTreeImpl.
 	_, err := buildElementTreeImpl(ctx, elem, statelessWidget.Build(ctx))
 	if err != nil {
@@ -317,14 +317,14 @@ func updateElementTree(ctx *Context, elem Element, widget Widget) (err error) {
 	if _, ok := widget.(StatefulWidget); ok {
 		return updateStatefulWidget(ctx, elem)
 	}
-	if statelessWidget, ok := widget.(*StatelessWidget); ok {
+	if statelessWidget, ok := widget.(StatelessWidget); ok {
 		return updateStatelessWidget(ctx, elem, statelessWidget)
 	}
 	return nil
 }
 
 // updateStatelessWidget updates the stateless element elem to hold the new stateless widget.
-func updateStatelessWidget(ctx *Context, elem Element, statelessWidget *StatelessWidget) error {
+func updateStatelessWidget(ctx *Context, elem Element, statelessWidget StatelessWidget) error {
 	err := reconciledChildElement(ctx, elem, 0, statelessWidget.Build(ctx))
 	if err != nil {
 		return err

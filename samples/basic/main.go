@@ -28,12 +28,7 @@ func main() {
 				HeightFactor: 1.2,
 				Widget: &widgets.SizedBox{
 					Width: 200, Height: 50,
-					Widget: &widgets.Button{
-						Label: "Click me!",
-						OnClick: func(*goui.Context) {
-							fmt.Println("Button clicked!")
-						},
-					},
+					Widget: newClickMeButton(),
 				},
 			},
 			&widgets.Center{
@@ -58,6 +53,19 @@ func main() {
 		}},
 	})
 	app.Run()
+}
+
+func newClickMeButton() goui.Widget {
+	return &goui.Stateless{
+		Builder: func(ctx *goui.Context) goui.Widget {
+			return &widgets.Button{
+				Label: "Click me!",
+				OnClick: func(ctx *goui.Context) {
+					fmt.Println("Click me!")
+				},
+			}
+		},
+	}
 }
 
 var counterButton = &goui.Stateful{

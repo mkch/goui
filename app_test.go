@@ -61,7 +61,7 @@ func TestUnwrapNativeMenu_WrappedInStatelessWidget(t *testing.T) {
 		elem: menuElem,
 	}
 
-	statelessWidget := &StatelessWidget{
+	statelessWidget := &Stateless{
 		ID: ValueID("stateless_wrapper"),
 		Builder: func(ctx *Context) Widget {
 			return menuWidget
@@ -138,7 +138,7 @@ func TestUnwrapNativeMenu_StatefulInStateless(t *testing.T) {
 	}
 
 	// Create a StatelessWidget that contains the StatefulWidget
-	statelessWidget := &StatelessWidget{
+	statelessWidget := &Stateless{
 		ID: ValueID("stateless_outer"),
 		Builder: func(ctx *Context) Widget {
 			return statefulWidget
@@ -168,7 +168,7 @@ func TestUnwrapNativeMenu_StatelessInStateful(t *testing.T) {
 	}
 
 	// Create a StatelessWidget that has the menu
-	statelessWidget := &StatelessWidget{
+	statelessWidget := &Stateless{
 		ID: ValueID("stateless_inner"),
 		Builder: func(ctx *Context) Widget {
 			return &mockNativeMenuWidget{id: ValueID("menu"), elem: menuElem}
@@ -226,7 +226,7 @@ func TestUnwrapNativeMenu_BlockedByContainer(t *testing.T) {
 func TestUnwrapNativeMenu_NotFound(t *testing.T) {
 	// Create a stateless widget without a menu
 	statelessElem := &ElementBase{}
-	statelessElem.theWidget = &StatelessWidget{
+	statelessElem.theWidget = &Stateless{
 		ID: ValueID("regular"),
 		Builder: func(ctx *Context) Widget {
 			return nil

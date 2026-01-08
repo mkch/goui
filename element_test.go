@@ -155,7 +155,7 @@ func TestBuildElementTree_StatelessWidget(t *testing.T) {
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
 
-	widget := &StatelessWidget{
+	widget := &Stateless{
 		ID: ValueID("stateless"),
 		Builder: func(ctx *Context) Widget {
 			return childWidget
@@ -215,7 +215,7 @@ func TestBuildElementTree_Container(t *testing.T) {
 
 	container := &mockContainer{
 		ID: ValueID("container"),
-		Children: []Widget{child1, &StatelessWidget{
+		Children: []Widget{child1, &Stateless{
 			ID: ValueID("stateless"),
 			Builder: func(ctx *Context) Widget {
 				return child2
@@ -261,7 +261,7 @@ func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 	childWidget := &mockWidget{ID: ValueID("child"), element: &ElementBase{}}
 	container := &mockContainer{
 		ID: ValueID("container"),
-		Children: []Widget{&StatelessWidget{
+		Children: []Widget{&Stateless{
 			ID: ValueID("stateless"),
 			Builder: func(ctx *Context) Widget {
 				return childWidget
@@ -306,7 +306,7 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 	container2 := &mockContainer{
 		ID: ValueID("container"),
 		Children: []Widget{
-			&StatelessWidget{
+			&Stateless{
 				Builder: func(ctx *Context) Widget {
 					return child1
 				}},
@@ -330,7 +330,7 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 	if newElem.NumChildren() != 2 {
 		t.Fatalf("expected 2 children, got %d", newElem.NumChildren())
 	}
-	if childWidget1, ok := newElem.Child(0).Widget().(*StatelessWidget); !ok {
+	if childWidget1, ok := newElem.Child(0).Widget().(*Stateless); !ok {
 		t.Fatal("expected first child to be a StatelessWidget")
 	} else if childWidget1.Build(ctx) != child1 {
 		t.Fatal("first child widget not updated correctly")
@@ -354,7 +354,7 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 
 	container3 := &mockContainer{
 		Children: []Widget{
-			&StatelessWidget{
+			&Stateless{
 				ID: ValueID("stateless"),
 				Builder: func(ctx *Context) Widget {
 					return child1

@@ -82,7 +82,7 @@ func TestBuildSuccess_ItemWrappedByStateless(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&goui.StatelessWidget{
+			&goui.Stateless{
 				ID: goui.ValueID("stateless"),
 				Builder: func(ctx *goui.Context) goui.Widget {
 					return &Item{
@@ -131,7 +131,7 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 func TestBuildSuccess_MenuWrappedByStateless(t *testing.T) {
 	ctx := widgetstest.NewContext()
 
-	menu := &goui.StatelessWidget{
+	menu := &goui.Stateless{
 		ID: goui.ValueID("stateless"),
 		Builder: func(ctx *goui.Context) goui.Widget {
 			return &Menu{
@@ -156,7 +156,7 @@ func TestBuildSuccess_SubmenuWrappedByStateless(t *testing.T) {
 			&Item{
 				ID:    goui.ValueID("item"),
 				Title: "Item",
-				Submenu: &goui.StatelessWidget{
+				Submenu: &goui.Stateless{
 					ID: goui.ValueID("stateless"),
 					Builder: func(ctx *goui.Context) goui.Widget {
 						return &Menu{
@@ -213,10 +213,10 @@ func TestBuildSuccess_NestedStatelessWidgets(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&goui.StatelessWidget{
+			&goui.Stateless{
 				ID: goui.ValueID("stateless1"),
 				Builder: func(ctx *goui.Context) goui.Widget {
-					return &goui.StatelessWidget{
+					return &goui.Stateless{
 						ID: goui.ValueID("stateless2"),
 						Builder: func(ctx *goui.Context) goui.Widget {
 							return &Item{
@@ -250,7 +250,7 @@ func TestBuildSuccess_MixedWrappers(t *testing.T) {
 						return &Item{
 							ID:    goui.ValueID("item"),
 							Title: "Item",
-							Submenu: &goui.StatelessWidget{
+							Submenu: &goui.Stateless{
 								ID: goui.ValueID("stateless"),
 								Builder: func(ctx *goui.Context) goui.Widget {
 									return &Menu{
@@ -284,7 +284,7 @@ func TestBuildSuccess_SeparatorWrappedByStateless(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.Widget{
-			&goui.StatelessWidget{
+			&goui.Stateless{
 				ID: goui.ValueID("stateless"),
 				Builder: func(ctx *goui.Context) goui.Widget {
 					return &Separator{ID: goui.ValueID("separator")}
@@ -387,7 +387,7 @@ func TestBuildFailure_ContainerBeforeStateless(t *testing.T) {
 		Items: []goui.Widget{
 			&mockWidget{
 				id: goui.ValueID("container"),
-				child: &goui.StatelessWidget{
+				child: &goui.Stateless{
 					ID: goui.ValueID("stateless"),
 					Builder: func(ctx *goui.Context) goui.Widget {
 						return &Item{
