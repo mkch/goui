@@ -26,7 +26,7 @@ func (p *Expanded) WidgetID() goui.ID {
 }
 
 func (p *Expanded) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return &goui.ElementBase{
+	return &goui.ElementHelper{
 		ElementLayouter: &expandedLayouter{},
 	}, nil
 }
@@ -35,7 +35,7 @@ func (p *Expanded) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Expanded) Child(n int) goui.WidgetBase {
+func (p *Expanded) Child(n int) goui.AbstractWidget {
 	return p.Widget
 }
 

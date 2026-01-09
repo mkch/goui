@@ -27,7 +27,7 @@ func (w *mockWidget) NumChildren() int {
 	return 0
 }
 
-func (w *mockWidget) Child(n int) goui.WidgetBase {
+func (w *mockWidget) Child(n int) goui.AbstractWidget {
 	if w.child == nil || n != 0 {
 		panic("index out of range")
 	}
@@ -37,7 +37,7 @@ func (w *mockWidget) Child(n int) goui.WidgetBase {
 func (*mockWidget) ExclusiveKind(marker.KindContainer) {}
 
 func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return &goui.ElementBase{}, nil
+	return &goui.ElementHelper{}, nil
 }
 
 // TestBuildSuccess_BasicMenuStructure tests basic menu structure builds successfully

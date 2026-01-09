@@ -33,7 +33,7 @@ func (c *Center) WidgetID() goui.ID {
 
 func (c *Center) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return &centerElement{
-		ElementBase: goui.ElementBase{
+		ElementHelper: goui.ElementHelper{
 			ElementLayouter: &centerLayouter{},
 		},
 	}, nil
@@ -43,7 +43,7 @@ func (c *Center) NumChildren() int {
 	return gg.If(c.Widget != nil, 1, 0)
 }
 
-func (c *Center) Child(n int) goui.WidgetBase {
+func (c *Center) Child(n int) goui.AbstractWidget {
 	if c.Widget == nil || n != 0 {
 		panic("index out of range")
 	}
@@ -54,10 +54,10 @@ func (*Center) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
 func (*Center) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 type centerElement struct {
-	goui.ElementBase
+	goui.ElementHelper
 }
 
-func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
+func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
 	center := widget.(*Center)
 	if center.WidthFactor < 0 {
 		return errors.New("Center.WidthFactor must be greater than or equal to 0")
@@ -65,7 +65,7 @@ func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (er
 	if center.HeightFactor < 0 {
 		return errors.New("Center.HeightFactor must be greater than or equal to 0")
 	}
-	return e.ElementBase.SetWidget(ctx, widget)
+	return e.ElementHelper.SetWidget(ctx, widget)
 }
 
 type centerLayouter struct {

@@ -78,7 +78,7 @@ func (l *Listener) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child]
-func (l *Listener) Child(index int) goui.WidgetBase {
+func (l *Listener) Child(index int) goui.AbstractWidget {
 	if l.Widget == nil || index != 0 {
 		panic("index out of range")
 	}
@@ -91,12 +91,12 @@ func (*Listener) ExclusiveKind(marker.KindContainer) { /*NOP*/ }
 // CreateElement implements [goui.Widget.CreateElement]
 func (l *Listener) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
 	return &listenerElement{
-		ElementBase: goui.ElementBase{ElementLayouter: &listenerLayouter{}},
+		ElementHelper: goui.ElementHelper{ElementLayouter: &listenerLayouter{}},
 	}, nil
 }
 
 type listenerElement struct {
-	goui.ElementBase
+	goui.ElementHelper
 	offset metrics.Point // offset within native parent
 	size   metrics.Size  // size of the element
 	ctx    *goui.Context
@@ -105,7 +105,7 @@ type listenerElement struct {
 }
 
 // SetWidget implements [goui.Element.SetWidget]
-func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) error {
+func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) error {
 	if e.Widget() == widget {
 		return nil // No change
 	}
@@ -119,7 +119,7 @@ func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) e
 		return errortrace.ErrorfStack("configure Listener failed: %w", err)
 	}
 	e.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, e)
-	return e.ElementBase.SetWidget(ctx, widget)
+	return e.ElementHelper.SetWidget(ctx, widget)
 }
 
 // Destroy implements [goui.Element.Destroy]

@@ -26,7 +26,7 @@ func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui
 func (*mockWidget) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type mockElement struct {
-	goui.ElementBase
+	goui.ElementHelper
 }
 
 type mockLayouter struct {
@@ -49,7 +49,7 @@ func Test_ColumnSize(t *testing.T) {
 	widget1 := &mockWidget{
 		ID: goui.ValueID("widget1"),
 		Element: mockElement{
-			ElementBase: goui.ElementBase{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &mockLayouter{
 					IntrinsicSize: metrics.Size{Width: 100, Height: 50},
 				},
@@ -60,7 +60,7 @@ func Test_ColumnSize(t *testing.T) {
 	widget2 := &mockWidget{
 		ID: goui.ValueID("widget2"),
 		Element: mockElement{
-			ElementBase: goui.ElementBase{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &mockLayouter{
 					IntrinsicSize: metrics.Size{Width: 200, Height: 30},
 				},
@@ -112,7 +112,7 @@ func Test_ColumnAlign(t *testing.T) {
 	widget1 := &mockWidget{
 		ID: goui.ValueID("widget1"),
 		Element: mockElement{
-			ElementBase: goui.ElementBase{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &mockLayouter{
 					IntrinsicSize: metrics.Size{Width: 100, Height: 50},
 				},
@@ -123,7 +123,7 @@ func Test_ColumnAlign(t *testing.T) {
 	widget2 := &mockWidget{
 		ID: goui.ValueID("widget2"),
 		Element: mockElement{
-			ElementBase: goui.ElementBase{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &mockLayouter{
 					IntrinsicSize: metrics.Size{Width: 200, Height: 30},
 				},
@@ -152,10 +152,10 @@ func Test_ColumnAlign(t *testing.T) {
 	if err = layouter.PositionAt(metrics.Point{X: 0, Y: 0}); err != nil {
 		t.Fatalf("PositionAt error: %v", err)
 	}
-	if x := widget1.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
+	if x := widget1.Element.ElementHelper.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
 		t.Fatalf("Unexpected widget1 X position: got %v, want 0", x)
 	}
-	if x := widget2.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
+	if x := widget2.Element.ElementHelper.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
 		t.Fatalf("Unexpected widget2 X position: got %v, want 0", x)
 	}
 
@@ -181,10 +181,10 @@ func Test_ColumnAlign(t *testing.T) {
 	if err = layouter.PositionAt(metrics.Point{X: 0, Y: 0}); err != nil {
 		t.Fatalf("PositionAt error: %v", err)
 	}
-	if x := widget1.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 50 {
+	if x := widget1.Element.ElementHelper.ElementLayouter.(*mockLayouter).Position.X; x != 50 {
 		t.Fatalf("Unexpected widget1 X position: got %v, want 50", x)
 	}
-	if x := widget2.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
+	if x := widget2.Element.ElementHelper.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
 		t.Fatalf("Unexpected widget2 X position: got %v, want 0", x)
 	}
 
@@ -201,10 +201,10 @@ func Test_ColumnAlign(t *testing.T) {
 	if err = layouter.PositionAt(metrics.Point{X: 0, Y: 0}); err != nil {
 		t.Fatalf("PositionAt error: %v", err)
 	}
-	if x := widget1.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 100 {
+	if x := widget1.Element.ElementHelper.ElementLayouter.(*mockLayouter).Position.X; x != 100 {
 		t.Fatalf("Unexpected widget1 X position: got %v, want 100", x)
 	}
-	if x := widget2.Element.ElementBase.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
+	if x := widget2.Element.ElementHelper.ElementLayouter.(*mockLayouter).Position.X; x != 0 {
 		t.Fatalf("Unexpected widget2 X position: got %v, want 0", x)
 	}
 }

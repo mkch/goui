@@ -13,7 +13,7 @@ import (
 // OverflowConstraintsError is returned when a widget's size exceeds its constraints in debug mode.
 // Widget can be nil and if it is not nil, it is included in the error message for better debugging.
 type OverflowConstraintsError struct {
-	Widget      WidgetBase
+	Widget      AbstractWidget
 	Size        metrics.Size
 	Constraints metrics.Constraints
 }
@@ -50,7 +50,7 @@ type Layouter interface {
 
 // LayouterHelper is a helper struct for implementing Layouter.
 // Embedding LayouterHelper in a struct and implementing
-// Layout and PositionAt methods implements the Layouter interface.
+// [Layouter.Layout] and [Layouter.PositionAt] methods implements the Layouter interface.
 type LayouterHelper struct {
 	element Element
 }

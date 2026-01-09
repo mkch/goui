@@ -19,7 +19,7 @@ func (p *Padding) WidgetID() goui.ID {
 }
 
 func (p *Padding) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return &goui.ElementBase{
+	return &goui.ElementHelper{
 		ElementLayouter: &paddingLayouter{},
 	}, nil
 }
@@ -28,7 +28,7 @@ func (p *Padding) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Padding) Child(n int) goui.WidgetBase {
+func (p *Padding) Child(n int) goui.AbstractWidget {
 	return p.Widget
 }
 

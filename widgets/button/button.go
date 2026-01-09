@@ -35,8 +35,8 @@ func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (elemen
 	native.SetWidgetEnabled(handle, !btn.Disabled)
 	layouter := &buttonLayouter{}
 	element = &buttonElement{
-		goui.ControlElementBase{
-			ElementBase: goui.ElementBase{
+		goui.ControlElementHelper{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: layouter,
 			},
 			Handle:      handle,
@@ -54,14 +54,14 @@ func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (elemen
 func (*Button) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type buttonElement struct {
-	goui.ControlElementBase
+	goui.ControlElementHelper
 }
 
-func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
+func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
 	oldBtn, _ := e.Widget().(*Button)
 	newBtn := widget.(*Button)
 
-	if err = e.ControlElementBase.SetWidget(ctx, widget); err != nil {
+	if err = e.ControlElementHelper.SetWidget(ctx, widget); err != nil {
 		return
 	}
 

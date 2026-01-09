@@ -53,7 +53,7 @@ func TestBuildElementTree_CreateElementError(t *testing.T) {
 
 func TestBuildElementTree_SimpleWidget(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
-	widget := &mockWidget{ID: ValueID("test"), element: &ElementBase{}}
+	widget := &mockWidget{ID: ValueID("test"), element: &ElementHelper{}}
 
 	elem, layouter, err := buildElementTree(ctx, widget)
 
@@ -89,7 +89,7 @@ func (l *mockLayouter) PositionAt(pt metrics.Point) error {
 func TestBuildElementTree_WidgetWithLayouter(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	mockLayouter := &mockLayouter{}
-	mockElement := &ElementBase{
+	mockElement := &ElementHelper{
 		ElementLayouter: mockLayouter,
 	}
 	mockWidget := &mockWidget{ID: ValueID("test"), element: mockElement}
@@ -116,7 +116,7 @@ func TestBuildElementTree_WidgetWithLayouter(t *testing.T) {
 func TestBuildElementTree_StatefulWidget(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	mockLayouter := &mockLayouter{}
-	mockElement := &ElementBase{
+	mockElement := &ElementHelper{
 		ElementLayouter: mockLayouter,
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
@@ -153,7 +153,7 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 func TestBuildElementTree_StatelessWidget(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	mockLayouter := &mockLayouter{}
-	mockElement := &ElementBase{
+	mockElement := &ElementHelper{
 		ElementLayouter: mockLayouter,
 	}
 	childWidget := &mockWidget{ID: ValueID("child"), element: mockElement}
@@ -196,14 +196,14 @@ func (c *mockContainer) WidgetID() ID {
 }
 
 func (c *mockContainer) CreateElement(ctx *Context, parent Element) (Element, error) {
-	return &ElementBase{ElementLayouter: &mockLayouter{}}, nil
+	return &ElementHelper{ElementLayouter: &mockLayouter{}}, nil
 }
 
 func (c *mockContainer) NumChildren() int {
 	return len(c.Children)
 }
 
-func (c *mockContainer) Child(n int) WidgetBase {
+func (c *mockContainer) Child(n int) AbstractWidget {
 	return c.Children[n]
 }
 
@@ -214,9 +214,9 @@ func (*mockContainer) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 func TestBuildElementTree_Container(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
 	layouter1 := &mockLayouter{}
-	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{ElementLayouter: layouter1}}
+	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{ElementLayouter: layouter1}}
 	layouter2 := &mockLayouter{}
-	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementBase{ElementLayouter: layouter2}}
+	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: layouter2}}
 
 	container := &mockContainer{
 		ID: ValueID("container"),
@@ -265,7 +265,7 @@ func TestBuildElementTree_Container(t *testing.T) {
 
 func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 	ctx := newMockContext(&AppConfig{Debug: &Debug{}})
-	childWidget := &mockWidget{ID: ValueID("child"), element: &ElementBase{}}
+	childWidget := &mockWidget{ID: ValueID("child"), element: &ElementHelper{}}
 	container := &mockContainer{
 		ID: ValueID("container"),
 		Children: []Widget{NewStatelessWidget(
@@ -296,8 +296,8 @@ func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 }
 
 func TestUpdateElementTree_Reconcile(t *testing.T) {
-	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
-	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
+	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
+	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
 
 	container1 := &mockContainer{
 		ID:       ValueID("container"),
@@ -405,9 +405,9 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 }
 
 func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
-	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
-	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
-	child3 := &mockWidget{ID: ValueID("child3"), element: &ElementBase{}}
+	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
+	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
+	child3 := &mockWidget{ID: ValueID("child3"), element: &ElementHelper{}}
 
 	container1 := &mockContainer{
 		ID: ValueID("container"),
@@ -438,8 +438,8 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 		t.Fatalf("expected 3 children, got %d", elem.NumChildren())
 	}
 
-	child4 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
-	child5 := &mockWidget{ID: ValueID("child5"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
+	child4 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
+	child5 := &mockWidget{ID: ValueID("child5"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
 	container2 := &mockContainer{
 		ID: ValueID("container"),
 		Children: []Widget{
@@ -489,9 +489,9 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 }
 
 func TestUpdateElementTree_Append(t *testing.T) {
-	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
-	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
-	child3 := &mockWidget{ID: ValueID("child3"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
+	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
+	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
+	child3 := &mockWidget{ID: ValueID("child3"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
 
 	container1 := &mockContainer{
 		ID:       ValueID("container"),
@@ -539,9 +539,9 @@ func TestUpdateElementTree_Append(t *testing.T) {
 }
 
 func TestUpdateElementTree_Remove(t *testing.T) {
-	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementBase{}}
-	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
-	child3 := &mockWidget{ID: ValueID("child3"), element: &ElementBase{ElementLayouter: &mockLayouter{}}}
+	child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
+	child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
+	child3 := &mockWidget{ID: ValueID("child3"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
 
 	container1 := &mockContainer{
 		ID:       ValueID("container"),
@@ -618,7 +618,7 @@ func (*mockMenu) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 func (*mockMenu) ExclusiveType(marker.TypeMenu) { /*Nop*/ }
 
 type mockMenuElement struct {
-	ElementBase
+	ElementHelper
 	Handle native.Handle
 }
 
@@ -646,6 +646,6 @@ func (c *mockControl) CreateElement(ctx *Context, parent Element) (Element, erro
 }
 
 type mockControlElement struct {
-	ControlElementBase
+	ControlElementHelper
 	nativeParent native.Handle
 }

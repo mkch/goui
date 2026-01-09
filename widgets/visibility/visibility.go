@@ -26,7 +26,7 @@ func (p *Visibility) WidgetID() goui.ID {
 }
 
 func (p *Visibility) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return &goui.ElementBase{
+	return &goui.ElementHelper{
 		ElementLayouter: &visibilityLayouter{},
 	}, nil
 }
@@ -35,7 +35,7 @@ func (p *Visibility) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Visibility) Child(n int) goui.WidgetBase {
+func (p *Visibility) Child(n int) goui.AbstractWidget {
 	return p.Widget
 }
 

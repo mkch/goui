@@ -25,7 +25,7 @@ func (row *Row) WidgetID() goui.ID {
 }
 
 func (row *Row) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return &goui.ElementBase{
+	return &goui.ElementHelper{
 		ElementLayouter: &rowcol.Layouter{
 			Main:               func(s *metrics.Size) *metrics.DP { return &s.Width },
 			Cross:              func(s *metrics.Size) *metrics.DP { return &s.Height },
@@ -43,7 +43,7 @@ func (row *Row) NumChildren() int {
 	return len(row.Widgets)
 }
 
-func (row *Row) Child(n int) goui.WidgetBase {
+func (row *Row) Child(n int) goui.AbstractWidget {
 	return row.Widgets[n]
 }
 

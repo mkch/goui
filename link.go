@@ -9,7 +9,7 @@ import (
 )
 
 //go:linkname link_BuildElementTree github.com/mkch/goui/widgets/widgetstest.BuildElementTree
-func link_BuildElementTree(ctx *Context, widget WidgetBase) (Element, Layouter, error) {
+func link_BuildElementTree(ctx *Context, widget AbstractWidget) (Element, Layouter, error) {
 	return buildElementTree(ctx, widget)
 }
 

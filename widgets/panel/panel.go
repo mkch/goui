@@ -35,8 +35,8 @@ func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (element g
 		return
 	}
 	element = &panelElement{
-		goui.ControlElementBase{
-			ElementBase: goui.ElementBase{
+		goui.ControlElementHelper{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &panelLayouter{},
 			},
 			Handle:      handle,
@@ -50,7 +50,7 @@ func (p *Panel) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Panel) Child(n int) goui.WidgetBase {
+func (p *Panel) Child(n int) goui.AbstractWidget {
 	return p.Widget
 }
 
@@ -58,14 +58,14 @@ func (*Panel) ExclusiveType(marker.TypeWidget)    { /*Nop*/ }
 func (*Panel) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 type panelElement struct {
-	goui.ControlElementBase
+	goui.ControlElementHelper
 }
 
-func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
+func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
 	oldPanel, _ := elem.Widget().(*Panel)
 	newPanel := widget.(*Panel)
 
-	if err = elem.ElementBase.SetWidget(ctx, widget); err != nil {
+	if err = elem.ElementHelper.SetWidget(ctx, widget); err != nil {
 		return
 	}
 

@@ -46,8 +46,8 @@ func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (element
 	}
 	layouter := &labelLayouter{}
 	element = &labelElement{
-		goui.ControlElementBase{
-			ElementBase: goui.ElementBase{
+		goui.ControlElementHelper{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: layouter,
 			},
 			Handle:      handle,
@@ -60,14 +60,14 @@ func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (element
 func (*Label) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type labelElement struct {
-	goui.ControlElementBase
+	goui.ControlElementHelper
 }
 
-func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
+func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
 	oldLabel, _ := e.Widget().(*Label)
 	newLabel := widget.(*Label)
 
-	if err = e.ControlElementBase.SetWidget(ctx, widget); err != nil {
+	if err = e.ControlElementHelper.SetWidget(ctx, widget); err != nil {
 		return
 	}
 

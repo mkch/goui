@@ -26,8 +26,8 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 
 	layouter := &textFieldLayouter{}
 	elem := &textFieldElement{
-		goui.ControlElementBase{
-			ElementBase: goui.ElementBase{
+		goui.ControlElementHelper{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: layouter,
 			},
 			Handle: handle,
@@ -45,13 +45,13 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 func (*TextField) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type textFieldElement struct {
-	goui.ControlElementBase
+	goui.ControlElementHelper
 }
 
-func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.WidgetBase) (err error) {
+func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
 	newWidget := widget.(*TextField)
 
-	if err = e.ControlElementBase.SetWidget(ctx, widget); err != nil {
+	if err = e.ControlElementHelper.SetWidget(ctx, widget); err != nil {
 		return
 	}
 

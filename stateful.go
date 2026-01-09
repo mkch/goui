@@ -7,18 +7,18 @@ import (
 	"github.com/mkch/goui/native"
 )
 
-// StatefulWidgetBase is a [WidgetBase] that has mutable state.
+// AbstractStatefulWidget is a [AbstractWidget] that has mutable state.
 // The state is stored in a separate State object associated with the widget.
 // The state can be updated via [State].Update method, which triggers a rebuild of the widget tree.
-type StatefulWidgetBase interface {
-	WidgetBase
-	CreateState(ctx *StateContext) StateBase
+type AbstractStatefulWidget interface {
+	AbstractWidget
+	CreateState(ctx *StateContext) AbstractState
 	ExclusiveKind(marker.KindStateful)
 }
 
 // StatefulWidgets is a [Widget] that has mutable state.
 type StatefulWidget interface {
-	StatefulWidgetBase
+	AbstractStatefulWidget
 	ExclusiveType(marker.TypeWidget)
 }
 
@@ -26,7 +26,7 @@ type StatefulWidget interface {
 type StatefulHelper struct {
 	ID ID
 	// StateCreator creates the state associated with this widget.
-	StateCreator func(ctx *StateContext) StateBase
+	StateCreator func(ctx *StateContext) AbstractState
 }
 
 func (w *StatefulHelper) WidgetID() ID {
@@ -37,33 +37,34 @@ func (w *StatefulHelper) CreateElement(ctx *Context, parent Element) (Element, e
 	return createStatefulElement(ctx)
 }
 
-func (w *StatefulHelper) CreateState(ctx *StateContext) StateBase {
+func (w *StatefulHelper) CreateState(ctx *StateContext) AbstractState {
 	return w.StateCreator(ctx)
 }
 
 func (*StatefulHelper) ExclusiveKind(marker.KindStateful) { /*Nop*/ }
 
-type stateful struct {
+// statefulWidget is an implementation of [StatefulWidget].
+type statefulWidget struct {
 	StatefulHelper
 }
 
-func (*stateful) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
+func (*statefulWidget) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
-// fromStateAdapter adapts a State to an StateBase.
-type fromStateAdapter struct {
+// stateAdapter adapts a State to an [AbstractState].
+type stateAdapter struct {
 	State
 }
 
-func (a *fromStateAdapter) Build() WidgetBase {
+func (a *stateAdapter) Build() AbstractWidget {
 	return a.State.Build()
 }
 
 // NewStatefulWidget creates a new StatefulWidget with the given ID and state creator function.
 func NewStatefulWidget(ID ID, stateCreator func(ctx *StateContext) State) StatefulWidget {
-	return &stateful{
+	return &statefulWidget{
 		StatefulHelper: StatefulHelper{
 			ID:           ID,
-			StateCreator: func(ctx *StateContext) StateBase { return &fromStateAdapter{State: stateCreator(ctx)} },
+			StateCreator: func(ctx *StateContext) AbstractState { return &stateAdapter{State: stateCreator(ctx)} },
 		},
 	}
 }
@@ -80,8 +81,8 @@ func (f StatefulWidgetFunc) CreateElement(ctx *Context, parent Element) (Element
 	return createStatefulElement(ctx)
 }
 
-func (f StatefulWidgetFunc) CreateState(ctx *StateContext) StateBase {
-	return &fromStateAdapter{State: f(ctx)}
+func (f StatefulWidgetFunc) CreateState(ctx *StateContext) AbstractState {
+	return &stateAdapter{State: f(ctx)}
 }
 
 func (StatefulWidgetFunc) ExclusiveKind(marker.KindStateful) { /*Nop*/ }
@@ -89,14 +90,14 @@ func (StatefulWidgetFunc) ExclusiveKind(marker.KindStateful) { /*Nop*/ }
 func (StatefulWidgetFunc) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type statefulElement struct {
-	ElementBase
-	state StateBase
+	ElementHelper
+	state AbstractState
 }
 
 // Destroy implements [Element.Destroy].
 func (e *statefulElement) Destroy() error {
 	e.state.Destroy()
-	return e.ElementBase.Destroy()
+	return e.ElementHelper.Destroy()
 }
 
 // createStatefulElement creates a new [Element] for a [StatefulWidget].
@@ -104,12 +105,12 @@ func createStatefulElement(*Context) (Element, error) {
 	return &statefulElement{}, nil
 }
 
-// StateBase is the state associated with a [StatefulWidgetBase].
-type StateBase interface {
+// AbstractState is the state associated with a [AbstractStatefulWidget].
+type AbstractState interface {
 	// Build builds the widget tree for this state.
 	// It is called during the initial creation of the state
 	// and whenever the state is updated via [UpdateStateFunc].
-	Build() WidgetBase
+	Build() AbstractWidget
 	// Destroy is called when the state is destroyed.
 	// It can be used to clean up any resources associated with the state.
 	Destroy()

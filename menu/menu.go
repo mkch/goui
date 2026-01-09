@@ -69,8 +69,8 @@ func nativeMenuParent(element goui.Element) (native.Handle, error) {
 // is not T and whose widget is neither a [StatelessType] or [StatefulType].
 func nativeParent[
 	ElementType goui.Element,
-	StatelessType goui.StatelessWidgetBase,
-	StatefulType goui.StatefulWidgetBase,
+	StatelessType goui.AbstractStatelessWidget,
+	StatefulType goui.AbstractStatefulWidget,
 ](element goui.Element) (ret ElementType, err error) {
 	type R struct {
 		val ElementType
@@ -115,7 +115,7 @@ func createMenuElement(parent goui.Element, popup bool) (element goui.Element, e
 		}
 	}
 	return &nativeMenuElement{
-		ElementBase: goui.ElementBase{
+		ElementHelper: goui.ElementHelper{
 			ElementLayouter: &menuLayouter{},
 		},
 		Handle: handle,
@@ -128,7 +128,7 @@ func (m *Menu) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child].
-func (m *Menu) Child(index int) goui.WidgetBase {
+func (m *Menu) Child(index int) goui.AbstractWidget {
 	return m.Items[index]
 }
 
@@ -153,7 +153,7 @@ func (m *WindowMenu) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child].
-func (m *WindowMenu) Child(index int) goui.WidgetBase {
+func (m *WindowMenu) Child(index int) goui.AbstractWidget {
 	return m.Items[index]
 }
 
@@ -163,7 +163,7 @@ func (*WindowMenu) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 // nativeMenuElement is an implementation of [goui.NativeMenuElement]
 // that represents a native menu.
 type nativeMenuElement struct {
-	goui.ElementBase
+	goui.ElementHelper
 	Handle native.Handle
 }
 
@@ -200,7 +200,7 @@ func (item *Item) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child].
-func (item *Item) Child(index int) goui.WidgetBase {
+func (item *Item) Child(index int) goui.AbstractWidget {
 	if item.Submenu == nil || index != 0 {
 		panic("index out of range")
 	}
@@ -217,7 +217,7 @@ func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element
 		return
 	}
 	element = &nativeItemElement{
-		ElementBase: goui.ElementBase{
+		ElementHelper: goui.ElementHelper{
 			ElementLayouter: &menuLayouter{},
 		},
 		Handle: handle,
@@ -244,7 +244,7 @@ func createItem(parent goui.Element, title string, separator bool) (handle nativ
 // nativeItemElement is an implementation of [goui.NativeMenuItemElement]
 // that represents a native menu item.
 type nativeItemElement struct {
-	goui.ElementBase
+	goui.ElementHelper
 	Handle native.Handle
 }
 
@@ -259,10 +259,10 @@ func (e *nativeItemElement) Destroy() (err error) {
 }
 
 // SetWidget implements [goui.Element.SetWidget].
-func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.WidgetBase) (err error) {
+func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.AbstractWidget) (err error) {
 	oldItem, _ := e.Widget().(*Item)
 	newItem := w.(*Item)
-	if err = e.ElementBase.SetWidget(ctx, w); err != nil {
+	if err = e.ElementHelper.SetWidget(ctx, w); err != nil {
 		return
 	}
 
@@ -314,7 +314,7 @@ func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (ele
 		return
 	}
 	element = &separatorElement{
-		ElementBase: goui.ElementBase{
+		ElementHelper: goui.ElementHelper{
 			ElementLayouter: &menuLayouter{},
 		},
 		Handle: handle,
@@ -325,7 +325,7 @@ func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (ele
 func (*Separator) ExclusiveType(marker.TypeMenuItem) { /*Nop*/ }
 
 type separatorElement struct {
-	goui.ElementBase
+	goui.ElementHelper
 	Handle native.Handle
 }
 
@@ -369,7 +369,7 @@ func (l *menuLayouter) Replayer() func(*goui.Context) error {
 }
 
 type StatefulMenu interface {
-	goui.StatefulWidgetBase
+	goui.AbstractStatefulWidget
 	ExclusiveType(marker.TypeMenu)
 }
 
@@ -388,7 +388,7 @@ type MenuState interface {
 }
 
 type menuState struct {
-	stateBase
+	stateHelper
 	build func() goui.Menu // Can't be nil
 }
 
@@ -398,7 +398,7 @@ func (s *menuState) Build() goui.Menu {
 
 func NewMenuState(ctx *goui.StateContext, build func() goui.Menu, destroy func()) MenuState {
 	return &menuState{
-		stateBase: stateBase{
+		stateHelper: stateHelper{
 			StateUpdater: goui.NewStateUpdater(ctx),
 			destroy:      destroy,
 		},
@@ -411,7 +411,7 @@ type menuStateAdapter struct {
 	MenuState
 }
 
-func (a menuStateAdapter) Build() goui.WidgetBase {
+func (a menuStateAdapter) Build() goui.AbstractWidget {
 	return a.MenuState.Build()
 }
 
@@ -420,13 +420,13 @@ func NewStatefulMenu(ID goui.ID, stateCreator func(ctx *goui.StateContext) MenuS
 	return &statefulMenu{
 		StatefulHelper: goui.StatefulHelper{
 			ID:           ID,
-			StateCreator: func(ctx *goui.StateContext) goui.StateBase { return &menuStateAdapter{stateCreator(ctx)} },
+			StateCreator: func(ctx *goui.StateContext) goui.AbstractState { return &menuStateAdapter{stateCreator(ctx)} },
 		},
 	}
 }
 
 type StatefulItem interface {
-	goui.StatefulWidgetBase
+	goui.AbstractStatefulWidget
 	ExclusiveType(marker.TypeMenuItem)
 }
 
@@ -444,13 +444,13 @@ type ItemState interface {
 	Update(updater func()) error
 }
 
-// stateBase is the common base for [menuState] and [itemState].
-type stateBase struct {
+// stateHelper is the building block for [menuState] and [itemState].
+type stateHelper struct {
 	goui.StateUpdater
 	destroy func() // Can be nil
 }
 
-func (s *stateBase) Destroy() {
+func (s *stateHelper) Destroy() {
 	if s.destroy != nil {
 		s.destroy()
 	}
@@ -458,7 +458,7 @@ func (s *stateBase) Destroy() {
 
 // itemState is an implementation of ItemState.
 type itemState struct {
-	stateBase
+	stateHelper
 	build func() goui.MenuItem // Can't be nil
 }
 
@@ -468,7 +468,7 @@ func (s *itemState) Build() goui.MenuItem {
 
 func NewItemState(ctx *goui.StateContext, build func() goui.MenuItem, destroy func()) ItemState {
 	return &itemState{
-		stateBase: stateBase{
+		stateHelper: stateHelper{
 			StateUpdater: goui.NewStateUpdater(ctx),
 			destroy:      destroy,
 		},
@@ -481,7 +481,7 @@ type itemStateAdapter struct {
 	ItemState
 }
 
-func (a itemStateAdapter) Build() goui.WidgetBase {
+func (a itemStateAdapter) Build() goui.AbstractWidget {
 	return a.ItemState.Build()
 }
 
@@ -490,13 +490,13 @@ func NewStatefulItem(ID goui.ID, stateCreator func(ctx *goui.StateContext) ItemS
 	return &statefulItem{
 		StatefulHelper: goui.StatefulHelper{
 			ID:           ID,
-			StateCreator: func(ctx *goui.StateContext) goui.StateBase { return &itemStateAdapter{stateCreator(ctx)} },
+			StateCreator: func(ctx *goui.StateContext) goui.AbstractState { return &itemStateAdapter{stateCreator(ctx)} },
 		},
 	}
 }
 
 type StatelessMenu interface {
-	goui.StatelessWidgetBase
+	goui.AbstractStatelessWidget
 	ExclusiveType(marker.TypeMenu)
 }
 
@@ -510,13 +510,13 @@ func NewStatelessMenu(ID goui.ID, builder func(ctx *goui.Context) goui.Menu) Sta
 	return &statelessMenu{
 		StatelessHelper: goui.StatelessHelper{
 			ID:      ID,
-			Builder: func(ctx *goui.Context) goui.WidgetBase { return builder(ctx) },
+			Builder: func(ctx *goui.Context) goui.AbstractWidget { return builder(ctx) },
 		},
 	}
 }
 
 type StatelessItem interface {
-	goui.StatelessWidgetBase
+	goui.AbstractStatelessWidget
 	ExclusiveType(marker.TypeMenuItem)
 }
 
@@ -530,7 +530,7 @@ func NewStatelessItem(ID goui.ID, builder func(ctx *goui.Context) goui.MenuItem)
 	return &statelessItem{
 		StatelessHelper: goui.StatelessHelper{
 			ID:      ID,
-			Builder: func(ctx *goui.Context) goui.WidgetBase { return builder(ctx) },
+			Builder: func(ctx *goui.Context) goui.AbstractWidget { return builder(ctx) },
 		},
 	}
 }

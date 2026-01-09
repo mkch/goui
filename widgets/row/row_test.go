@@ -26,7 +26,7 @@ func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui
 func (*mockWidget) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 type mockElement struct {
-	goui.ElementBase
+	goui.ElementHelper
 }
 
 type mockLayouter struct {
@@ -49,7 +49,7 @@ func Test_RowSize(t *testing.T) {
 	widget1 := &mockWidget{
 		ID: goui.ValueID("widget1"),
 		Element: mockElement{
-			ElementBase: goui.ElementBase{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &mockLayouter{
 					IntrinsicSize: metrics.Size{Width: 100, Height: 50},
 				},
@@ -60,7 +60,7 @@ func Test_RowSize(t *testing.T) {
 	widget2 := &mockWidget{
 		ID: goui.ValueID("widget2"),
 		Element: mockElement{
-			ElementBase: goui.ElementBase{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &mockLayouter{
 					IntrinsicSize: metrics.Size{Width: 200, Height: 30},
 				},
@@ -112,7 +112,7 @@ func Test_RowAlign(t *testing.T) {
 	widget1 := &mockWidget{
 		ID: goui.ValueID("widget1"),
 		Element: mockElement{
-			ElementBase: goui.ElementBase{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &mockLayouter{
 					IntrinsicSize: metrics.Size{Width: 100, Height: 50},
 				},
@@ -123,7 +123,7 @@ func Test_RowAlign(t *testing.T) {
 	widget2 := &mockWidget{
 		ID: goui.ValueID("widget2"),
 		Element: mockElement{
-			ElementBase: goui.ElementBase{
+			ElementHelper: goui.ElementHelper{
 				ElementLayouter: &mockLayouter{
 					IntrinsicSize: metrics.Size{Width: 200, Height: 30},
 				},

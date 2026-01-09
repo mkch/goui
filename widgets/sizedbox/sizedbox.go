@@ -21,7 +21,7 @@ func (s *SizedBox) WidgetID() goui.ID {
 }
 
 func (s *SizedBox) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return &goui.ElementBase{
+	return &goui.ElementHelper{
 		ElementLayouter: &sizedBoxLayouter{},
 	}, nil
 }
@@ -30,7 +30,7 @@ func (s *SizedBox) NumChildren() int {
 	return gg.If(s.Widget != nil, 1, 0)
 }
 
-func (s *SizedBox) Child(n int) goui.WidgetBase {
+func (s *SizedBox) Child(n int) goui.AbstractWidget {
 	return s.Widget
 }
 

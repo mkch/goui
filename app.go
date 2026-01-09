@@ -232,7 +232,7 @@ func (app *App) CreateWindow(config *Window) (err error) {
 
 // unwrapNativeMenu unwraps the given Element to find the nearest underlying [NativeMenuElement].
 // If such a NativeMenuElement is found, its native.Handle is returned.
-// Any wrapper that is not [StatelessWidgetBase] or [StatefulWidgetBase] are skipped.
+// Any wrapper that is not [AbstractStatelessWidget] or [AbstractStatefulWidget] are skipped.
 func unwrapNativeMenu(element Element) native.Handle {
 	h, found := LookupChild(element, func(e Element) (native.Handle, bool) {
 		if nativeMenu, ok := e.(NativeMenuElement); ok {
@@ -240,12 +240,12 @@ func unwrapNativeMenu(element Element) native.Handle {
 		}
 		widget := e.Widget()
 		// More precisely, [menu.StatelessMenu] and [menu.StatefulMenu] are expected here,
-		// but we use the base interfaces [goui.StatelessWidgetBase] and [goui.StatefulWidgetBase]
+		// but we use the base interfaces [goui.AbstractStatelessWidget] and [goui.AbstractStatefulWidget]
 		// to avoid import cycle.
-		if _, isStateless := widget.(StatelessWidgetBase); isStateless {
+		if _, isStateless := widget.(AbstractStatelessWidget); isStateless {
 			return nil, false // May contain a menu, continue searching
 		}
-		if _, isStateful := widget.(StatefulWidgetBase); isStateful {
+		if _, isStateful := widget.(AbstractStatefulWidget); isStateful {
 			return nil, false // May contain a menu, continue searching
 		}
 		// Can't contain a menu. Found a `Not Found`(nil).
