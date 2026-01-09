@@ -267,7 +267,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 		return attachment
 	}
 	if _, isMenuitem := element.Widget().(interface{ ExclusiveType(marker.TypeMenuItem) }); isMenuitem {
-		// MenuItem must have a menu parent, check it
+		// MenuItem must have a parent, check it
 		return elementAttachedToWindow(ctx, element.Parent())
 	}
 	// Check for window widget tree
