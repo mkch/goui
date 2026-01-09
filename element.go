@@ -296,10 +296,11 @@ func buildStatelessElement(ctx *Context, elem Element, statelessWidget AbstractS
 }
 
 func buildStatefulElement(ctx *Context, elem Element, statefulWidget AbstractStatefulWidget) (Element, error) {
-	statefulElement := elem.(*statefulElement)
-	statefulElement.state = statefulWidget.CreateState(&StateContext{ctx, statefulElement})
+	statefulElement := elem.(*StatefulElement)
+	state := statefulWidget.CreateState(&StateContext{ctx, statefulElement})
+	statefulElement.State = state
 	// The child element is already appended to elem in buildElementTreeImpl.
-	_, err := buildElementTreeImpl(ctx, elem, statefulElement.state.Build())
+	_, err := buildElementTreeImpl(ctx, elem, state.Build())
 	if err != nil {
 		return nil, err
 	}
@@ -337,12 +338,12 @@ func updateStatelessWidget(ctx *Context, elem Element, statelessWidget AbstractS
 
 // updateStatefulWidget updates the stateful element elem to hold the new stateful widget.
 func updateStatefulWidget(ctx *Context, elem Element) error {
-	statefulElement := elem.(*statefulElement)
+	statefulElement := elem.(*StatefulElement)
 	// rebuild the child widget and reconcile.
 	err := reconciledChildElement(
 		ctx,
 		statefulElement, 0,
-		statefulElement.state.Build(),
+		statefulElement.State.Build(),
 	)
 	if err != nil {
 		return err

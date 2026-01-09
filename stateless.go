@@ -17,7 +17,7 @@ type StatelessWidget interface {
 	ExclusiveType(marker.TypeWidget)
 }
 
-// StatelessHelper is a helper to implement concrete stateless widgets.
+// StatelessHelper is a helper to implement concrete stateless widgets, menus and menu items.
 // The WidgetID method returns ID and the Build method calls Builder.
 type StatelessHelper struct {
 	ID

@@ -106,8 +106,7 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 	menu := &Menu{
 		ID: goui.ValueID("menu"),
 		Items: []goui.MenuItem{
-			NewStatefulItem(
-				goui.ValueID("stateful"),
+			StatefulItemFunc(
 				func(ctx *goui.StateContext) ItemState {
 					return NewItemState(ctx, func() goui.MenuItem {
 						return &Item{
@@ -184,8 +183,7 @@ func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
 			&Item{
 				ID:    goui.ValueID("item"),
 				Title: "Item",
-				Submenu: NewStatefulMenu(
-					goui.ValueID("stateful"),
+				Submenu: StatefulMenuFunc(
 					func(ctx *goui.StateContext) MenuState {
 						return NewMenuState(ctx, func() goui.Menu {
 							return &Menu{

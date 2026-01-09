@@ -32,8 +32,7 @@ func (s *CountState) Build() goui.MenuItem {
 
 // NewCounterItem creates a stateful menu item that tracks how many times it has been selected.
 func NewCounterItem() menu.StatefulItem {
-	return menu.NewStatefulItem(
-		nil,
+	return menu.StatefulItemFunc(
 		func(ctx *goui.StateContext) menu.ItemState {
 			return &CountState{
 				StateUpdater: goui.NewStateUpdater(ctx),

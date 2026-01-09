@@ -89,20 +89,22 @@ func (StatefulWidgetFunc) ExclusiveKind(marker.KindStateful) { /*Nop*/ }
 
 func (StatefulWidgetFunc) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
-type statefulElement struct {
+// StatefulElement is the element for stateful widgets, menus and menu items.
+type StatefulElement struct {
 	ElementHelper
-	state AbstractState
+	State AbstractState
 }
 
-// Destroy implements [Element.Destroy].
-func (e *statefulElement) Destroy() error {
-	e.state.Destroy()
+// Destroy implements [Element].Destroy method.
+// It calls State.Destroy before destroying the element.
+func (e *StatefulElement) Destroy() error {
+	e.State.Destroy()
 	return e.ElementHelper.Destroy()
 }
 
 // createStatefulElement creates a new [Element] for a [StatefulWidget].
 func createStatefulElement(*Context) (Element, error) {
-	return &statefulElement{}, nil
+	return &StatefulElement{}, nil
 }
 
 // AbstractState is the state associated with a [AbstractStatefulWidget].
@@ -183,7 +185,7 @@ func (h StateUpdater) Update(updater func()) error {
 // StateContext is the context used by [NewStateUpdater].
 type StateContext struct {
 	*Context
-	elem *statefulElement
+	elem *StatefulElement
 }
 
 // NewStateUpdater creates a new StateUpdater with the given context.
@@ -195,11 +197,11 @@ func NewStateUpdater(ctx *StateContext) StateUpdater {
 
 // updateWidgetState calls f and updates its widget tree.
 // f can't be nil.
-func updateWidgetState(f func(), ctx *Context, statefulElement *statefulElement) error {
+func updateWidgetState(f func(), ctx *Context, statefulElement *StatefulElement) error {
 	f()
 
 	// Rebuild the child widget and reconcile.
-	newWidget := statefulElement.state.Build()
+	newWidget := statefulElement.State.Build()
 	err := reconciledChildElement(ctx, statefulElement, 0, newWidget)
 	if err != nil {
 		return err
@@ -263,7 +265,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 			}); ok {
 				return attachNone, false // Continue searching
 			}
-			return attachNone, true // Not in window menu tree
+			return attachNone, true // Not the window menu.
 		})
 		return attachment
 	}

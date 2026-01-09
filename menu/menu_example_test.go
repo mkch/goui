@@ -15,7 +15,7 @@ func ExampleMenu() {
 		Menu: &menu.Menu{
 			Items: []goui.MenuItem{&menu.Item{
 				Title: "File",
-				Submenu: &menu.Menu{Items: []goui.MenuItem{
+				Submenu: menu.Items{
 					&menu.Item{
 						Title:    "New",
 						OnSelect: func(ctx *goui.Context) { /* handle New action */ },
@@ -25,7 +25,7 @@ func ExampleMenu() {
 						Title:    "Exit",
 						OnSelect: func(ctx *goui.Context) { app.Exit(0) },
 					},
-				}},
+				},
 			}},
 		},
 	})

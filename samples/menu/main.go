@@ -71,30 +71,27 @@ func main() {
 var showHelp = true
 var screenCoord = false // Use screen coordinates for menu popup
 
-var MainMenu = menu.NewStatefulMenu(
-	nil,
+var MainMenu = menu.StatefulMenuFunc(
 	func(ctx *goui.StateContext) (state menu.MenuState) {
 		state = menu.NewMenuState(ctx, func() goui.Menu {
 			m := &menu.WindowMenu{
 				Items: []goui.MenuItem{
 					&menu.Item{
 						Title: "File",
-						Submenu: &menu.Menu{
-							Items: []goui.MenuItem{
-								&menu.Item{
-									Title:    "New",
-									OnSelect: func(ctx *goui.Context) { fmt.Println("New selected") },
-								},
-								&menu.Separator{},
-								CounterItem,
-								&menu.Item{
-									Title:    gg.If(showHelp, "Hide Help", "Show Help"),
-									OnSelect: func(ctx *goui.Context) { state.Update(func() { showHelp = !showHelp }) },
-								},
-								&menu.Item{
-									Title:    gg.If(screenCoord, "Popup at mouse pointer", "Popup at (10,20) on screen"),
-									OnSelect: func(ctx *goui.Context) { state.Update(func() { screenCoord = !screenCoord }) },
-								},
+						Submenu: menu.Items{
+							&menu.Item{
+								Title:    "New",
+								OnSelect: func(ctx *goui.Context) { fmt.Println("New selected") },
+							},
+							&menu.Separator{},
+							CounterItem,
+							&menu.Item{
+								Title:    gg.If(showHelp, "Hide Help", "Show Help"),
+								OnSelect: func(ctx *goui.Context) { state.Update(func() { showHelp = !showHelp }) },
+							},
+							&menu.Item{
+								Title:    gg.If(screenCoord, "Popup at mouse pointer", "Popup at (10,20) on screen"),
+								OnSelect: func(ctx *goui.Context) { state.Update(func() { screenCoord = !screenCoord }) },
 							},
 						},
 					},
@@ -125,9 +122,14 @@ func (s *CountState) Increment() {
 
 func (s *CountState) Build() goui.MenuItem {
 	return &menu.Item{
-		Title: fmt.Sprintf("Count: %d", s.count),
-		OnSelect: func(ctx *goui.Context) {
-			s.Increment()
+		Title: "Counter item inside",
+		Submenu: menu.Items{
+			&menu.Item{
+				Title: fmt.Sprintf("Count: %d", s.count),
+				OnSelect: func(ctx *goui.Context) {
+					s.Increment()
+				},
+			},
 		},
 	}
 }

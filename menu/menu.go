@@ -10,7 +10,7 @@ import (
 	"github.com/mkch/goui/native"
 )
 
-// Menu is a menu widget that can contain items of type [Item] and [Separator].
+// Menu is a menu widget that can contain menu items.
 type Menu struct {
 	ID goui.ID
 	// Items are the menu's child widgets.
@@ -27,6 +27,16 @@ func (m *Menu) WidgetID() goui.ID {
 // CreateElement implements [goui.Widget.CreateElement].
 func (m *Menu) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
 	return createMenuElement(parent, true)
+}
+
+// NumChildren implements [goui.Container.NumChildren].
+func (m *Menu) NumChildren() int {
+	return len(m.Items)
+}
+
+// Child implements [goui.Container.Child].
+func (m *Menu) Child(index int) goui.AbstractWidget {
+	return m.Items[index]
 }
 
 func (*Menu) ExclusiveType(marker.TypeMenu)      { /*Nop*/ }
@@ -120,16 +130,6 @@ func createMenuElement(parent goui.Element, popup bool) (element goui.Element, e
 		},
 		Handle: handle,
 	}, nil
-}
-
-// NumChildren implements [goui.Container.NumChildren].
-func (m *Menu) NumChildren() int {
-	return len(m.Items)
-}
-
-// Child implements [goui.Container.Child].
-func (m *Menu) Child(index int) goui.AbstractWidget {
-	return m.Items[index]
 }
 
 // WindowMenu is a [Menu] that is suitable for use as a window menu.
@@ -368,169 +368,30 @@ func (l *menuLayouter) Replayer() func(*goui.Context) error {
 	}
 }
 
-type StatefulMenu interface {
-	goui.AbstractStatefulWidget
-	ExclusiveType(marker.TypeMenu)
+// Items is a menu that contains menu items.
+// It is convenient to use when defining menus inline.
+// See example of [Menu] for usage.
+type Items []goui.MenuItem
+
+// WidgetID implements [goui.Menu.WidgetID] and always returns nil.
+func (items Items) WidgetID() goui.ID {
+	return nil
 }
 
-type statefulMenu struct {
-	goui.StatefulHelper
+// CreateElement implements [goui.Menu.CreateElement].
+func (items Items) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
+	return createMenuElement(parent, true)
 }
 
-func (*statefulMenu) ExclusiveType(marker.TypeMenu) { /*Nop*/ }
-
-// MenuState is the state associated with a [StatefulItem].
-// See [goui.State] for more details.
-type MenuState interface {
-	Build() goui.Menu
-	Destroy()
-	Update(updater func()) error
+// NumChildren implements [goui.AbstractContainer.NumChildren].
+func (items Items) NumChildren() int {
+	return len(items)
 }
 
-type menuState struct {
-	stateHelper
-	build func() goui.Menu // Can't be nil
+// Child implements [goui.AbstractContainer.Child].
+func (items Items) Child(index int) goui.AbstractWidget {
+	return items[index]
 }
 
-func (s *menuState) Build() goui.Menu {
-	return s.build()
-}
-
-func NewMenuState(ctx *goui.StateContext, build func() goui.Menu, destroy func()) MenuState {
-	return &menuState{
-		stateHelper: stateHelper{
-			StateUpdater: goui.NewStateUpdater(ctx),
-			destroy:      destroy,
-		},
-		build: build,
-	}
-}
-
-// menuStateAdapter adapts a MenuState to a goui.State.
-type menuStateAdapter struct {
-	MenuState
-}
-
-func (a menuStateAdapter) Build() goui.AbstractWidget {
-	return a.MenuState.Build()
-}
-
-// NewStatefulMenu creates a new StatefulMenu with the given ID and state creator function.
-func NewStatefulMenu(ID goui.ID, stateCreator func(ctx *goui.StateContext) MenuState) StatefulMenu {
-	return &statefulMenu{
-		StatefulHelper: goui.StatefulHelper{
-			ID:           ID,
-			StateCreator: func(ctx *goui.StateContext) goui.AbstractState { return &menuStateAdapter{stateCreator(ctx)} },
-		},
-	}
-}
-
-type StatefulItem interface {
-	goui.AbstractStatefulWidget
-	ExclusiveType(marker.TypeMenuItem)
-}
-
-type statefulItem struct {
-	goui.StatefulHelper
-}
-
-func (*statefulItem) ExclusiveType(marker.TypeMenuItem) { /*Nop*/ }
-
-// ItemState is the state associated with a [StatefulItem].
-// See [goui.State] for more details.
-type ItemState interface {
-	Build() goui.MenuItem
-	Destroy()
-	Update(updater func()) error
-}
-
-// stateHelper is the building block for [menuState] and [itemState].
-type stateHelper struct {
-	goui.StateUpdater
-	destroy func() // Can be nil
-}
-
-func (s *stateHelper) Destroy() {
-	if s.destroy != nil {
-		s.destroy()
-	}
-}
-
-// itemState is an implementation of ItemState.
-type itemState struct {
-	stateHelper
-	build func() goui.MenuItem // Can't be nil
-}
-
-func (s *itemState) Build() goui.MenuItem {
-	return s.build()
-}
-
-func NewItemState(ctx *goui.StateContext, build func() goui.MenuItem, destroy func()) ItemState {
-	return &itemState{
-		stateHelper: stateHelper{
-			StateUpdater: goui.NewStateUpdater(ctx),
-			destroy:      destroy,
-		},
-		build: build,
-	}
-}
-
-// itemStateAdapter adapts an ItemState to a goui.State.
-type itemStateAdapter struct {
-	ItemState
-}
-
-func (a itemStateAdapter) Build() goui.AbstractWidget {
-	return a.ItemState.Build()
-}
-
-// NewStatefulMenuItem creates a new StatefulMenuItem with the given ID and state creator function.
-func NewStatefulItem(ID goui.ID, stateCreator func(ctx *goui.StateContext) ItemState) StatefulItem {
-	return &statefulItem{
-		StatefulHelper: goui.StatefulHelper{
-			ID:           ID,
-			StateCreator: func(ctx *goui.StateContext) goui.AbstractState { return &itemStateAdapter{stateCreator(ctx)} },
-		},
-	}
-}
-
-type StatelessMenu interface {
-	goui.AbstractStatelessWidget
-	ExclusiveType(marker.TypeMenu)
-}
-
-type statelessMenu struct {
-	goui.StatelessHelper
-}
-
-func (*statelessMenu) ExclusiveType(marker.TypeMenu) { /*Nop*/ }
-
-func NewStatelessMenu(ID goui.ID, builder func(ctx *goui.Context) goui.Menu) StatelessMenu {
-	return &statelessMenu{
-		StatelessHelper: goui.StatelessHelper{
-			ID:      ID,
-			Builder: func(ctx *goui.Context) goui.AbstractWidget { return builder(ctx) },
-		},
-	}
-}
-
-type StatelessItem interface {
-	goui.AbstractStatelessWidget
-	ExclusiveType(marker.TypeMenuItem)
-}
-
-type statelessItem struct {
-	goui.StatelessHelper
-}
-
-func (*statelessItem) ExclusiveType(marker.TypeMenuItem) { /*Nop*/ }
-
-func NewStatelessItem(ID goui.ID, builder func(ctx *goui.Context) goui.MenuItem) StatelessItem {
-	return &statelessItem{
-		StatelessHelper: goui.StatelessHelper{
-			ID:      ID,
-			Builder: func(ctx *goui.Context) goui.AbstractWidget { return builder(ctx) },
-		},
-	}
-}
+func (Items) ExclusiveType(marker.TypeMenu)      { /*Nop*/ }
+func (Items) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
