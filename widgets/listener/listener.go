@@ -106,19 +106,15 @@ type listenerElement struct {
 
 // SetWidget implements [goui.Element.SetWidget]
 func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) error {
-	if e.Widget() == widget {
-		return nil // No change
+	if e.Widget() == nil {
+		// One time setup.
+		e.ctx = ctx
+		parent, err := goui.WidgetNativeParent(ctx, e.Parent())
+		if err != nil {
+			return errortrace.ErrorfStack("configure Listener failed: %w", err)
+		}
+		e.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, e)
 	}
-	e.ctx = ctx
-	if e.remove != nil {
-		e.remove()
-		e.remove = nil
-	}
-	parent, err := goui.WidgetNativeParent(ctx, e.Parent())
-	if err != nil {
-		return errortrace.ErrorfStack("configure Listener failed: %w", err)
-	}
-	e.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, e)
 	return e.ElementHelper.SetWidget(ctx, widget)
 }
 
