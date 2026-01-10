@@ -20,21 +20,19 @@ import (
 	"github.com/mkch/gw/window"
 )
 
-type App any
-
-func NewApp() App {
+func NewApp() Handle {
 	return gwapp.New()
 }
 
-func App_Run(app App) int {
+func App_Run(app Handle) int {
 	return app.(*gwapp.GwApp).Run()
 }
 
-func App_Post(app App, f func()) error {
+func App_Post(app Handle, f func()) error {
 	return app.(*gwapp.GwApp).Post(f)
 }
 
-func App_Quit(app App, exitCode int) {
+func App_Quit(app Handle, exitCode int) {
 	app.(*gwapp.GwApp).Quit(exitCode)
 }
 
@@ -478,7 +476,7 @@ func callMouseEventListeners(msg *win32.MSG, method func(listener MouseEventList
 // App_AddMouseEventListener adds a mouse event listener to the specified window.
 // It returns a function to remove the listener.
 // Parameter win is the window whose client coordinates are used for the event positions.
-func App_AddMouseEventListener(app App, win Handle, listener MouseEventListener) (remove func()) {
+func App_AddMouseEventListener(app Handle, win Handle, listener MouseEventListener) (remove func()) {
 	if mouseEventListeners == nil {
 		mouseEventListeners = make(map[*MouseEventListener]Handle)
 		app.(*gwapp.GwApp).SetMessageDispatcher(func(msg *win32.MSG, prevProc func(msg *win32.MSG) win32.LRESULT) win32.LRESULT {

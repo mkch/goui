@@ -32,7 +32,7 @@ func (ctx *Context) NativeWindow() native.Handle {
 	return ctx.window.Handle
 }
 
-func (ctx *Context) NativeApp() native.App {
+func (ctx *Context) NativeApp() native.Handle {
 	return ctx.app.Native()
 }
 
@@ -44,11 +44,11 @@ func (ctx *Context) App() *App {
 // There should not be more than one App instance per goroutine.
 type App struct {
 	debug   *tricks.Debug
-	app     native.App
+	app     native.Handle
 	windows map[ID]*window
 }
 
-func (app *App) Native() native.App {
+func (app *App) Native() native.Handle {
 	return app.app
 }
 
