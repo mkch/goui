@@ -684,9 +684,6 @@ func (OS) MessageBox(parent native.Handle, title, message string, icon native.Me
 	}
 	id, err := win32util.MessageBox(nativeParent, message, title, nativeType)
 	if err != nil {
-		return
-	}
-	if err != nil {
 		err = errortrace.WithStack(err)
 		return
 	}
