@@ -7,6 +7,7 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -75,9 +76,9 @@ func Run(f func()) int {
 					continue
 				}
 				if mu := topLevel.Menu(); mu != nil {
-					mustOK(DestroyMenu(mu))
+					chkerr.MustOK(DestroyMenu(mu))
 				}
-				mustOK(DestroyWindow(h))
+				chkerr.MustOK(DestroyWindow(h))
 
 			}
 		}

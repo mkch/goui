@@ -4,14 +4,9 @@ import (
 	"slices"
 	"unsafe"
 
-	"github.com/mkch/gg/errorcheck"
-	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui/metrics"
 )
-
-func mustOK(err error) {
-	errorcheck.MustOK(errortrace.Panic, err)
-}
 
 // Handle represents a handle of a mock OS element.
 type Handle unsafe.Pointer
@@ -94,7 +89,7 @@ func initAbstractWindow(win *abstractWindow, rect *metrics.Rect) *abstractWindow
 			win.callOnSizeChangedListener()
 		case MsgDestroying:
 			for _, child := range win.children {
-				mustOK(DestroyWindow(child))
+				chkerr.MustOK(DestroyWindow(child))
 			}
 		case MsgDestroyed:
 			win.callOnDestroyListener()
