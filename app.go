@@ -4,57 +4,28 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"os"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/internal/tricks"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
+	"github.com/mkch/goui/native/mock"
 )
 
-type Context struct {
-	app    *App    // can't be nil
-	window *window // can't be nil
-}
+var appOS native.OS
+var appDebug *tricks.Debug
+var appWindows map[ID]*window
 
-// newMockContext creates and returns a new mock Context for testing.
-func newMockContext(config *AppConfig) (ctx *Context) {
-	ctx = &Context{
-		app: &App{
-			debug: configDebug(config),
-		},
-		window: &window{},
-	}
-	return
-}
-
-// NativeWindow returns the native window handle associated with this context.
-func (ctx *Context) NativeWindow() native.Handle {
-	return ctx.window.Handle
-}
-
-func (ctx *Context) NativeApp() native.Handle {
-	return ctx.app.Native()
-}
-
-func (ctx *Context) App() *App {
-	return ctx.app
-}
-
-// App is the main application object that manages the GUI application's lifecycle and windows.
-// There should not be more than one App instance per goroutine.
-type App struct {
-	debug   *tricks.Debug
-	app     native.Handle
-	windows map[ID]*window
-}
-
-func (app *App) Native() native.Handle {
-	return app.app
+// OS returns the native OS interface used by the application.
+func OS() native.OS {
+	return appOS
 }
 
 // Post posts a function to be executed on the main GUI goroutine.
-func (app *App) Post(f func()) error {
-	return native.App_Post(app.app, f)
+func Post(f func()) error {
+	return appOS.App_Post(f)
 }
 
 // AppConfig is the configuration for creating a new App.
@@ -79,30 +50,81 @@ func configDebug(config *AppConfig) *tricks.Debug {
 		func() *tricks.Debug { return (*tricks.Debug)(config.Debug).Clone() })
 }
 
-// NewApp creates and returns a new App instance.
-// The app is setup with the given config. If config is nil, default configuration is used.
-func NewApp(config *AppConfig) (app *App) {
-	return &App{
-		debug:   configDebug(config),
-		app:     native.NewApp(),
-		windows: make(map[ID]*window),
-	}
+// Run does the following things sequentially:
+//   - initializes the application
+//   - calls f
+//   - runs the main event loop
+//
+// It returns the exit code passed to [Exit].
+// No other goui functions should be called before or after Run.
+func Run(f func(), config *AppConfig) int {
+	return runOS(newOS(), f, config)
 }
 
-func (app *App) Run() int {
-	return native.App_Run(app.app)
+// RunAndExit calls [os.Exit]([Run](f, config)).
+// It is convenience for applications that want to exit with the exit code returned by [Run].
+func RunAndExit(f func(), config *AppConfig) {
+	os.Exit(Run(f, config))
 }
 
-func (app *App) Exit(exitCode int) {
-	native.App_Quit(app.app, exitCode)
+// runOS runs the application with the given native OS implementation.
+func runOS(os native.OS, f func(), config *AppConfig) int {
+	defer func() {
+		appOS = nil
+		appDebug = nil
+		for _, w := range appWindows {
+			if err := appOS.Window_Destroy(w.Handle); err != nil {
+				errortrace.Panic(err)
+			}
+		}
+		appWindows = nil
+	}()
+	appOS = os
+	appDebug = configDebug(config)
+	appWindows = make(map[ID]*window)
+	return appOS.App_Run(f)
+}
+
+// runContext initializes the application and creates a Context with a new window.
+func runContext(os native.OS, f func(ctx *Context), config *AppConfig) int {
+	defer func() {
+		appOS = nil
+		appDebug = nil
+		for _, w := range appWindows {
+			if err := appOS.Window_Destroy(w.Handle); err != nil {
+				errortrace.Panic(err)
+			}
+		}
+		appWindows = nil
+	}()
+	appOS = os
+	appDebug = configDebug(config)
+	appWindows = make(map[ID]*window)
+	return appOS.App_Run(func() {
+		id := UniqueID()
+		CreateWindow(&Window{ID: id})
+		f(&Context{appWindows[id]})
+		Exit(0)
+	})
+}
+
+// runContextMock calls [runContext] with a mock native OS implementation.
+func runContextMock(f func(ctx *Context), config *AppConfig) int {
+	return runContext(mock.NewOS(), f, config)
+}
+
+// Exit quits the main event loop of the application with the given exit code.
+// The exit code will be returned by the [Run] function.
+func Exit(exitCode int) {
+	appOS.App_Quit(exitCode)
 }
 
 func layoutWindow(ctx *Context) error {
-	_, _, width, height, err := native.WindowClientRect(ctx.window.Handle)
+	rect, err := appOS.Window_ClientRect(ctx.window.Handle)
 	if err != nil {
 		return err
 	}
-	if err := performLayoutWindow(ctx, width, height); err != nil {
+	if err := performLayoutWindow(ctx, rect.Width(), rect.Height()); err != nil {
 		return err
 	}
 	return nil
@@ -121,7 +143,7 @@ func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 	if err != nil {
 		return err
 	}
-	return ctx.window.Layouter.PositionAt(metrics.Point{X: 0, Y: 0})
+	return ctx.window.Layouter.PositionAt(ctx, metrics.Point{X: 0, Y: 0})
 
 }
 
@@ -135,7 +157,7 @@ var ErrInvalidWindowMenu = errors.New("invalid window menu")
 // CreateWindow creates a new window with the given configuration.
 // If config is nil, a default configuration is used.
 // If a window with the same ID already exists, it returns an error.
-func (app *App) CreateWindow(config *Window) (err error) {
+func CreateWindow(config *Window) (err error) {
 	if config == nil {
 		config = &Window{
 			Width: 800, Height: 600,
@@ -144,17 +166,17 @@ func (app *App) CreateWindow(config *Window) (err error) {
 	if config.ID == nil {
 		config.ID = UniqueID() // unique key is required to insert into the map
 	}
-	if app.windows[config.ID] != nil {
+	if appWindows[config.ID] != nil {
 		return fmt.Errorf("window with ID %v already exists", config.ID)
 	}
 
-	handle, err := native.CreateWindow(config.Title, config.Width, config.Height)
+	handle, err := appOS.NewWindow(config.Title, metrics.Size{Width: config.Width, Height: config.Height})
 	if err != nil {
 		return
 	}
 	defer func() {
 		if err != nil {
-			native.DestroyWindow(handle)
+			appOS.Window_Destroy(handle)
 		}
 	}()
 
@@ -162,26 +184,26 @@ func (app *App) CreateWindow(config *Window) (err error) {
 		ID:     config.ID,
 		Handle: handle,
 	}
-	ctx := &Context{app, window}
-	native.SetWindowOnSizeChangedListener(handle, func(width, height metrics.DP) {
-		if err = performLayoutWindow(ctx, width, height); err != nil {
+	ctx := &Context{window}
+	appOS.Window_SetOnSizeChangedListener(handle, func(size metrics.Size) {
+		if err = performLayoutWindow(ctx, size.Width, size.Height); err != nil {
 			return
 		}
 	})
-	native.SetWindowOnCloseListener(handle, func() bool {
+	appOS.Window_SetOnCloseListener(handle, func() bool {
 		if config.OnClose == nil {
 			return true
 		}
 		return config.OnClose(ctx)
 	})
-	native.SetWindowOnDestroyListener(handle, func() {
+	appOS.Window_SetOnDestroyListener(handle, func() {
 		if config.OnDestroy != nil {
 			config.OnDestroy(ctx)
 		}
-		delete(app.windows, config.ID)
+		delete(appWindows, config.ID)
 	})
-	if app.debug.LayoutOutlineEnabled() {
-		layer, err := native.EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
+	if appDebug.LayoutOutlineEnabled() {
+		layer, err := appOS.Window_EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {
 				return func(yield func(native.DebugRect) bool) {}
 			}
@@ -220,13 +242,13 @@ func (app *App) CreateWindow(config *Window) (err error) {
 			return ErrInvalidWindowMenu
 		}
 		window.Menu = elem
-		err = native.SetWindowMenu(window.Handle, menuHandle)
+		err = appOS.Window_SetMenu(window.Handle, menuHandle)
 		if err != nil {
 			return
 		}
 	}
 
-	app.windows[config.ID] = window
+	appWindows[config.ID] = window
 	return nil
 }
 
@@ -298,10 +320,10 @@ var ErrNoSuchWindow = errors.New("no such window exists")
 
 // CloseWindow closes the window with the given ID.
 // If no such window exists, it returns [ErrNoSuchWindow].
-func (app *App) CloseWindow(windowID ID) error {
-	win := app.windows[windowID]
+func CloseWindow(windowID ID) error {
+	win := appWindows[windowID]
 	if win == nil {
 		return ErrNoSuchWindow
 	}
-	return native.CloseWindow(app.windows[windowID].Handle)
+	return appOS.Window_Close(appWindows[windowID].Handle)
 }

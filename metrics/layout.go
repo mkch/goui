@@ -29,6 +29,22 @@ type Rect struct {
 	Left, Top, Right, Bottom DP
 }
 
+func NewRect(pt Point, size Size) Rect {
+	return Rect{
+		Left:   pt.X,
+		Top:    pt.Y,
+		Right:  pt.X + size.Width,
+		Bottom: pt.Y + size.Height,
+	}
+}
+
+func (r *Rect) Size() Size {
+	return Size{
+		Width:  r.Width(),
+		Height: r.Height(),
+	}
+}
+
 func (r *Rect) Width() DP {
 	return r.Right - r.Left
 }

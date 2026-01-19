@@ -36,6 +36,7 @@ type PointerEvent struct {
 	Button ButtonMask
 	Pos    metrics.Point // Listener-local position
 
+	ctx            *goui.Context
 	listenerOffset metrics.Point
 	nativeParent   native.Handle
 	nativeWindow   native.Handle
@@ -47,7 +48,7 @@ func (evt *PointerEvent) String() string {
 
 // WindowClientPos returns the position of the pointer event in the coordinate system of the native window's client area.
 func (evt *PointerEvent) WindowClientPos() (pos metrics.Point, err error) {
-	x, y, err := native.ClientCoordinatesConv(evt.nativeParent, evt.nativeWindow,
+	x, y, err := goui.OS().Util_ClientCoordinatesConv(evt.nativeParent, evt.nativeWindow,
 		evt.listenerOffset.X+evt.Pos.X, evt.listenerOffset.Y+evt.Pos.Y)
 	if err != nil {
 		return
@@ -113,13 +114,13 @@ func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidge
 		if err != nil {
 			return errortrace.ErrorfStack("configure Listener failed: %w", err)
 		}
-		e.remove = native.App_AddMouseEventListener(ctx.NativeApp(), parent, e)
+		e.remove = goui.OS().App_AddMouseEventListener(parent, e)
 	}
 	return e.ElementHelper.SetWidget(ctx, widget)
 }
 
 // Destroy implements [goui.Element.Destroy]
-func (e *listenerElement) Destroy() error {
+func (e *listenerElement) Destroy(ctx *goui.Context) error {
 	e.remove()
 	return nil
 }
@@ -133,6 +134,7 @@ func (e *listenerElement) callPointerEventMethod(method func(ctx *goui.Context, 
 			Kind:           Mouse,
 			Button:         button,
 			Pos:            metrics.Point{X: x - e.offset.X, Y: y - e.offset.Y},
+			ctx:            e.ctx,
 			listenerOffset: e.offset,
 			nativeParent:   parent,
 			nativeWindow:   e.ctx.NativeWindow(),
@@ -183,10 +185,10 @@ func (l *listenerLayouter) Layout(ctx *goui.Context, constraints metrics.Constra
 	return constraints.MinSize(), nil // No child, take minimum size
 }
 
-func (l *listenerLayouter) PositionAt(pt metrics.Point) error {
+func (l *listenerLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) error {
 	l.Element().(*listenerElement).offset = pt
 	for child := range l.Children() {
-		return child.PositionAt(pt)
+		return child.PositionAt(ctx, pt)
 	}
 	return nil
 }

@@ -5,31 +5,32 @@ package main
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/messagebox"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
-
 func main() {
-	app.CreateWindow(&goui.Window{
-		OnDestroy: func(*goui.Context) { app.Exit(0) },
+	os.Exit(goui.Run(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	}))
+}
+
+func ui() {
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		OnDestroy: func(*goui.Context) { goui.Exit(0) },
 		Title:     "goui login sample",
 		Width:     800,
 		Height:    600,
 		Root:      rootWidget(),
-	})
-
-	app.Run()
+	}))
 }
 
 const username = "admin"
@@ -69,8 +70,8 @@ func rootWidget() goui.Widget {
 }
 
 func doLogin(ctx *goui.Context, userNameCtrl, passwordCtrl *widgets.TextFieldController) {
-	user := check.Must(userNameCtrl.Text())
-	pass := check.Must(passwordCtrl.Text())
+	user := chkerr.Must(userNameCtrl.Text())
+	pass := chkerr.Must(passwordCtrl.Text())
 	if user == username && pass == password {
 		messagebox.Show(ctx, "Login", "Logged in successfully!", messagebox.IconInfo, messagebox.ButtonOK)
 	} else {

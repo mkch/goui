@@ -7,26 +7,27 @@ import (
 	"image/color"
 	"os"
 
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/label"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
-
 func main() {
+	os.Exit(goui.Run(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	}))
+}
 
-	check.MustOK(app.CreateWindow(&goui.Window{
+func ui() {
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
 		Title: "dpi test",
 		Width: 800, Height: 850,
-		OnDestroy: func(*goui.Context) { app.Exit(0) },
+		OnDestroy: func(*goui.Context) { goui.Exit(0) },
 		Root: &widgets.Center{
 			Widget: &widgets.Column{
 				CrossAxisAlignment: axes.Center,
@@ -63,6 +64,4 @@ In this case, the exact size of the gray box should be:
 			},
 		},
 	}))
-
-	os.Exit(app.Run())
 }

@@ -5,28 +5,31 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/messagebox"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
-
 func main() {
+	os.Exit(goui.Run(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	}))
+}
+
+func ui() {
 	var window3ID = goui.ValueID("window3")
 	closeWindow3Button, enableCloseWindow3Button := newEnableDisableButton("Close Window3", func() {
-		app.CloseWindow(window3ID)
+		goui.CloseWindow(window3ID)
 	})
-	app.CreateWindow(&goui.Window{
-		OnDestroy: func(*goui.Context) { app.Exit(0) },
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		OnDestroy: func(*goui.Context) { goui.Exit(0) },
 		Title:     "Window 1",
 		Width:     800,
 		Height:    600,
@@ -46,11 +49,10 @@ func main() {
 				},
 			},
 		},
-	})
+	}))
 	createWindow3(window3ID, func(*goui.Context) {
 		enableCloseWindow3Button(false)
 	})
-	app.Run()
 }
 
 func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidget, setEnabled func(bool)) {
@@ -76,7 +78,7 @@ func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidg
 }
 
 func createWindow2() {
-	app.CreateWindow(&goui.Window{
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
 		Title:  "Window 2",
 		Width:  700,
 		Height: 600,
@@ -87,7 +89,7 @@ func createWindow2() {
 				messagebox.ButtonYesNo)
 			return ret == messagebox.ReturnYes
 		},
-	})
+	}))
 }
 
 func CountButton(ctx *goui.StateContext) goui.State {
@@ -97,14 +99,14 @@ func CountButton(ctx *goui.StateContext) goui.State {
 		return &widgets.Button{
 			Label: fmt.Sprintf("Clicked %d times", count),
 			OnClick: func(ctx *goui.Context) {
-				check.MustOK(updater.Update(func() { count++ }))
+				chkerr.MustOK(updater.Update(func() { count++ }))
 			},
 		}
 	}, nil)
 }
 
 func createWindow3(id goui.ID, onDestroy func(*goui.Context)) {
-	app.CreateWindow(&goui.Window{
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
 		ID:     id,
 		Title:  "Window 3",
 		Width:  600,
@@ -116,5 +118,5 @@ func createWindow3(id goui.ID, onDestroy func(*goui.Context)) {
 			},
 		}},
 		OnDestroy: onDestroy,
-	})
+	}))
 }

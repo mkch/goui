@@ -1,8 +1,8 @@
 package menu
 
 import (
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -29,8 +29,8 @@ func Popup(ctx *goui.Context, menu *Menu, spec *PopupSpec) (err error) {
 	// TrackPopupMenu(win32.TrackPopupMenuEx) returns.
 	// If the menu is destroyed before that, the menu commands will not be delivered
 	// to the menu item callback.
-	defer ctx.App().Post(func() {
-		check.MustOK(elem.Destroy())
+	defer goui.Post(func() {
+		chkerr.MustOK(elem.Destroy(ctx))
 	})
 
 	var nativeSpec *native.TrackPopupSpec
@@ -40,5 +40,5 @@ func Popup(ctx *goui.Context, menu *Menu, spec *PopupSpec) (err error) {
 			Y: spec.Pos.Y,
 		}
 	}
-	return native.TrackPopupMenu(elem.(*nativeMenuElement).Handle, ctx.NativeWindow(), nativeSpec)
+	return goui.OS().Window_TrackPopupMenu(ctx.NativeWindow(), elem.(*nativeMenuElement).Handle, nativeSpec)
 }

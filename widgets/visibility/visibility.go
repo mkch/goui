@@ -61,9 +61,12 @@ func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints metrics.Const
 				err = errortrace.ErrorfStack("Layout Visibility failed: %w", err)
 				return
 			}
-			if _, _, l.childXOffset, _, err = native.WindowClientRect(parentHandle); err != nil {
+			var rect metrics.Rect
+			if rect, err = goui.OS().Window_ClientRect(parentHandle); err != nil {
 				err = errortrace.ErrorfStack("Layout Visibility failed: %w", err)
 				return
+			} else {
+				l.childXOffset = rect.Width()
 			}
 			if visibility.MaintainSize {
 				// Use the child's size.
@@ -81,10 +84,10 @@ func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints metrics.Const
 	return constraints.MinSize(), nil
 }
 
-func (l *visibilityLayouter) PositionAt(pt metrics.Point) (err error) {
+func (l *visibilityLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
 	for child := range l.Children() {
 		// See Layout() for the offset logic.
-		return child.PositionAt(metrics.Point{
+		return child.PositionAt(ctx, metrics.Point{
 			X: pt.X + l.childXOffset,
 			Y: pt.Y})
 	}

@@ -29,7 +29,7 @@ func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (element g
 		err = errortrace.ErrorfStack("Create Panel failed: %w", err)
 		return
 	}
-	handle, err := native.CreatePanel(parentHandle)
+	handle, err := goui.OS().NewPanel(parentHandle)
 	if err != nil {
 		err = errortrace.ErrorfStack("Create Panel failed: %w", err)
 		return
@@ -40,7 +40,7 @@ func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (element g
 				ElementLayouter: &panelLayouter{},
 			},
 			Handle:      handle,
-			DestroyFunc: native.DestroyWindow,
+			DestroyFunc: func(ctx *goui.Context, handle native.Handle) error { return goui.OS().Control_Destroy(handle) },
 		},
 	}
 	return
@@ -71,13 +71,13 @@ func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidge
 
 	if oldPanel != nil {
 		if oldPanel.BackgroundColor != newPanel.BackgroundColor {
-			if err = native.SetPanelBackgroundColor(elem.Handle, newPanel.BackgroundColor); err != nil {
+			if err = goui.OS().Panel_SetBackgroundColor(elem.Handle, newPanel.BackgroundColor); err != nil {
 				return
 			}
 		}
 		return
 	}
-	return native.SetPanelBackgroundColor(elem.Handle, newPanel.BackgroundColor)
+	return goui.OS().Panel_SetBackgroundColor(elem.Handle, newPanel.BackgroundColor)
 }
 
 type panelLayouter struct {
@@ -97,12 +97,12 @@ func (l *panelLayouter) Layout(ctx *goui.Context, constraints metrics.Constraint
 	return constraints.MinSize(), nil // Use min size when no child.
 }
 
-func (l *panelLayouter) PositionAt(pt metrics.Point) (err error) {
-	if err = native.SetWidgetDimensions(l.Element().(*panelElement).Handle, pt.X, pt.Y, l.layoutSize.Width, l.layoutSize.Height); err != nil {
+func (l *panelLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
+	if err = goui.OS().Control_SetDimensions(l.Element().(*panelElement).Handle, metrics.NewRect(pt, l.layoutSize)); err != nil {
 		return
 	}
 	for child := range l.Children() {
-		return child.PositionAt(metrics.Point{X: 0, Y: 0}) // Position child at (0,0) relative to panel.
+		return child.PositionAt(ctx, metrics.Point{X: 0, Y: 0}) // Position child at (0,0) relative to panel.
 	}
 	return
 }

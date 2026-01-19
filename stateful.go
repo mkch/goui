@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/mkch/goui/marker"
-	"github.com/mkch/goui/native"
 )
 
 // AbstractStatefulWidget is a [AbstractWidget] that has mutable state.
@@ -97,9 +96,9 @@ type StatefulElement struct {
 
 // Destroy implements [Element].Destroy method.
 // It calls State.Destroy before destroying the element.
-func (e *StatefulElement) Destroy() error {
+func (e *StatefulElement) Destroy(ctx *Context) error {
 	e.State.Destroy()
-	return e.ElementHelper.Destroy()
+	return e.ElementHelper.Destroy(ctx)
 }
 
 // createStatefulElement creates a new [Element] for a [StatefulWidget].
@@ -191,13 +190,13 @@ type StateContext struct {
 // NewStateUpdater creates a new StateUpdater with the given context.
 func NewStateUpdater(ctx *StateContext) StateUpdater {
 	return func(updater func()) error {
-		return updateWidgetState(updater, ctx.Context, ctx.elem)
+		return updateWidgetState(ctx.Context, updater, ctx.elem)
 	}
 }
 
 // updateWidgetState calls f and updates its widget tree.
 // f can't be nil.
-func updateWidgetState(f func(), ctx *Context, statefulElement *StatefulElement) error {
+func updateWidgetState(ctx *Context, f func(), statefulElement *StatefulElement) error {
 	f()
 
 	// Rebuild the child widget and reconcile.
@@ -213,7 +212,7 @@ func updateWidgetState(f func(), ctx *Context, statefulElement *StatefulElement)
 	}
 
 	if attachment == attachAsWindowMenu {
-		return native.RefreshWindowMenu(ctx.NativeWindow())
+		return appOS.Window_RefreshMenu(ctx.NativeWindow())
 	}
 
 	// Layout

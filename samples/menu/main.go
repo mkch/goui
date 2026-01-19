@@ -9,8 +9,8 @@ import (
 
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/menu"
 	"github.com/mkch/goui/messagebox"
 	"github.com/mkch/goui/metrics"
@@ -18,20 +18,22 @@ import (
 	"github.com/mkch/goui/widgets/listener"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
+func main() {
+	os.Exit(goui.Run(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	}))
+}
 
 var popupCount = 0
 
-func main() {
-	check.MustOK(app.CreateWindow(&goui.Window{
+func ui() {
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
 		Title:     "menu demo",
 		Width:     800,
 		Height:    600,
-		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
+		OnDestroy: func(ctx *goui.Context) { goui.Exit(0) },
 		Menu:      MainMenu,
 		Root: &widgets.Listener{
 			OnPointerUp: func(ctx *goui.Context, event *listener.PointerEvent) {
@@ -65,7 +67,6 @@ func main() {
 			Widget: &widgets.Expanded{},
 		},
 	}))
-	os.Exit(app.Run())
 }
 
 var showHelp = true

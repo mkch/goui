@@ -5,29 +5,30 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
-
 func main() {
-	app.CreateWindow(&goui.Window{
-		OnDestroy: func(*goui.Context) { app.Exit(0) },
+	os.Exit(goui.Run(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	}))
+}
+func ui() {
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		OnDestroy: func(*goui.Context) { goui.Exit(0) },
 		Title:     "goui idmatch demo",
 		Width:     1200,
 		Height:    800,
 		Root:      goui.StatefulWidgetFunc(Root),
-	})
-	app.Run()
+	}))
 }
 
 type Person struct {
@@ -76,7 +77,7 @@ func (s *State) Build() goui.Widget {
 					Label: "Sort by name",
 					OnClick: func(ctx *goui.Context) {
 						// Update the whole Root widget to rebuild children
-						check.MustOK(s.Update(func() {
+						chkerr.MustOK(s.Update(func() {
 							// Sort personList by Name
 							slices.SortStableFunc(s.PersonList, func(a, b Person) int {
 								return strings.Compare(a.Name, b.Name)
@@ -92,7 +93,7 @@ func (s *State) Build() goui.Widget {
 					Label: "Sort by age",
 					OnClick: func(ctx *goui.Context) {
 						// Update the whole Root widget to rebuild children
-						check.MustOK(s.Update(func() {
+						chkerr.MustOK(s.Update(func() {
 							// Sort personList by Age
 							slices.SortStableFunc(s.PersonList, func(a, b Person) int {
 								return a.Age - b.Age
@@ -121,7 +122,7 @@ func (s *PersonState) Build() goui.Widget {
 		ID:    goui.ValueID(s.person.ID),
 		Label: fmt.Sprintf("%s (%d years old) - Clicked %d times", s.person.Name, s.person.Age, s.clicked),
 		OnClick: func(ctx *goui.Context) {
-			check.MustOK(s.Update(func() { s.clicked++ }))
+			chkerr.MustOK(s.Update(func() { s.clicked++ }))
 		},
 	}
 }

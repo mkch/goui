@@ -38,7 +38,7 @@ func Show(ctx *goui.Context, title, message string, icon Icon, button Button) (r
 	if ctx != nil {
 		parent = ctx.NativeWindow()
 	}
-	id, err := native.MessageBox(parent, title, message, native.MessageBoxIcon(icon), native.MessageBoxButton(button))
+	id, err := goui.OS().MessageBox(parent, title, message, native.MessageBoxIcon(icon), native.MessageBoxButton(button))
 	ret = Return(id)
 	return
 }

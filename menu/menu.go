@@ -26,7 +26,7 @@ func (m *Menu) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (m *Menu) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
-	return createMenuElement(parent, true)
+	return createMenuElement(ctx, parent, true)
 }
 
 // NumChildren implements [goui.Container.NumChildren].
@@ -108,8 +108,11 @@ func nativeParent[
 }
 
 // createMenuElement is a helper function to create a popup or window menu element.
-func createMenuElement(parent goui.Element, popup bool) (element goui.Element, err error) {
-	handle := native.CreateMenu(popup)
+func createMenuElement(ctx *goui.Context, parent goui.Element, popup bool) (element goui.Element, err error) {
+	handle, err := goui.OS().NewMenu(popup)
+	if err != nil {
+		return
+	}
 	if parent != nil {
 		// If parent is given, it must represent a opener
 		// menu item to which this menu is a submenu.
@@ -119,7 +122,7 @@ func createMenuElement(parent goui.Element, popup bool) (element goui.Element, e
 			return
 		}
 		if opener != nil {
-			if err = native.SetMenuItemSubmenu(opener, handle); err != nil {
+			if err = goui.OS().MenuItem_SetSubmenu(opener, handle); err != nil {
 				return
 			}
 		}
@@ -144,7 +147,7 @@ func (m *WindowMenu) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (m *WindowMenu) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return createMenuElement(parent, false)
+	return createMenuElement(ctx, parent, false)
 }
 
 // NumChildren implements [goui.Container.NumChildren].
@@ -173,8 +176,8 @@ func (e *nativeMenuElement) NativeMenu() native.Handle {
 }
 
 // Destroy implements [goui.Element.Destroy].
-func (e *nativeMenuElement) Destroy() (err error) {
-	return native.DestroyMenu(e.Handle)
+func (e *nativeMenuElement) Destroy(ctx *goui.Context) (err error) {
+	return goui.OS().Menu_Destroy(e.Handle)
 }
 
 // Item is a menu item widget that can be added to a [Menu].
@@ -212,7 +215,7 @@ func (*Item) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
-	handle, err := createItem(parent, item.Title, false)
+	handle, err := createItem(ctx, parent, item.Title, false)
 	if err != nil {
 		return
 	}
@@ -227,7 +230,7 @@ func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element
 
 // createItem is a helper function to create a menu item under the given parent element.
 // If separator is true, a separator item is created.
-func createItem(parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
+func createItem(ctx *goui.Context, parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
 	parentMenu, err := nativeMenuParent(parent)
 	if err == nil && parentMenu == nil {
 		// Menu item must have a parent menu
@@ -237,7 +240,7 @@ func createItem(parent goui.Element, title string, separator bool) (handle nativ
 		err = errortrace.ErrorfStack("create menu %s failed: %w", gg.If(separator, "separator", "item"), err)
 		return
 	}
-	handle, err = native.CreateMenuItem(parentMenu, title, separator)
+	handle, err = goui.OS().NewMenuItem(parentMenu, title, separator)
 	return
 }
 
@@ -254,8 +257,8 @@ func (e *nativeItemElement) NativeMenuItem() native.Handle {
 }
 
 // Destroy implements [goui.Element.Destroy].
-func (e *nativeItemElement) Destroy() (err error) {
-	return native.DestroyMenuItem(e.Handle)
+func (e *nativeItemElement) Destroy(ctx *goui.Context) (err error) {
+	return goui.OS().MenuItem_Destroy(e.Handle)
 }
 
 // SetWidget implements [goui.Element.SetWidget].
@@ -268,29 +271,29 @@ func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.AbstractWidget) 
 
 	if oldItem != nil {
 		if oldItem.Title != newItem.Title {
-			if err = native.SetMenuItemTitle(e.Handle, newItem.Title); err != nil {
+			if err = goui.OS().MenuItem_SetTitle(e.Handle, newItem.Title); err != nil {
 				return
 			}
 		}
 		if oldItem.Disabled != newItem.Disabled {
-			if err = native.SetMenuItemDisabled(e.Handle, newItem.Disabled); err != nil {
+			if err = goui.OS().MenuItem_SetDisabled(e.Handle, newItem.Disabled); err != nil {
 				return
 			}
 		}
 		return
 	}
 
-	if err = native.SetMenuItemTitle(e.Handle, newItem.Title); err != nil {
+	if err = goui.OS().MenuItem_SetTitle(e.Handle, newItem.Title); err != nil {
 		return
 	}
-	if err = native.SetMenuItemDisabled(e.Handle, newItem.Disabled); err != nil {
+	if err = goui.OS().MenuItem_SetDisabled(e.Handle, newItem.Disabled); err != nil {
 		return
 	}
 
 	if newItem.OnSelect == nil {
-		native.SetMenuItemOnClickListener(e.Handle, nil)
+		goui.OS().MenuItem_SetOnClickListener(e.Handle, nil)
 	} else {
-		native.SetMenuItemOnClickListener(e.Handle, func() {
+		goui.OS().MenuItem_SetOnClickListener(e.Handle, func() {
 			newItem.OnSelect(ctx)
 		})
 	}
@@ -309,7 +312,7 @@ func (sep *Separator) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Widget.CreateElement].
 func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (element goui.Element, err error) {
-	handle, err := createItem(parent, "", true)
+	handle, err := createItem(ctx, parent, "", true)
 	if err != nil {
 		return
 	}
@@ -335,8 +338,8 @@ func (e *separatorElement) NativeMenuItem() native.Handle {
 }
 
 // Destroy implements [goui.Element.Destroy].
-func (e *separatorElement) Destroy() (err error) {
-	return native.DestroyMenuItem(e.Handle)
+func (e *separatorElement) Destroy(ctx *goui.Context) (err error) {
+	return goui.OS().MenuItem_Destroy(e.Handle)
 }
 
 // menuLayouter is a simple layouter for menu elements.
@@ -355,7 +358,7 @@ func (l *menuLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints
 }
 
 // PositionAt implements [goui.Layouter.PositionAt].
-func (l *menuLayouter) PositionAt(pt metrics.Point) (err error) {
+func (l *menuLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
 	// Nop positioning.
 	return nil
 }
@@ -380,7 +383,7 @@ func (items Items) WidgetID() goui.ID {
 
 // CreateElement implements [goui.Menu.CreateElement].
 func (items Items) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	return createMenuElement(parent, true)
+	return createMenuElement(ctx, parent, true)
 }
 
 // NumChildren implements [goui.AbstractContainer.NumChildren].

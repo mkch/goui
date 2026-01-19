@@ -27,12 +27,12 @@ func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (elemen
 		err = errortrace.ErrorfStack("Create Button failed: %w", err)
 		return
 	}
-	handle, err := native.CreateButton(parentHandle, btn.Label)
+	handle, err := goui.OS().NewButton(parentHandle, btn.Label)
 	if err != nil {
 		err = errortrace.ErrorfStack("Create Button failed: %w", err)
 		return
 	}
-	native.SetWidgetEnabled(handle, !btn.Disabled)
+	goui.OS().Control_SetEnabled(handle, !btn.Disabled)
 	layouter := &buttonLayouter{}
 	element = &buttonElement{
 		goui.ControlElementHelper{
@@ -40,10 +40,10 @@ func (btn *Button) CreateElement(ctx *goui.Context, parent goui.Element) (elemen
 				ElementLayouter: layouter,
 			},
 			Handle:      handle,
-			DestroyFunc: native.DestroyWindow,
+			DestroyFunc: func(ctx *goui.Context, handle native.Handle) error { return goui.OS().Window_Destroy(handle) },
 		},
 	}
-	native.SetButtonOnClickListener(handle, func() {
+	goui.OS().Button_SetOnClickListener(handle, func() {
 		if btn.OnClick != nil {
 			btn.OnClick(ctx)
 		}
@@ -67,25 +67,25 @@ func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget)
 
 	if oldBtn != nil {
 		if oldBtn.Label != newBtn.Label {
-			if err = native.SetButtonLabel(e.Handle, newBtn.Label); err != nil {
+			if err = goui.OS().Button_SetLabel(e.Handle, newBtn.Label); err != nil {
 				return
 			}
 		}
 		if oldBtn.Disabled != newBtn.Disabled {
-			if err = native.SetWidgetEnabled(e.Handle, !newBtn.Disabled); err != nil {
+			if err = goui.OS().Control_SetEnabled(e.Handle, !newBtn.Disabled); err != nil {
 				return
 			}
 		}
 	} else {
-		if err = native.SetWidgetEnabled(e.Handle, !newBtn.Disabled); err != nil {
+		if err = goui.OS().Control_SetEnabled(e.Handle, !newBtn.Disabled); err != nil {
 			return
 		}
 	}
 
 	if newBtn.OnClick != nil {
-		native.SetButtonOnClickListener(e.Handle, func() { newBtn.OnClick(ctx) })
+		goui.OS().Button_SetOnClickListener(e.Handle, func() { newBtn.OnClick(ctx) })
 	} else {
-		native.SetButtonOnClickListener(e.Handle, nil)
+		goui.OS().Button_SetOnClickListener(e.Handle, nil)
 	}
 
 	return
@@ -113,15 +113,15 @@ func (l *buttonLayouter) Layout(ctx *goui.Context, constraints metrics.Constrain
 	if padding == nil {
 		padding = &defaultButtonPadding
 	}
-	intrinsicWidth, intrinsicHeight, err := native.GetButtonMinimumSize(elem.Handle, widget.Label)
+	intrinsicSize, err := goui.OS().Button_MinimumSize(elem.Handle, widget.Label)
 	if err != nil {
 		return
 	}
-	size = constraints.Clamp(metrics.Size{Width: intrinsicWidth + padding.Width, Height: intrinsicHeight + padding.Height})
+	size = constraints.Clamp(metrics.Size{Width: intrinsicSize.Width + padding.Width, Height: intrinsicSize.Height + padding.Height})
 	l.layoutSize = size
 	return
 }
 
-func (l *buttonLayouter) PositionAt(pt metrics.Point) (err error) {
-	return native.SetWidgetDimensions(l.Element().(*buttonElement).Handle, pt.X, pt.Y, l.layoutSize.Width, l.layoutSize.Height)
+func (l *buttonLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
+	return goui.OS().Control_SetDimensions(l.Element().(*buttonElement).Handle, metrics.NewRect(pt, l.layoutSize))
 }

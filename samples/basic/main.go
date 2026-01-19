@@ -6,20 +6,22 @@ package main
 import (
 	"fmt"
 
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
-
 func main() {
-	app.CreateWindow(&goui.Window{
-		OnDestroy: func(*goui.Context) { app.Exit(0) },
+	goui.RunAndExit(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	})
+}
+
+func ui() {
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		OnDestroy: func(*goui.Context) { goui.Exit(0) },
 		Title:     "goui demo",
 		Width:     1200,
 		Height:    800,
@@ -51,8 +53,7 @@ func main() {
 				},
 			},
 		}},
-	})
-	app.Run()
+	}))
 }
 
 func ClickMeButton(ctx *goui.Context) goui.Widget {
@@ -71,7 +72,7 @@ func counterButton(ctx *goui.StateContext) (state goui.State) {
 		return &widgets.Button{
 			Label: fmt.Sprintf("Clicked %d times", count),
 			OnClick: func(ctx *goui.Context) {
-				check.MustOK(state.Update(func() { count++ }))
+				chkerr.MustOK(state.Update(func() { count++ }))
 			},
 		}
 	}, nil)

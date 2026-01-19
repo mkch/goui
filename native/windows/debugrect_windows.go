@@ -1,11 +1,11 @@
-package native
+package windows
 
 import (
 	"iter"
 
 	"github.com/mkch/gg/errortrace"
-	"github.com/mkch/goui/internal/check"
-	"github.com/mkch/goui/metrics"
+	"github.com/mkch/gg/errortrace/chkerr"
+	"github.com/mkch/goui/native"
 	"github.com/mkch/gw/paint"
 	"github.com/mkch/gw/paint/brush"
 	"github.com/mkch/gw/paint/pen"
@@ -18,12 +18,12 @@ var debugRectPen = func() func() *pen.Pen {
 	var p *pen.Pen
 	return func() *pen.Pen {
 		if p == nil {
-			p = check.Must(pen.New(pen.NewLogPen(&win32.LOGPEN{
+			p = chkerr.Must(pen.New(pen.NewLogPen(&win32.LOGPEN{
 				Style: win32.PS_DOT,
 				Width: 2,
 				Color: win32.RGB(255, 0, 0),
 			}, 96), 96))
-			//p = check.Must(pen.NewCosmetic(win32.PS_DOT, win32.RGB(255, 0, 0)))
+			//p = chkerr.Must(pen.NewCosmetic(win32.PS_DOT, win32.RGB(255, 0, 0)))
 		}
 		return p
 	}
@@ -33,7 +33,7 @@ var debugRectHollowBrush = func() func() *brush.Brush {
 	var b *brush.Brush
 	return func() *brush.Brush {
 		if b == nil {
-			b = check.Must(brush.NewStock(win32.NULL_BRUSH))
+			b = chkerr.Must(brush.NewStock(win32.NULL_BRUSH))
 		}
 		return b
 	}
@@ -43,7 +43,7 @@ var debugRectHighlightBrush = func() func() *brush.Brush {
 	var b *brush.Brush
 	return func() *brush.Brush {
 		if b == nil {
-			b = check.Must(brush.New(&win32.LOGBRUSH{
+			b = chkerr.Must(brush.New(&win32.LOGBRUSH{
 				Style: win32.BS_SOLID,
 				Color: win32.RGB(255, 0, 0),
 			}))
@@ -52,12 +52,7 @@ var debugRectHighlightBrush = func() func() *brush.Brush {
 	}
 }()
 
-type DebugRect struct {
-	Left, Top, Right, Bottom metrics.DP
-	Highlight                bool
-}
-
-func EnableDrawDebugRect(winHandle Handle, rects func() iter.Seq[DebugRect]) (layer Handle, err error) {
+func (OS) Window_EnableDrawDebugRect(winHandle native.Handle, rects func() iter.Seq[native.DebugRect]) (layer native.Handle, err error) {
 	win := winHandle.(*window.Window)
 	client, err := win.GetClientRect()
 	if err != nil {
@@ -110,17 +105,17 @@ For windows 10/11, one can include this compatibility snippet in its app.manifes
 			Erase: paintData.Erase,
 		})
 
-		dpi := check.Must(win32.GetDpiForWindow(layeredPanel.HWND()))
+		dpi := chkerr.Must(win32.GetDpiForWindow(layeredPanel.HWND()))
 
 		pen := debugRectPen()
-		defer check.Must(paint.SelectObject(paintData.DC, pen.HPEN())).Restore()
+		defer chkerr.Must(paint.SelectObject(paintData.DC, pen.HPEN())).Restore()
 
 		for rect := range rects() {
 			var restore func()
 			if rect.Highlight {
-				restore = check.Must(paint.SelectObject(paintData.DC, debugRectHighlightBrush().HBRUSH())).Restore
+				restore = chkerr.Must(paint.SelectObject(paintData.DC, debugRectHighlightBrush().HBRUSH())).Restore
 			} else {
-				restore = check.Must(paint.SelectObject(paintData.DC, debugRectHollowBrush().HBRUSH())).Restore
+				restore = chkerr.Must(paint.SelectObject(paintData.DC, debugRectHollowBrush().HBRUSH())).Restore
 			}
 			left := rect.Left.Px(uint(dpi))
 			right := rect.Right.Px(uint(dpi))

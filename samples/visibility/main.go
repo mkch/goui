@@ -4,28 +4,30 @@ package main
 //go:generate rsrc -arch 386 -manifest manifest.xml
 
 import (
+	"os"
+
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
-
 func main() {
-	app.CreateWindow(&goui.Window{
-		OnDestroy: func(*goui.Context) { app.Exit(0) },
+	os.Exit(goui.Run(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	}))
+}
+
+func ui() {
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		OnDestroy: func(*goui.Context) { goui.Exit(0) },
 		Title:     "goui visibility sample",
 		Width:     800,
 		Height:    600,
 		Root:      rootWidget(),
-	})
-
-	app.Run()
+	}))
 }
 
 func rootWidget() goui.Widget {
@@ -69,7 +71,7 @@ func (s *state) Build() goui.Widget {
 				Label: "Show",
 				OnClick: func(ctx *goui.Context) {
 					if !s.visible {
-						check.MustOK(s.Update(func() { s.visible = true }))
+						chkerr.MustOK(s.Update(func() { s.visible = true }))
 					}
 				},
 			},
@@ -77,7 +79,7 @@ func (s *state) Build() goui.Widget {
 				Label: "Hide",
 				OnClick: func(ctx *goui.Context) {
 					if s.visible || s.maintainSize {
-						check.MustOK(s.Update(func() { s.visible = false; s.maintainSize = false }))
+						chkerr.MustOK(s.Update(func() { s.visible = false; s.maintainSize = false }))
 					}
 				},
 			},
@@ -85,7 +87,7 @@ func (s *state) Build() goui.Widget {
 				Label: "Hide, maintain size",
 				OnClick: func(ctx *goui.Context) {
 					if s.visible || !s.maintainSize {
-						check.MustOK(s.Update(func() { s.visible = false; s.maintainSize = true }))
+						chkerr.MustOK(s.Update(func() { s.visible = false; s.maintainSize = true }))
 					}
 				},
 			},

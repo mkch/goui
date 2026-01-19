@@ -19,7 +19,7 @@ func (txt *TextField) WidgetID() goui.ID {
 }
 
 func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := native.CreateTextField(ctx.NativeWindow(), txt.InitialValue, txt.Obscure)
+	handle, err := goui.OS().NewTextField(ctx.NativeWindow(), txt.InitialValue, txt.Obscure)
 	if err != nil {
 		return nil, err
 	}
@@ -31,11 +31,11 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 				ElementLayouter: layouter,
 			},
 			Handle: handle,
-			DestroyFunc: func(h native.Handle) error {
+			DestroyFunc: func(ctx *goui.Context, h native.Handle) error {
 				if txt.Controller != nil {
-					txt.Controller.setElement(nil)
+					txt.Controller.setElement(ctx, nil)
 				}
-				return native.DestroyWindow(h)
+				return goui.OS().Control_Destroy(h)
 			},
 		},
 	}
@@ -56,7 +56,7 @@ func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidg
 	}
 
 	if newWidget.Controller != nil {
-		newWidget.Controller.setElement(e)
+		newWidget.Controller.setElement(ctx, e)
 	}
 	return
 }
@@ -78,6 +78,6 @@ func (l *textFieldLayouter) Layout(ctx *goui.Context, constraints metrics.Constr
 	return
 }
 
-func (l *textFieldLayouter) PositionAt(pt metrics.Point) (err error) {
-	return native.SetWidgetDimensions(l.Element().(*textFieldElement).Handle, pt.X, pt.Y, l.layoutSize.Width, l.layoutSize.Height)
+func (l *textFieldLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
+	return goui.OS().Control_SetDimensions(l.Element().(*textFieldElement).Handle, metrics.NewRect(pt, l.layoutSize))
 }

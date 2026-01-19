@@ -5,24 +5,27 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mkch/gg"
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/label"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
-
 func main() {
-	app.CreateWindow(&goui.Window{
-		OnDestroy: func(*goui.Context) { app.Exit(0) },
+	os.Exit(goui.Run(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	}))
+}
+
+func ui() {
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		OnDestroy: func(*goui.Context) { goui.Exit(0) },
 		Title:     "goui demo",
 		Width:     800,
 		Height:    600,
@@ -44,8 +47,7 @@ func main() {
 				},
 			},
 		},
-	})
-	app.Run()
+	}))
 }
 
 type numberState struct {
@@ -76,7 +78,7 @@ func (s *numberState) Build() goui.Widget {
 }
 
 func (s *numberState) Inc() {
-	check.MustOK(s.Update(func() { s.number++ }))
+	chkerr.MustOK(s.Update(func() { s.number++ }))
 }
 
 var state *numberState

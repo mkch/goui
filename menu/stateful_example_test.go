@@ -41,20 +41,21 @@ func NewCounterItem() menu.StatefulItem {
 	)
 }
 func Example_statefulMenuItem() {
-	var app *goui.App // assume app is created elsewhere
-	_ = app.CreateWindow(&goui.Window{
-		Title:  "Stateful Menu Example",
-		Width:  400,
-		Height: 300,
-		Menu: &menu.Menu{
-			Items: []goui.MenuItem{&menu.Item{
-				Title: "Stateful item inside",
-				Submenu: &menu.Menu{
-					Items: []goui.MenuItem{
-						NewCounterItem(),
+	goui.Run(func() {
+		goui.CreateWindow(&goui.Window{
+			Title:  "Stateful Menu Example",
+			Width:  400,
+			Height: 300,
+			Menu: &menu.Menu{
+				Items: []goui.MenuItem{&menu.Item{
+					Title: "Stateful item inside",
+					Submenu: &menu.Menu{
+						Items: []goui.MenuItem{
+							NewCounterItem(),
+						},
 					},
-				},
-			}},
-		},
-	})
+				}},
+			},
+		})
+	}, nil)
 }

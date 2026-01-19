@@ -19,7 +19,7 @@ type Element interface {
 	// Parent returns the parent element, or nil if this is the root element of a window.
 	Parent() Element
 	// Destroy destroys the element and releases any associated resources.
-	Destroy() error
+	Destroy(ctx *Context) error
 	// NumChildren returns the number of child elements.
 	NumChildren() int
 	// Child returns the nth child element.
@@ -125,9 +125,9 @@ func (e *ElementHelper) setChildrenSlice(children []Element) {
 }
 
 // Destroy implements [Element.Destroy].
-func (e *ElementHelper) Destroy() (err error) {
+func (e *ElementHelper) Destroy(ctx *Context) (err error) {
 	for _, child := range e.children {
-		if err = child.Destroy(); err != nil {
+		if err = child.Destroy(ctx); err != nil {
 			return
 		}
 	}
@@ -159,7 +159,7 @@ func (e *ElementHelper) setChildInSlice(n int, child Element) {
 // Using this package-level function (taking the interface `Element`)
 // preserves the original parent's dynamic type when calling
 // child.setParent(parent).
-func element_AppendChild(parent, child Element) {
+func element_AppendChild(ctx *Context, parent, child Element) {
 	parent.appendChildToSlice(child)
 	child.setParent(parent)
 }
@@ -169,11 +169,11 @@ func element_AppendChild(parent, child Element) {
 // Then child's parent is set to parent.
 //
 // See [element_AppendChild] for explanation why this is a package-level function.
-func element_SetChild(parent Element, n int, child Element) (err error) {
+func element_SetChild(ctx *Context, parent Element, n int, child Element) (err error) {
 	if parent.Child(n) == child {
 		return
 	}
-	if err = parent.Child(n).Destroy(); err != nil {
+	if err = parent.Child(n).Destroy(ctx); err != nil {
 		return
 	}
 	parent.setChildInSlice(n, child)
@@ -195,7 +195,7 @@ type ControlElementHelper struct {
 	Handle native.Handle
 	// DestroyFunc is called to destroy the native handle.
 	// A nil value means no special destruction is needed.
-	DestroyFunc func(native.Handle) error
+	DestroyFunc func(ctx *Context, handle native.Handle) error
 }
 
 // NativeControl implements the [ControlElement.NativeControl] method.
@@ -204,9 +204,9 @@ func (e *ControlElementHelper) NativeControl() native.Handle {
 }
 
 // Destroy implements the [ControlElement.Destroy] method.
-func (e *ControlElementHelper) Destroy() error {
+func (e *ControlElementHelper) Destroy(ctx *Context) error {
 	if e.DestroyFunc != nil {
-		err := e.DestroyFunc(e.Handle)
+		err := e.DestroyFunc(ctx, e.Handle)
 		if err != nil {
 			return err
 		}
@@ -245,12 +245,12 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget AbstractWidget) (
 		// Appending elem to parent before elem is fully constructed because
 		// CreateElement method of native widget looks for its native parent
 		// handle up the element tree. See [NativeControl] function.
-		element_AppendChild(parent, elem)
+		element_AppendChild(ctx, parent, elem)
 	}
 
 	if layouter := elem.Layouter(); layouter != nil {
 		layouter.setElement(elem)
-		if ctx.app.debug.LayoutOutlineEnabled() {
+		if appDebug != nil && appDebug.LayoutOutlineEnabled() {
 			layouter = &debugLayouter{
 				Layouter: layouter,
 			}
@@ -426,7 +426,7 @@ func updateContainerElement(ctx *Context, element Element, container AbstractCon
 		} else {
 			updatedElem, err = reconcileElementTreeImpl(ctx, matchedElem, widget)
 			if updatedElem != matchedElem {
-				if err = matchedElem.Destroy(); err != nil {
+				if err = matchedElem.Destroy(ctx); err != nil {
 					return err
 				}
 			}
@@ -439,13 +439,13 @@ func updateContainerElement(ctx *Context, element Element, container AbstractCon
 	}
 	// Destroy unmatched old elements
 	for _, unmatched := range unmatchedKeyedElements {
-		if err := unmatched.Destroy(); err != nil {
+		if err := unmatched.Destroy(ctx); err != nil {
 			return err
 		}
 	}
 	// Destroy unused old elements
 	for _, unusedElem := range unusedElements {
-		if err := unusedElem.Destroy(); err != nil {
+		if err := unusedElem.Destroy(ctx); err != nil {
 			return err
 		}
 	}
@@ -488,7 +488,7 @@ func reconciledChildElement(ctx *Context, parent Element, childIndex int, widget
 		return err
 	}
 	if newChild != oldChild {
-		return element_SetChild(parent, childIndex, newChild)
+		return element_SetChild(ctx, parent, childIndex, newChild)
 	}
 	return
 }

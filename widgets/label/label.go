@@ -39,7 +39,7 @@ func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (element
 		err = errortrace.ErrorfStack("Create Label failed: %w", err)
 		return
 	}
-	handle, err := native.CreateLabel(parentHandle, btn.Text)
+	handle, err := goui.OS().NewLabel(parentHandle, btn.Text)
 	if err != nil {
 		err = errortrace.ErrorfStack("Create Label failed: %w", err)
 		return
@@ -51,7 +51,7 @@ func (btn *Label) CreateElement(ctx *goui.Context, parent goui.Element) (element
 				ElementLayouter: layouter,
 			},
 			Handle:      handle,
-			DestroyFunc: native.DestroyWindow,
+			DestroyFunc: func(ctx *goui.Context, handle native.Handle) error { return goui.OS().Control_Destroy(handle) },
 		},
 	}
 	return
@@ -73,38 +73,38 @@ func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) 
 
 	if oldLabel != nil {
 		if oldLabel.Text != newLabel.Text {
-			if err = native.SetLabelText(e.Handle, newLabel.Text); err != nil {
+			if err = goui.OS().Label_SetText(e.Handle, newLabel.Text); err != nil {
 				return
 			}
 		}
 		if oldLabel.BackgroundColor != newLabel.BackgroundColor ||
 			oldLabel.BackgroundColor != nil && *newLabel.BackgroundColor != *oldLabel.BackgroundColor {
-			if err = native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
+			if err = goui.OS().Label_SetBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
 				return
 			}
 		}
 		if oldLabel.Multiline != newLabel.Multiline {
-			if err = native.SetLabelMultiline(e.Handle, newLabel.Multiline); err != nil {
+			if err = goui.OS().Label_SetMultiline(e.Handle, newLabel.Multiline); err != nil {
 				return
 			}
 		}
 		if oldLabel.TextAlignment != newLabel.TextAlignment {
-			if err = native.SetLabelTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment)); err != nil {
+			if err = goui.OS().Label_SetTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment)); err != nil {
 				return
 			}
 		}
 		return
 	}
 
-	if err = native.SetLabelBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
+	if err = goui.OS().Label_SetBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
 		return
 	}
 
-	if err = native.SetLabelMultiline(e.Handle, newLabel.Multiline); err != nil {
+	if err = goui.OS().Label_SetMultiline(e.Handle, newLabel.Multiline); err != nil {
 		return
 	}
 
-	return native.SetLabelTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment))
+	return goui.OS().Label_SetTextAlignment(e.Handle, native.TextAlignment(newLabel.TextAlignment))
 }
 
 type labelLayouter struct {
@@ -123,15 +123,15 @@ func (l *labelLayouter) Layout(ctx *goui.Context, constraints metrics.Constraint
 		return
 	}
 	widget := elem.Widget().(*Label)
-	intrinsicWidth, intrinsicHeight, err := native.GetTextDrawingSize(elem.Handle, widget.Text, widget.Multiline, constraints.MaxWidth)
+	intrinsicSize, err := goui.OS().Control_TextDrawingSize(elem.Handle, widget.Text, widget.Multiline, constraints.MaxWidth)
 	if err != nil {
 		return
 	}
-	size = constraints.Clamp(metrics.Size{Width: intrinsicWidth, Height: intrinsicHeight})
+	size = constraints.Clamp(intrinsicSize)
 	l.layoutSize = size
 	return
 }
 
-func (l *labelLayouter) PositionAt(pt metrics.Point) (err error) {
-	return native.SetWidgetDimensions(l.Element().(*labelElement).Handle, pt.X, pt.Y, l.layoutSize.Width, l.layoutSize.Height)
+func (l *labelLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
+	return goui.OS().Control_SetDimensions(l.Element().(*labelElement).Handle, metrics.NewRect(pt, l.layoutSize))
 }

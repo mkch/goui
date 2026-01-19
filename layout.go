@@ -32,7 +32,7 @@ type Layouter interface {
 	Layout(ctx *Context, constraints metrics.Constraints) (metrics.Size, error)
 	// PositionAt puts the element at the given position.
 	// The position is relative to the native parent element's top-left corner.
-	PositionAt(pt metrics.Point) error
+	PositionAt(ctx *Context, pt metrics.Point) error
 	// Replayer returns a function that can replay the last layout operations,
 	// or nil if replay is not supported (e.g., when the layout depends on children).
 	Replayer() func(*Context) error
@@ -124,13 +124,13 @@ func (l *debugLayouter) Layout(ctx *Context, constraints metrics.Constraints) (s
 				return // do not show highlight if layout fails
 			}
 			// Show highlight after laying out(include children) is done
-			native.InvalidateWindow(ctx.window.DebugLayer)
+			appOS.Window_Invalidate(ctx.window.DebugLayer, nil)
 			// Schedule canceling all highlights in the batch after a delay
 			const delay = 100 * time.Millisecond
 			batch := *l.cancelHighlightBatch
 			*l.cancelHighlightBatch = nil
 			time.AfterFunc(delay, func() {
-				ctx.app.Post(func() {
+				appOS.App_Post(func() {
 					// Cancel all highlights in a batch
 					var cancelled bool
 					for _, record := range batch {
@@ -143,7 +143,7 @@ func (l *debugLayouter) Layout(ctx *Context, constraints metrics.Constraints) (s
 					}
 					// Request a redraw to remove the highlights
 					if cancelled {
-						native.InvalidateWindow(ctx.window.DebugLayer)
+						appOS.Window_Invalidate(ctx.window.DebugLayer, nil)
 					}
 				})
 			})
@@ -158,8 +158,8 @@ func (l *debugLayouter) Layout(ctx *Context, constraints metrics.Constraints) (s
 	return
 }
 
-func (l *debugLayouter) PositionAt(pt metrics.Point) (err error) {
-	err = l.Layouter.PositionAt(pt)
+func (l *debugLayouter) PositionAt(ctx *Context, pt metrics.Point) (err error) {
+	err = l.Layouter.PositionAt(ctx, pt)
 	if err != nil {
 		return
 	}

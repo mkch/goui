@@ -8,25 +8,26 @@ import (
 	"image/color"
 	"os"
 
-	"github.com/mkch/gg/errortrace"
+	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/check"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/label"
 	"github.com/mkch/goui/widgets/listener"
 )
 
-var app = goui.NewApp(&goui.AppConfig{
-	Debug: &goui.Debug{
-		LayoutOutline: true,
-	},
-})
-
 func main() {
-	err := app.CreateWindow(&goui.Window{
+	os.Exit(goui.Run(ui, &goui.AppConfig{
+		Debug: &goui.Debug{
+			LayoutOutline: true,
+		},
+	}))
+}
+
+func ui() {
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
 		Title: "Listener Sample",
 		Width: 1200, Height: 400,
-		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
+		OnDestroy: func(ctx *goui.Context) { goui.Exit(0) },
 		Root: &widgets.Center{
 			Widget: goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
 				return &ListenerLabelState{
@@ -34,13 +35,7 @@ func main() {
 				}
 			}),
 		},
-	})
-
-	if err != nil {
-		errortrace.Panic(err)
-	}
-
-	os.Exit(app.Run())
+	}))
 }
 
 type ListenerLabelState struct {
@@ -61,7 +56,7 @@ func (state *ListenerLabelState) Build() goui.Widget {
 	}
 	var labelText = "Nothing yet."
 	if state.event != nil {
-		labelText = fmt.Sprintf("%s\nWindowPos: %s", state.event, check.Must(state.event.WindowClientPos()))
+		labelText = fmt.Sprintf("%s\nWindowPos: %s", state.event, chkerr.Must(state.event.WindowClientPos()))
 	}
 	return &widgets.Padding{
 		Left: 50, Right: 50, Top: 30, Bottom: 30,

@@ -65,10 +65,10 @@ func (l *sizedBoxLayouter) Layout(ctx *goui.Context, constraints metrics.Constra
 	return
 }
 
-func (l *sizedBoxLayouter) PositionAt(pt metrics.Point) (err error) {
+func (l *sizedBoxLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
 	l.pos = pt
 	for child := range l.Children() {
-		return child.PositionAt(pt)
+		return child.PositionAt(ctx, pt)
 	}
 	return
 }
@@ -82,6 +82,6 @@ func (l *sizedBoxLayouter) Replayer() func(ctx *goui.Context) error {
 		if err != nil {
 			return err
 		}
-		return l.PositionAt(l.pos)
+		return l.PositionAt(ctx, l.pos)
 	}
 }
