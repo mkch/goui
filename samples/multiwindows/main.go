@@ -58,9 +58,9 @@ func ui() {
 func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidget, setEnabled func(bool)) {
 	var enabled bool = true
 	var updater goui.StateUpdater
-	btn = goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
+	btn = goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.WidgetState {
 		updater = goui.NewStateUpdater(ctx)
-		return goui.NewState(ctx, func() goui.Widget {
+		return goui.NewWidgetState(ctx, func() goui.Widget {
 			return &widgets.Button{
 				Label:    gg.If(enabled, label, label+" (Disabled)"),
 				Disabled: !enabled,
@@ -92,10 +92,10 @@ func createWindow2() {
 	}))
 }
 
-func CountButton(ctx *goui.StateContext) goui.State {
+func CountButton(ctx *goui.StateContext) goui.WidgetState {
 	var count int
 	var updater = goui.NewStateUpdater(ctx)
-	return goui.NewState(ctx, func() goui.Widget {
+	return goui.NewWidgetState(ctx, func() goui.Widget {
 		return &widgets.Button{
 			Label: fmt.Sprintf("Clicked %d times", count),
 			OnClick: func(ctx *goui.Context) {

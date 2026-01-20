@@ -65,10 +65,10 @@ func ClickMeButton(ctx *goui.Context) goui.Widget {
 	}
 }
 
-func counterButton(ctx *goui.StateContext) (state goui.State) {
+func counterButton(ctx *goui.StateContext) (state goui.WidgetState) {
 	// Click count, the real state.
 	var count int
-	state = goui.NewState(ctx, func() goui.Widget {
+	state = goui.NewWidgetState(ctx, func() goui.Widget {
 		return &widgets.Button{
 			Label: fmt.Sprintf("Clicked %d times", count),
 			OnClick: func(ctx *goui.Context) {

@@ -77,8 +77,8 @@ func nativeMenuParent(element goui.Element) (native.Handle, error) {
 // is not T and whose widget is neither a [StatelessType] or [StatefulType].
 func nativeParent[
 	ElementType goui.Element,
-	StatelessType goui.AbstractStatelessWidget,
-	StatefulType goui.AbstractStatefulWidget,
+	StatelessType goui.StatelessComponent,
+	StatefulType goui.StatefulComponent,
 ](element goui.Element) (ret ElementType, err error) {
 	type R struct {
 		val ElementType

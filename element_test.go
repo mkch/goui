@@ -129,8 +129,8 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 
 		widget := NewStatefulWidget(
 			ValueID("stateful"),
-			func(ctx *StateContext) State {
-				return NewState(ctx, func() Widget { return childWidget }, nil)
+			func(ctx *StateContext) WidgetState {
+				return NewWidgetState(ctx, func() Widget { return childWidget }, nil)
 			},
 		)
 
@@ -428,14 +428,14 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 				child1,
 				NewStatefulWidget(
 					nil,
-					func(ctx *StateContext) State {
-						return NewState(ctx, func() Widget { return child2 }, nil)
+					func(ctx *StateContext) WidgetState {
+						return NewWidgetState(ctx, func() Widget { return child2 }, nil)
 					},
 				),
 				NewStatefulWidget(
 					ValueID("no-change"),
-					func(ctx *StateContext) State {
-						return NewState(ctx, func() Widget { return child3 }, nil)
+					func(ctx *StateContext) WidgetState {
+						return NewWidgetState(ctx, func() Widget { return child3 }, nil)
 					},
 				),
 			},
@@ -458,14 +458,14 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 				child4, // Match old #0, update in-place.
 				NewStatefulWidget(
 					ValueID("parent-of-child5"),
-					func(ctx *StateContext) State { // No match, recrated
-						return NewState(ctx, func() Widget { return child5 }, nil)
+					func(ctx *StateContext) WidgetState { // No match, recrated
+						return NewWidgetState(ctx, func() Widget { return child5 }, nil)
 					},
 				),
 				NewStatefulWidget(
 					ValueID("no-change"),
-					func(ctx *StateContext) State { // Match old #2, update in-place and createState will not be called.
-						return NewState(ctx, func() Widget { return child3 }, nil)
+					func(ctx *StateContext) WidgetState { // Match old #2, update in-place and createState will not be called.
+						return NewWidgetState(ctx, func() Widget { return child3 }, nil)
 					},
 				),
 			},

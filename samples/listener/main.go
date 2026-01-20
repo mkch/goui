@@ -29,7 +29,7 @@ func ui() {
 		Width: 1200, Height: 400,
 		OnDestroy: func(ctx *goui.Context) { goui.Exit(0) },
 		Root: &widgets.Center{
-			Widget: goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.State {
+			Widget: goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.WidgetState {
 				return &ListenerLabelState{
 					StateUpdater: goui.NewStateUpdater(ctx),
 				}
@@ -49,7 +49,7 @@ func (state *ListenerLabelState) SetEvent(evt *listener.PointerEvent) {
 	state.StateUpdater.Update(func() { state.event = evt })
 }
 
-// Build implements [goui.State.Build]
+// Build implements [goui.WidgetState.Build]
 func (state *ListenerLabelState) Build() goui.Widget {
 	f := func(ctx *goui.Context, evt *listener.PointerEvent) {
 		state.SetEvent(evt)

@@ -263,10 +263,10 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Component) (Eleme
 		return nil, err
 	}
 
-	if statefulWidget, ok := widget.(AbstractStatefulWidget); ok {
+	if statefulWidget, ok := widget.(StatefulComponent); ok {
 		return buildStatefulElement(ctx, elem, statefulWidget)
 	}
-	if statelessWidget, ok := widget.(AbstractStatelessWidget); ok {
+	if statelessWidget, ok := widget.(StatelessComponent); ok {
 		return buildStatelessElement(ctx, elem, statelessWidget)
 	}
 	if container, ok := widget.(ContainerComponent); ok {
@@ -287,7 +287,7 @@ func buildContainerElement(ctx *Context, elem Element, container ContainerCompon
 	return elem, nil
 }
 
-func buildStatelessElement(ctx *Context, elem Element, statelessWidget AbstractStatelessWidget) (Element, error) {
+func buildStatelessElement(ctx *Context, elem Element, statelessWidget StatelessComponent) (Element, error) {
 	// The child element is already appended to elem in buildElementTreeImpl.
 	_, err := buildElementTreeImpl(ctx, elem, statelessWidget.Build(ctx))
 	if err != nil {
@@ -296,7 +296,7 @@ func buildStatelessElement(ctx *Context, elem Element, statelessWidget AbstractS
 	return elem, nil
 }
 
-func buildStatefulElement(ctx *Context, elem Element, statefulWidget AbstractStatefulWidget) (Element, error) {
+func buildStatefulElement(ctx *Context, elem Element, statefulWidget StatefulComponent) (Element, error) {
 	statefulElement := elem.(*StatefulElement)
 	state := statefulWidget.CreateState(&StateContext{ctx, statefulElement})
 	statefulElement.State = state
@@ -319,17 +319,17 @@ func updateElementTree(ctx *Context, elem Element, widget Component) (err error)
 	if container, ok := widget.(ContainerComponent); ok {
 		return updateContainerElement(ctx, elem, container)
 	}
-	if _, ok := widget.(AbstractStatefulWidget); ok {
+	if _, ok := widget.(StatefulComponent); ok {
 		return updateStatefulWidget(ctx, elem)
 	}
-	if statelessWidget, ok := widget.(AbstractStatelessWidget); ok {
+	if statelessWidget, ok := widget.(StatelessComponent); ok {
 		return updateStatelessWidget(ctx, elem, statelessWidget)
 	}
 	return nil
 }
 
 // updateStatelessWidget updates the stateless element elem to hold the new stateless widget.
-func updateStatelessWidget(ctx *Context, elem Element, statelessWidget AbstractStatelessWidget) error {
+func updateStatelessWidget(ctx *Context, elem Element, statelessWidget StatelessComponent) error {
 	err := reconciledChildElement(ctx, elem, 0, statelessWidget.Build(ctx))
 	if err != nil {
 		return err

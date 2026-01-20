@@ -7,7 +7,7 @@ import (
 
 // StatefulMenu is a stateful wrapper for a [Menu].
 type StatefulMenu interface {
-	goui.AbstractStatefulWidget
+	goui.StatefulComponent
 	ExclusiveType(marker.TypeMenu)
 }
 
@@ -60,7 +60,7 @@ func NewStatefulMenu(ID goui.ID, stateCreator func(ctx *goui.StateContext) MenuS
 	return &statefulMenu{
 		StatefulHelper: goui.StatefulHelper{
 			ID:           ID,
-			StateCreator: func(ctx *goui.StateContext) goui.AbstractState { return &menuStateAdapter{stateCreator(ctx)} },
+			StateCreator: func(ctx *goui.StateContext) goui.ComponentState { return &menuStateAdapter{stateCreator(ctx)} },
 		},
 	}
 }
@@ -79,7 +79,7 @@ func (f StatefulMenuFunc) CreateElement(ctx *goui.Context, parent goui.Element) 
 }
 
 // CreateState implements [StatefulMenu.CreateState] and calls f(ctx) to build the state.
-func (f StatefulMenuFunc) CreateState(ctx *goui.StateContext) goui.AbstractState {
+func (f StatefulMenuFunc) CreateState(ctx *goui.StateContext) goui.ComponentState {
 	return &menuStateAdapter{f(ctx)}
 }
 
@@ -87,7 +87,7 @@ func (StatefulMenuFunc) ExclusiveType(marker.TypeMenu)     { /*Nop*/ }
 func (StatefulMenuFunc) ExclusiveKind(marker.KindStateful) { /*Nop*/ }
 
 type StatefulItem interface {
-	goui.AbstractStatefulWidget
+	goui.StatefulComponent
 	ExclusiveType(marker.TypeMenuItem)
 }
 
@@ -98,7 +98,7 @@ type statefulItem struct {
 func (*statefulItem) ExclusiveType(marker.TypeMenuItem) { /*Nop*/ }
 
 // ItemState is the state associated with a [StatefulItem].
-// See [goui.State] for more details.
+// See [goui.WidgetState] for more details.
 type ItemState interface {
 	Build() goui.MenuItem
 	Destroy()
@@ -151,7 +151,7 @@ func NewStatefulItem(ID goui.ID, stateCreator func(ctx *goui.StateContext) ItemS
 	return &statefulItem{
 		StatefulHelper: goui.StatefulHelper{
 			ID:           ID,
-			StateCreator: func(ctx *goui.StateContext) goui.AbstractState { return &itemStateAdapter{stateCreator(ctx)} },
+			StateCreator: func(ctx *goui.StateContext) goui.ComponentState { return &itemStateAdapter{stateCreator(ctx)} },
 		},
 	}
 }
@@ -170,7 +170,7 @@ func (f StatefulItemFunc) CreateElement(ctx *goui.Context, parent goui.Element) 
 }
 
 // CreateState implements [StatefulItem.CreateState] and calls f(ctx) to build the state.
-func (f StatefulItemFunc) CreateState(ctx *goui.StateContext) goui.AbstractState {
+func (f StatefulItemFunc) CreateState(ctx *goui.StateContext) goui.ComponentState {
 	return &itemStateAdapter{f(ctx)}
 }
 

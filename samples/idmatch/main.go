@@ -106,7 +106,7 @@ func (s *State) Build() goui.Widget {
 	}
 }
 
-func Root(ctx *goui.StateContext) goui.State {
+func Root(ctx *goui.StateContext) goui.WidgetState {
 	return NewState(ctx)
 }
 
@@ -127,7 +127,7 @@ func (s *PersonState) Build() goui.Widget {
 	}
 }
 
-func NewPersonState(ctx *goui.StateContext, person *Person) goui.State {
+func NewPersonState(ctx *goui.StateContext, person *Person) goui.WidgetState {
 	return &PersonState{
 		StateUpdater: goui.NewStateUpdater(ctx),
 		person:       person,
@@ -138,7 +138,7 @@ func NewPersonState(ctx *goui.StateContext, person *Person) goui.State {
 func NewPersonWidget(person Person) goui.Widget {
 	return goui.NewStatefulWidget(
 		goui.ValueID(person.ID),
-		func(ctx *goui.StateContext) goui.State {
+		func(ctx *goui.StateContext) goui.WidgetState {
 			return NewPersonState(ctx, &person)
 		},
 	)

@@ -243,7 +243,7 @@ func CreateWindow(config *Window) (err error) {
 
 // unwrapNativeMenu unwraps the given Element to find the nearest underlying [NativeMenuElement].
 // If such a NativeMenuElement is found, its native.Handle is returned.
-// Any wrapper that is not [AbstractStatelessWidget] or [AbstractStatefulWidget] are skipped.
+// Any wrapper that is neither stateful menu nor stateless menu are skipped.
 func unwrapNativeMenu(element Element) native.Handle {
 	h, found := util.LookupChild(element, func(e Element) (native.Handle, bool) {
 		if nativeMenu, ok := e.(NativeMenuElement); ok {
@@ -253,11 +253,11 @@ func unwrapNativeMenu(element Element) native.Handle {
 		// More precisely, [menu.StatelessMenu] and [menu.StatefulMenu] are expected here,
 		// but we use statelessMenu and statefulMenu to avoid import cycle.
 		type statelessMenu interface {
-			AbstractStatelessWidget
+			StatelessComponent
 			ExclusiveType(marker.TypeMenu)
 		}
 		type statefulMenu interface {
-			AbstractStatefulWidget
+			StatefulComponent
 			ExclusiveType(marker.TypeMenu)
 		}
 		if _, isStateless := widget.(statelessMenu); isStateless {

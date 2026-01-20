@@ -2,9 +2,9 @@ package goui
 
 import "github.com/mkch/goui/marker"
 
-// AbstractStatelessWidget is a [Component] that builds its UI using a Build method.
+// StatelessComponent is a [Component] that builds its UI using a Build method.
 // Stateless widget is a wrapper around other widgets and do not hold any state.
-type AbstractStatelessWidget interface {
+type StatelessComponent interface {
 	Component
 	// Build builds and returns the wrapped widget.
 	Build(ctx *Context) Component
@@ -13,11 +13,11 @@ type AbstractStatelessWidget interface {
 
 // StatelessWidget is a [Widget] that builds its UI using a Build method.
 type StatelessWidget interface {
-	AbstractStatelessWidget
+	StatelessComponent
 	ExclusiveType(marker.TypeWidget)
 }
 
-// StatelessHelper is a helper to implement concrete stateless widgets, menus and menu items.
+// StatelessHelper is a helper to implement concrete [StatelessComponent] and [StatelessWidget].
 // The WidgetID method returns ID and the Build method calls Builder.
 type StatelessHelper struct {
 	ID
@@ -35,7 +35,7 @@ func (w *StatelessHelper) CreateElement(ctx *Context, parent Element) (Element, 
 	return createStatelessElement(ctx, parent)
 }
 
-// Build implements [AbstractStatelessWidget.Build].
+// Build implements [StatelessComponent.Build].
 // It calls the Builder function. Panics if Builder is nil.
 func (w *StatelessHelper) Build(ctx *Context) Component {
 	return w.Builder(ctx)

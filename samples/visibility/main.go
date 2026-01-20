@@ -95,6 +95,6 @@ func (s *state) Build() goui.Widget {
 	}
 }
 
-func demoWidget(ctx *goui.StateContext) goui.State {
+func demoWidget(ctx *goui.StateContext) goui.WidgetState {
 	return NewState(ctx)
 }

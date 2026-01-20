@@ -7,26 +7,26 @@ import (
 	"github.com/mkch/goui/marker"
 )
 
-// AbstractStatefulWidget is a [Component] that has mutable state.
+// StatefulComponent is a [Component] that has mutable state.
 // The state is stored in a separate State object associated with the widget.
-// The state can be updated via [State].Update method, which triggers a rebuild of the widget tree.
-type AbstractStatefulWidget interface {
+// The state can be updated via [WidgetState].Update method, which triggers a rebuild of the widget tree.
+type StatefulComponent interface {
 	Component
-	CreateState(ctx *StateContext) AbstractState
+	CreateState(ctx *StateContext) ComponentState
 	ExclusiveKind(marker.KindStateful)
 }
 
 // StatefulWidgets is a [Widget] that has mutable state.
 type StatefulWidget interface {
-	AbstractStatefulWidget
+	StatefulComponent
 	ExclusiveType(marker.TypeWidget)
 }
 
-// StatefulHelper is a helper to implement concrete state widgets.
+// StatefulHelper is a helper to implement concrete state component.
 type StatefulHelper struct {
 	ID ID
 	// StateCreator creates the state associated with this widget.
-	StateCreator func(ctx *StateContext) AbstractState
+	StateCreator func(ctx *StateContext) ComponentState
 }
 
 func (w *StatefulHelper) WidgetID() ID {
@@ -37,7 +37,7 @@ func (w *StatefulHelper) CreateElement(ctx *Context, parent Element) (Element, e
 	return createStatefulElement(ctx)
 }
 
-func (w *StatefulHelper) CreateState(ctx *StateContext) AbstractState {
+func (w *StatefulHelper) CreateState(ctx *StateContext) ComponentState {
 	return w.StateCreator(ctx)
 }
 
@@ -50,28 +50,28 @@ type statefulWidget struct {
 
 func (*statefulWidget) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
-// stateAdapter adapts a State to an [AbstractState].
+// stateAdapter adapts a State to an [ComponentState].
 type stateAdapter struct {
-	State
+	WidgetState
 }
 
 func (a *stateAdapter) Build() Component {
-	return a.State.Build()
+	return a.WidgetState.Build()
 }
 
 // NewStatefulWidget creates a new StatefulWidget with the given ID and state creator function.
-func NewStatefulWidget(ID ID, stateCreator func(ctx *StateContext) State) StatefulWidget {
+func NewStatefulWidget(ID ID, stateCreator func(ctx *StateContext) WidgetState) StatefulWidget {
 	return &statefulWidget{
 		StatefulHelper: StatefulHelper{
 			ID:           ID,
-			StateCreator: func(ctx *StateContext) AbstractState { return &stateAdapter{State: stateCreator(ctx)} },
+			StateCreator: func(ctx *StateContext) ComponentState { return &stateAdapter{WidgetState: stateCreator(ctx)} },
 		},
 	}
 }
 
 // StatefulWidgetFunc is a function type that implements [StatefulWidget].
 // Method WidgetID returns nil and CreateState calls f.
-type StatefulWidgetFunc func(ctx *StateContext) State
+type StatefulWidgetFunc func(ctx *StateContext) WidgetState
 
 func (f StatefulWidgetFunc) WidgetID() ID {
 	return nil
@@ -81,8 +81,8 @@ func (f StatefulWidgetFunc) CreateElement(ctx *Context, parent Element) (Element
 	return createStatefulElement(ctx)
 }
 
-func (f StatefulWidgetFunc) CreateState(ctx *StateContext) AbstractState {
-	return &stateAdapter{State: f(ctx)}
+func (f StatefulWidgetFunc) CreateState(ctx *StateContext) ComponentState {
+	return &stateAdapter{WidgetState: f(ctx)}
 }
 
 func (StatefulWidgetFunc) ExclusiveKind(marker.KindStateful) { /*Nop*/ }
@@ -92,7 +92,7 @@ func (StatefulWidgetFunc) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 // StatefulElement is the element for stateful widgets, menus and menu items.
 type StatefulElement struct {
 	ElementHelper
-	State AbstractState
+	State ComponentState
 }
 
 // Destroy implements [Element].Destroy method.
@@ -107,12 +107,8 @@ func createStatefulElement(*Context) (Element, error) {
 	return &StatefulElement{}, nil
 }
 
-// AbstractState is the state associated with a [AbstractStatefulWidget].
-type AbstractState interface {
-	// Build builds the widget tree for this state.
-	// It is called during the initial creation of the state
-	// and whenever the state is updated via [UpdateStateFunc].
-	Build() Component
+// ComponentState is the state associated with a [StatefulComponent].
+type ComponentState interface {
 	// Destroy is called when the state is destroyed.
 	// It can be used to clean up any resources associated with the state.
 	Destroy()
@@ -122,41 +118,57 @@ type AbstractState interface {
 	// Having f return an error would add unnecessary noise for callers.
 
 	// Update calls updater and then updates the state.
-	// Use StateUpdater to implement this method.
+	// Use [StateUpdater] to implement this method.
 	Update(updater func()) error
+	// Build builds the component tree for this state.
+	// It is called during the initial creation of the state
+	// and whenever the state is updated via [State.Update].
+	Build() Component
 }
 
-// State is the state associated with a [StatefulWidget].
-type State interface {
-	Build() Widget
+// WidgetState is the state associated with a [StatefulWidget].
+type WidgetState interface {
+	// Destroy is called when the state is destroyed.
+	// It can be used to clean up any resources associated with the state.
 	Destroy()
+
+	// Note: updater has little chance to yield an error,
+	// because it typically just mutates a few simple fields in practice.
+	// Having f return an error would add unnecessary noise for callers.
+
+	// Update calls updater and then updates the state.
+	// Use [StateUpdater] to implement this method.
 	Update(updater func()) error
+	// Build builds the widget tree for this state.
+	// It is called during the initial creation of the state
+	// and whenever the state is updated via [State.Update].
+	Build() Widget
 }
 
-// state is a simple implementation of [State].
-type state struct {
+// widgetState is a simple implementation of [WidgetState].
+type widgetState struct {
 	StateUpdater
 	destroy func()        // Can be nil
 	build   func() Widget // Can't be nil
 }
 
-func (s *state) Build() Widget {
+func (s *widgetState) Build() Widget {
 	return s.build()
 }
 
-func (s *state) Destroy() {
+func (s *widgetState) Destroy() {
 	if s.destroy != nil {
 		s.destroy()
 	}
 }
 
-// NewState creates a new State with the given context, a build function, and a destroy function.
+// NewWidgetState creates a new State with the given context, a build function, and a destroy function.
 // The returned State uses the build function to build its widget tree, and the destroy function
 // to clean up resources.
 // The destroy func can be nil.
 // This function is convenient to create simple states without defining a new struct type.
-func NewState(ctx *StateContext, build func() Widget, destroy func()) State {
-	return &state{
+func NewWidgetState(ctx *StateContext, build func() Widget, destroy func()) WidgetState {
+	return &widgetState{
 		StateUpdater: NewStateUpdater(ctx),
 		build:        build,
 		destroy:      destroy,
@@ -170,14 +182,14 @@ type NopDestroyer struct{}
 // Destroy does nothing.
 func (NopDestroyer) Destroy() { /*NOP*/ }
 
-// StateUpdater implements [State].Update method.
-// Embedding StateUpdater in a struct and implementing other methods of [State]
-// allows the struct type to satisfy the [State] interface.
+// StateUpdater implements [ComponentState].Update method.
+// Embedding StateUpdater in a struct and implementing other methods of [WidgetState]
+// allows the struct type to satisfy the [WidgetState] interface.
 type StateUpdater stateUpdater
 
 type stateUpdater func(updater func()) error
 
-// Update implements [State].Update.
+// Update implements [WidgetState].Update.
 func (h StateUpdater) Update(updater func()) error {
 	return h(updater)
 }

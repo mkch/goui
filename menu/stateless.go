@@ -7,7 +7,7 @@ import (
 
 // StatelessMenu is a stateless wrapper for a [Menu].
 type StatelessMenu interface {
-	goui.AbstractStatelessWidget
+	goui.StatelessComponent
 	ExclusiveType(marker.TypeMenu)
 }
 
@@ -50,7 +50,7 @@ func (f StatelessMenuFunc) ExclusiveType(marker.TypeMenu)      { /*Nop*/ }
 func (f StatelessMenuFunc) ExclusiveKind(marker.KindStateless) { /*Nop*/ }
 
 type StatelessItem interface {
-	goui.AbstractStatelessWidget
+	goui.StatelessComponent
 	ExclusiveType(marker.TypeMenuItem)
 }
 

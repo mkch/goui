@@ -7,7 +7,7 @@ import (
 	"github.com/mkch/goui/widgets"
 )
 
-// CountState is a [goui.State] that holds the click count.
+// CountState is a [goui.WidgetState] that holds the click count.
 type CountState struct {
 	goui.StateUpdater // Implements Update method.
 	goui.NopDestroyer // No cleanup needed.
@@ -16,13 +16,13 @@ type CountState struct {
 }
 
 // NewCountState creates a new [CountState].
-func NewCountState(ctx *goui.StateContext) goui.State {
+func NewCountState(ctx *goui.StateContext) goui.WidgetState {
 	return &CountState{
 		StateUpdater: goui.NewStateUpdater(ctx),
 	}
 }
 
-// Build implements [goui.State.Build] method.
+// Build implements [goui.WidgetState.Build] method.
 func (state *CountState) Build() goui.Widget {
 	return &widgets.Button{
 		Label: fmt.Sprintf("Clicked %d times", state.count),
@@ -40,7 +40,7 @@ func (state *CountState) Build() goui.Widget {
 func NewCounterButton(ID goui.ID) goui.StatefulWidget {
 	return goui.NewStatefulWidget(
 		ID,
-		func(ctx *goui.StateContext) goui.State { return NewCountState(ctx) },
+		func(ctx *goui.StateContext) goui.WidgetState { return NewCountState(ctx) },
 	)
 }
 
