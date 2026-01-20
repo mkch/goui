@@ -5,17 +5,15 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
+	"github.com/mkch/goui/internal/util"
 	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
-// Menu is a menu widget that can contain menu items.
+// Menu is a menu component that can contain menu items.
 type Menu struct {
-	ID goui.ID
-	// Items are the menu's child widgets.
-	// Only widgets representing menu items should be added;
-	// others will not display correctly or cause error returns.
+	ID    goui.ID
 	Items []goui.MenuItem
 }
 
@@ -35,7 +33,7 @@ func (m *Menu) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child].
-func (m *Menu) Child(index int) goui.AbstractWidget {
+func (m *Menu) Child(index int) goui.Component {
 	return m.Items[index]
 }
 
@@ -86,7 +84,7 @@ func nativeParent[
 		val ElementType
 		err error
 	}
-	r, found := goui.LookupParent(element, func(e goui.Element) (R, bool) {
+	r, found := util.LookupParent(element, func(e goui.Element) (R, bool) {
 		if elem, ok := e.(ElementType); ok {
 			return R{elem, nil}, true
 		}
@@ -97,8 +95,7 @@ func nativeParent[
 		if _, isStateful := widget.(StatefulType); isStateful {
 			return R{}, false // Continue searching
 		}
-		var zero ElementType
-		return R{zero, errortrace.WithStack(goui.ErrWrongParent)}, true // Wrong parent
+		return R{err: errortrace.WithStack(goui.ErrWrongParent)}, true // Wrong parent
 	})
 	if found {
 		ret = r.val
@@ -108,7 +105,7 @@ func nativeParent[
 }
 
 // createMenuElement is a helper function to create a popup or window menu element.
-func createMenuElement(ctx *goui.Context, parent goui.Element, popup bool) (element goui.Element, err error) {
+func createMenuElement(_ *goui.Context, parent goui.Element, popup bool) (element goui.Element, err error) {
 	handle, err := goui.OS().NewMenu(popup)
 	if err != nil {
 		return
@@ -156,7 +153,7 @@ func (m *WindowMenu) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child].
-func (m *WindowMenu) Child(index int) goui.AbstractWidget {
+func (m *WindowMenu) Child(index int) goui.Component {
 	return m.Items[index]
 }
 
@@ -180,12 +177,9 @@ func (e *nativeMenuElement) Destroy(ctx *goui.Context) (err error) {
 	return goui.OS().Menu_Destroy(e.Handle)
 }
 
-// Item is a menu item widget that can be added to a [Menu].
+// Item is a menu item component that can be added to a [Menu].
 type Item struct {
-	ID goui.ID
-	// Submenu is an optional submenu of this menu item.
-	// Only widgets representing menus should be assigned;
-	// others will not display correctly or cause error returns.
+	ID       goui.ID
 	Submenu  goui.Menu
 	Title    string
 	Disabled bool
@@ -203,7 +197,7 @@ func (item *Item) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child].
-func (item *Item) Child(index int) goui.AbstractWidget {
+func (item *Item) Child(index int) goui.Component {
 	if item.Submenu == nil || index != 0 {
 		panic("index out of range")
 	}
@@ -230,7 +224,7 @@ func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element
 
 // createItem is a helper function to create a menu item under the given parent element.
 // If separator is true, a separator item is created.
-func createItem(ctx *goui.Context, parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
+func createItem(_ *goui.Context, parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
 	parentMenu, err := nativeMenuParent(parent)
 	if err == nil && parentMenu == nil {
 		// Menu item must have a parent menu
@@ -262,7 +256,7 @@ func (e *nativeItemElement) Destroy(ctx *goui.Context) (err error) {
 }
 
 // SetWidget implements [goui.Element.SetWidget].
-func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.AbstractWidget) (err error) {
+func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.Component) (err error) {
 	oldItem, _ := e.Widget().(*Item)
 	newItem := w.(*Item)
 	if err = e.ElementHelper.SetWidget(ctx, w); err != nil {
@@ -386,13 +380,13 @@ func (items Items) CreateElement(ctx *goui.Context, parent goui.Element) (goui.E
 	return createMenuElement(ctx, parent, true)
 }
 
-// NumChildren implements [goui.AbstractContainer.NumChildren].
+// NumChildren implements [goui.ContainerComponent.NumChildren].
 func (items Items) NumChildren() int {
 	return len(items)
 }
 
-// Child implements [goui.AbstractContainer.Child].
-func (items Items) Child(index int) goui.AbstractWidget {
+// Child implements [goui.ContainerComponent.Child].
+func (items Items) Child(index int) goui.Component {
 	return items[index]
 }
 

@@ -22,7 +22,7 @@ func NewStatelessMenu(ID goui.ID, builder func(ctx *goui.Context) goui.Menu) Sta
 	return &statelessMenu{
 		StatelessHelper: goui.StatelessHelper{
 			ID:      ID,
-			Builder: func(ctx *goui.Context) goui.AbstractWidget { return builder(ctx) },
+			Builder: func(ctx *goui.Context) goui.Component { return builder(ctx) },
 		},
 	}
 }
@@ -42,7 +42,7 @@ func (f StatelessMenuFunc) CreateElement(ctx *goui.Context, parent goui.Element)
 
 // Build implements [StatelessMenu.Build].
 // It calls f(ctx).
-func (f StatelessMenuFunc) Build(ctx *goui.Context) goui.AbstractWidget {
+func (f StatelessMenuFunc) Build(ctx *goui.Context) goui.Component {
 	return f(ctx)
 }
 
@@ -64,7 +64,7 @@ func NewStatelessItem(ID goui.ID, builder func(ctx *goui.Context) goui.MenuItem)
 	return &statelessItem{
 		StatelessHelper: goui.StatelessHelper{
 			ID:      ID,
-			Builder: func(ctx *goui.Context) goui.AbstractWidget { return builder(ctx) },
+			Builder: func(ctx *goui.Context) goui.Component { return builder(ctx) },
 		},
 	}
 }
@@ -84,7 +84,7 @@ func (f StatelessItemFunc) CreateElement(ctx *goui.Context, parent goui.Element)
 
 // Build implements [StatelessMenu.Build].
 // It calls f(ctx).
-func (f StatelessItemFunc) Build(ctx *goui.Context) goui.AbstractWidget {
+func (f StatelessItemFunc) Build(ctx *goui.Context) goui.Component {
 	return f(ctx)
 }
 

@@ -57,7 +57,7 @@ type buttonElement struct {
 	goui.ControlElementHelper
 }
 
-func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
+func (e *buttonElement) SetWidget(ctx *goui.Context, widget goui.Component) (err error) {
 	oldBtn, _ := e.Widget().(*Button)
 	newBtn := widget.(*Button)
 

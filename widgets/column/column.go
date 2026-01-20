@@ -43,7 +43,7 @@ func (c *Column) NumChildren() int {
 	return len(c.Widgets)
 }
 
-func (c *Column) Child(n int) goui.AbstractWidget {
+func (c *Column) Child(n int) goui.Component {
 	return c.Widgets[n]
 }
 

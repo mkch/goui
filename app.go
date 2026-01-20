@@ -9,6 +9,8 @@ import (
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/internal/tricks"
+	"github.com/mkch/goui/internal/util"
+	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 	"github.com/mkch/goui/native/mock"
@@ -147,13 +149,6 @@ func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 
 }
 
-// ErrInvalidWindowRoot is returned when creating a window with an invalid root widget,
-// such as a Menu or MenuItem.
-var ErrInvalidWindowRoot = errors.New("invalid window root")
-
-// ErrInvalidWindowMenu is returned when creating a window with an widget that is not a menu.
-var ErrInvalidWindowMenu = errors.New("invalid window menu")
-
 // CreateWindow creates a new window with the given configuration.
 // If config is nil, a default configuration is used.
 // If a window with the same ID already exists, it returns an error.
@@ -220,12 +215,6 @@ func CreateWindow(config *Window) (err error) {
 		if err != nil {
 			return
 		}
-		if unwrapNativeMenu(window.Root) != nil {
-			// Cannot set a menu as the root element of a window
-			window.Root = nil
-			window.Layouter = nil
-			return ErrInvalidWindowRoot
-		}
 		if err = layoutWindow(ctx); err != nil {
 			return
 		}
@@ -239,7 +228,7 @@ func CreateWindow(config *Window) (err error) {
 		}
 		menuHandle := unwrapNativeMenu(elem)
 		if menuHandle == nil {
-			return ErrInvalidWindowMenu
+			return
 		}
 		window.Menu = elem
 		err = appOS.Window_SetMenu(window.Handle, menuHandle)
@@ -256,18 +245,25 @@ func CreateWindow(config *Window) (err error) {
 // If such a NativeMenuElement is found, its native.Handle is returned.
 // Any wrapper that is not [AbstractStatelessWidget] or [AbstractStatefulWidget] are skipped.
 func unwrapNativeMenu(element Element) native.Handle {
-	h, found := LookupChild(element, func(e Element) (native.Handle, bool) {
+	h, found := util.LookupChild(element, func(e Element) (native.Handle, bool) {
 		if nativeMenu, ok := e.(NativeMenuElement); ok {
 			return nativeMenu.NativeMenu(), true // Found a menu
 		}
 		widget := e.Widget()
 		// More precisely, [menu.StatelessMenu] and [menu.StatefulMenu] are expected here,
-		// but we use the base interfaces [goui.AbstractStatelessWidget] and [goui.AbstractStatefulWidget]
-		// to avoid import cycle.
-		if _, isStateless := widget.(AbstractStatelessWidget); isStateless {
+		// but we use statelessMenu and statefulMenu to avoid import cycle.
+		type statelessMenu interface {
+			AbstractStatelessWidget
+			ExclusiveType(marker.TypeMenu)
+		}
+		type statefulMenu interface {
+			AbstractStatefulWidget
+			ExclusiveType(marker.TypeMenu)
+		}
+		if _, isStateless := widget.(statelessMenu); isStateless {
 			return nil, false // May contain a menu, continue searching
 		}
-		if _, isStateful := widget.(AbstractStatefulWidget); isStateful {
+		if _, isStateful := widget.(statefulMenu); isStateful {
 			return nil, false // May contain a menu, continue searching
 		}
 		// Can't contain a menu. Found a `Not Found`(nil).
@@ -278,40 +274,6 @@ func unwrapNativeMenu(element Element) native.Handle {
 		return h
 	}
 	return nil
-}
-
-// LookupParent searches the element and its ancestors for an element
-// that satisfies the given predicate.
-// The found result of predicate indicates whether it is satisfied.
-// The first value returned by predicate is returned when found.
-// If no such element is found, the zero value of T and false are returned.
-func LookupParent[T any](element Element, predicate func(Element) (v T, found bool)) (ret T, found bool) {
-	for elem := element; elem != nil; elem = elem.Parent() {
-		if t, ok := predicate(elem); ok {
-			return t, ok
-		}
-	}
-	return
-}
-
-// LookupChild searches the element and its descendants for an element
-// that satisfies the given predicate.
-// The predicate function should return:
-//   - satisfied=true: the element satisfies the condition, value is returned.
-//   - satisfied=false: the element does not satisfy, continue searching all descendants.
-//
-// If an element satisfies the predicate, its value and true are returned immediately.
-// If no such element is found, the zero value of T and false are returned.
-func LookupChild[T any](element Element, predicate func(Element) (value T, satisfied bool)) (v T, found bool) {
-	if t, ok := predicate(element); ok {
-		return t, true
-	}
-	for i := 0; i < element.NumChildren(); i++ {
-		if t, ok := LookupChild(element.Child(i), predicate); ok {
-			return t, ok
-		}
-	}
-	return
 }
 
 // ErrNoSuchWindow is returned when trying to access a window using

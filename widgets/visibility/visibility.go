@@ -35,7 +35,7 @@ func (p *Visibility) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Visibility) Child(n int) goui.AbstractWidget {
+func (p *Visibility) Child(n int) goui.Component {
 	return p.Widget
 }
 

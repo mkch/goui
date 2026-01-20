@@ -3,14 +3,15 @@ package goui
 import (
 	"errors"
 
+	"github.com/mkch/goui/internal/util"
 	"github.com/mkch/goui/marker"
 )
 
-// AbstractStatefulWidget is a [AbstractWidget] that has mutable state.
+// AbstractStatefulWidget is a [Component] that has mutable state.
 // The state is stored in a separate State object associated with the widget.
 // The state can be updated via [State].Update method, which triggers a rebuild of the widget tree.
 type AbstractStatefulWidget interface {
-	AbstractWidget
+	Component
 	CreateState(ctx *StateContext) AbstractState
 	ExclusiveKind(marker.KindStateful)
 }
@@ -54,7 +55,7 @@ type stateAdapter struct {
 	State
 }
 
-func (a *stateAdapter) Build() AbstractWidget {
+func (a *stateAdapter) Build() Component {
 	return a.State.Build()
 }
 
@@ -111,7 +112,7 @@ type AbstractState interface {
 	// Build builds the widget tree for this state.
 	// It is called during the initial creation of the state
 	// and whenever the state is updated via [UpdateStateFunc].
-	Build() AbstractWidget
+	Build() Component
 	// Destroy is called when the state is destroyed.
 	// It can be used to clean up any resources associated with the state.
 	Destroy()
@@ -247,7 +248,7 @@ const (
 func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 	// Check or window menu
 	if _, isMenu := element.Widget().(interface{ ExclusiveType(marker.TypeMenu) }); isMenu {
-		attachment, _ := LookupParent(element, func(e Element) (attachment windowAttachment, stop bool) {
+		attachment, _ := util.LookupParent(element, func(e Element) (attachment windowAttachment, stop bool) {
 			if e == ctx.window.Menu {
 				return attachAsWindowMenu, true // Is window menu
 			}
@@ -273,7 +274,7 @@ func elementAttachedToWindow(ctx *Context, element Element) windowAttachment {
 		return elementAttachedToWindow(ctx, element.Parent())
 	}
 	// Check for window widget tree
-	attachment, _ := LookupParent(element, func(e Element) (attachment windowAttachment, stop bool) {
+	attachment, _ := util.LookupParent(element, func(e Element) (attachment windowAttachment, stop bool) {
 		if e == ctx.window.Root {
 			return attachToWidgetTree, true // In widget tree
 		}

@@ -17,7 +17,7 @@ func debug() *tricks.Debug
 
 // CheckLayoutOverflow returns an [goui.OverflowConstraintsError] if the given size exceeds the given constraints.
 // Widget can be nil and if widget is not nil, it is included in the error for better debugging.
-func CheckLayoutOverflow(ctx *goui.Context, widget goui.AbstractWidget, size metrics.Size, constraints metrics.Constraints) error {
+func CheckLayoutOverflow(ctx *goui.Context, widget goui.Component, size metrics.Size, constraints metrics.Constraints) error {
 	if debug() == nil {
 		return nil
 	}

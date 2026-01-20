@@ -17,7 +17,7 @@ import (
 // If any error occurs during the build, the error is returned.
 // The returned Element is the root element of the built tree, and
 // the returned Layouter is the layouter of the Element or its nearest child.
-func BuildElementTree(ctx *goui.Context, widget goui.AbstractWidget, parentLayouter goui.Layouter) (goui.Element, goui.Layouter, error)
+func BuildElementTree(ctx *goui.Context, widget goui.Component, parentLayouter goui.Layouter) (goui.Element, goui.Layouter, error)
 
 //go:linkname app_RunOS
 func app_RunOS(os native.OS, f func(), config *goui.AppConfig) int

@@ -30,7 +30,7 @@ func (s *SizedBox) NumChildren() int {
 	return gg.If(s.Widget != nil, 1, 0)
 }
 
-func (s *SizedBox) Child(n int) goui.AbstractWidget {
+func (s *SizedBox) Child(n int) goui.Component {
 	return s.Widget
 }
 

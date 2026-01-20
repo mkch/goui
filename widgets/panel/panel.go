@@ -50,7 +50,7 @@ func (p *Panel) NumChildren() int {
 	return gg.If(p.Widget != nil, 1, 0)
 }
 
-func (p *Panel) Child(n int) goui.AbstractWidget {
+func (p *Panel) Child(n int) goui.Component {
 	return p.Widget
 }
 
@@ -61,7 +61,7 @@ type panelElement struct {
 	goui.ControlElementHelper
 }
 
-func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
+func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Component) (err error) {
 	oldPanel, _ := elem.Widget().(*Panel)
 	newPanel := widget.(*Panel)
 

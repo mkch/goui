@@ -43,7 +43,7 @@ func (row *Row) NumChildren() int {
 	return len(row.Widgets)
 }
 
-func (row *Row) Child(n int) goui.AbstractWidget {
+func (row *Row) Child(n int) goui.Component {
 	return row.Widgets[n]
 }
 

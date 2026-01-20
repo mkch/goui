@@ -48,7 +48,7 @@ type textFieldElement struct {
 	goui.ControlElementHelper
 }
 
-func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
+func (e *textFieldElement) SetWidget(ctx *goui.Context, widget goui.Component) (err error) {
 	newWidget := widget.(*TextField)
 
 	if err = e.ControlElementHelper.SetWidget(ctx, widget); err != nil {

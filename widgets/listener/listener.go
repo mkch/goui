@@ -79,7 +79,7 @@ func (l *Listener) NumChildren() int {
 }
 
 // Child implements [goui.Container.Child]
-func (l *Listener) Child(index int) goui.AbstractWidget {
+func (l *Listener) Child(index int) goui.Component {
 	if l.Widget == nil || index != 0 {
 		panic("index out of range")
 	}
@@ -106,7 +106,7 @@ type listenerElement struct {
 }
 
 // SetWidget implements [goui.Element.SetWidget]
-func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) error {
+func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.Component) error {
 	if e.Widget() == nil {
 		// One time setup.
 		e.ctx = ctx

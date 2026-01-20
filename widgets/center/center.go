@@ -43,7 +43,7 @@ func (c *Center) NumChildren() int {
 	return gg.If(c.Widget != nil, 1, 0)
 }
 
-func (c *Center) Child(n int) goui.AbstractWidget {
+func (c *Center) Child(n int) goui.Component {
 	if c.Widget == nil || n != 0 {
 		panic("index out of range")
 	}
@@ -57,7 +57,7 @@ type centerElement struct {
 	goui.ElementHelper
 }
 
-func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
+func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Component) (err error) {
 	center := widget.(*Center)
 	if center.WidthFactor < 0 {
 		return errors.New("Center.WidthFactor must be greater than or equal to 0")

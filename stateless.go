@@ -2,12 +2,12 @@ package goui
 
 import "github.com/mkch/goui/marker"
 
-// AbstractStatelessWidget is a [AbstractWidget] that builds its UI using a Build method.
+// AbstractStatelessWidget is a [Component] that builds its UI using a Build method.
 // Stateless widget is a wrapper around other widgets and do not hold any state.
 type AbstractStatelessWidget interface {
-	AbstractWidget
+	Component
 	// Build builds and returns the wrapped widget.
-	Build(ctx *Context) AbstractWidget
+	Build(ctx *Context) Component
 	ExclusiveKind(marker.KindStateless)
 }
 
@@ -22,22 +22,22 @@ type StatelessWidget interface {
 type StatelessHelper struct {
 	ID
 	// Builder is a function that builds and returns the wrapped widget. Can't be nil.
-	Builder func(ctx *Context) AbstractWidget
+	Builder func(ctx *Context) Component
 }
 
-// WidgetID implements [AbstractWidget.WidgetID].
+// WidgetID implements [Component.WidgetID].
 func (w *StatelessHelper) WidgetID() ID {
 	return w.ID
 }
 
-// CreateElement implements [AbstractWidget.CreateElement].
+// CreateElement implements [Component.CreateElement].
 func (w *StatelessHelper) CreateElement(ctx *Context, parent Element) (Element, error) {
 	return createStatelessElement(ctx, parent)
 }
 
 // Build implements [AbstractStatelessWidget.Build].
 // It calls the Builder function. Panics if Builder is nil.
-func (w *StatelessHelper) Build(ctx *Context) AbstractWidget {
+func (w *StatelessHelper) Build(ctx *Context) Component {
 	return w.Builder(ctx)
 }
 
@@ -60,7 +60,7 @@ func NewStatelessWidget(ID ID, builder func(ctx *Context) Widget) StatelessWidge
 	return &statelessWidget{
 		StatelessHelper: StatelessHelper{
 			ID:      ID,
-			Builder: func(ctx *Context) AbstractWidget { return builder(ctx) },
+			Builder: func(ctx *Context) Component { return builder(ctx) },
 		},
 	}
 }
@@ -81,7 +81,7 @@ func (f StatelessWidgetFunc) CreateElement(ctx *Context, parent Element) (Elemen
 
 // Build implements [StatelessWidget.Build].
 // It calls f.
-func (f StatelessWidgetFunc) Build(ctx *Context) AbstractWidget {
+func (f StatelessWidgetFunc) Build(ctx *Context) Component {
 	return f(ctx)
 }
 

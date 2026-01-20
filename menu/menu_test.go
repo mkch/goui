@@ -27,7 +27,7 @@ func (w *mockWidget) NumChildren() int {
 	return 0
 }
 
-func (w *mockWidget) Child(n int) goui.AbstractWidget {
+func (w *mockWidget) Child(n int) goui.Component {
 	if w.child == nil || n != 0 {
 		panic("index out of range")
 	}

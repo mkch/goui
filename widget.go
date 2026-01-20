@@ -2,9 +2,8 @@ package goui
 
 import "github.com/mkch/goui/marker"
 
-// AbstractWidget is the base interface for all widgets.
-// It lacks any exclusive method to identify its kind or type.
-type AbstractWidget interface {
+// Component is the base interface for all widgets, menus and menu items.
+type Component interface {
 	// WidgetID returns the identifier of this widget within its parent container. Can be nil.
 	WidgetID() ID
 	// CreateElement creates the Element for this widget.
@@ -14,23 +13,23 @@ type AbstractWidget interface {
 
 // Widget represents a GUI widget laid out in a window.
 type Widget interface {
-	AbstractWidget
+	Component
 	ExclusiveType(marker.TypeWidget)
 }
 
-// AbstractContainer is an [AbstractWidget] that can contain child widgets.
-type AbstractContainer interface {
-	AbstractWidget
+// ContainerComponent is an [Component] that can contain child components.
+type ContainerComponent interface {
+	Component
 	// NumChildren returns the number of child widgets.
 	NumChildren() int
 	// Child returns the n-th child widget. Panics if n is out of range.
-	Child(n int) AbstractWidget
+	Child(n int) Component
 	ExclusiveKind(marker.KindContainer)
 }
 
 // Container is a [Widget] that can contain child widgets.
 type Container interface {
-	AbstractContainer
+	ContainerComponent
 	ExclusiveType(marker.TypeWidget)
 }
 
@@ -38,12 +37,12 @@ type Container interface {
 // A Menu can contain MenuItems or wrap another Menu in which case it is
 // a stateless or stateful menu.
 type Menu interface {
-	AbstractWidget
+	Component
 	ExclusiveType(marker.TypeMenu)
 }
 
 // MenuItem represents an item in a menu.
 type MenuItem interface {
-	AbstractWidget
+	Component
 	ExclusiveType(marker.TypeMenuItem)
 }

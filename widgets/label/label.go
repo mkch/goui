@@ -63,7 +63,7 @@ type labelElement struct {
 	goui.ControlElementHelper
 }
 
-func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.AbstractWidget) (err error) {
+func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Component) (err error) {
 	oldLabel, _ := e.Widget().(*Label)
 	newLabel := widget.(*Label)
 

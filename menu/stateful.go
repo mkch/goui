@@ -51,7 +51,7 @@ type menuStateAdapter struct {
 	MenuState
 }
 
-func (a menuStateAdapter) Build() goui.AbstractWidget {
+func (a menuStateAdapter) Build() goui.Component {
 	return a.MenuState.Build()
 }
 
@@ -142,7 +142,7 @@ type itemStateAdapter struct {
 	ItemState
 }
 
-func (a itemStateAdapter) Build() goui.AbstractWidget {
+func (a itemStateAdapter) Build() goui.Component {
 	return a.ItemState.Build()
 }
 

@@ -212,7 +212,7 @@ func (c *mockContainer) NumChildren() int {
 	return len(c.Children)
 }
 
-func (c *mockContainer) Child(n int) AbstractWidget {
+func (c *mockContainer) Child(n int) Component {
 	return c.Children[n]
 }
 
