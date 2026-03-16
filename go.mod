@@ -3,8 +3,8 @@ module github.com/mkch/goui
 go 1.25.4
 
 require (
-	github.com/mkch/gg v0.0.0-20251224113603-2b3158a5031e
-	github.com/mkch/gw v0.0.0-20251119125618-7a7edd46be89
+	github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56
+	github.com/mkch/gw v0.0.0-20260105144810-3929c033d13e
 )
 
 require (
