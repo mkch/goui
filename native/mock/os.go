@@ -147,6 +147,36 @@ func (OS) MenuItem_SetOnClickListener(item native.Handle, listener func()) {
 	mockos.SetMenuItemOnClickListener(item.(mockos.Handle), listener)
 }
 
+// Debug_MenuItems returns the menu items of the given parent menu.
+// For debug purposes only.
+func (OS) Debug_MenuItems(parent native.Handle) ([]native.Handle, error) {
+	handles, err := mockos.MenuItems(parent.(mockos.Handle))
+	if err != nil {
+		return nil, err
+	}
+	nativeHandles := make([]native.Handle, len(handles))
+	for i, h := range handles {
+		nativeHandles[i] = h
+	}
+	return nativeHandles, nil
+}
+
+// Debug_MenuItemTitle returns the title of the given menu item.
+// For debug purposes only.
+func (OS) Debug_MenuItemTitle(item native.Handle) (string, error) {
+	return mockos.MenuItemTitle(item.(mockos.Handle))
+}
+
+// Debug_MenuItemIsSeparator returns whether the given menu item is a separator.
+func (OS) Debug_MenuItemIsSeparator(item native.Handle) (bool, error) {
+	return mockos.MenuItemIsSeparator(item.(mockos.Handle))
+}
+
+// Debug_MenuItemSubMenu returns the submenu of the given menu item, or nil if it has no submenu.
+func (OS) Debug_MenuItemSubMenu(item native.Handle) (native.Handle, error) {
+	return mockos.MenuItemSubMenu(item.(mockos.Handle))
+}
+
 func (OS) NewButton(parent native.Handle, title string) (handle native.Handle, err error) {
 	return mockos.NewButton(parent.(mockos.Handle), title)
 }

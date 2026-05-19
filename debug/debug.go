@@ -6,19 +6,20 @@ import (
 
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/tricks"
 	"github.com/mkch/goui/metrics"
 )
 
-//go:linkname debug
+//go:linkname debugEnabled
 
-// debug returns the debug configuration for the given context.
-func debug() *tricks.Debug
+// debugEnabled returns whether debug mode is enabled.
+// It is implemented in goui/link.go and is linked here to avoid import cycle.
+func debugEnabled() bool
 
-// CheckLayoutOverflow returns an [goui.OverflowConstraintsError] if the given size exceeds the given constraints.
+// CheckLayoutOverflow returns an [goui.OverflowConstraintsError] if the given size exceeds the given constraints and debug mode is on.
 // Widget can be nil and if widget is not nil, it is included in the error for better debugging.
+// It is recommended to call this function in the Layout method of a custom layouter to detect children layout overflow issues.
 func CheckLayoutOverflow(ctx *goui.Context, widget goui.Component, size metrics.Size, constraints metrics.Constraints) error {
-	if debug() == nil {
+	if !debugEnabled() {
 		return nil
 	}
 	if size.Width < constraints.MinWidth || size.Width > constraints.MaxWidth ||

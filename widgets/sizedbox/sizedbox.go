@@ -3,7 +3,7 @@ package sizedbox
 import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/debug"
 	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
 )

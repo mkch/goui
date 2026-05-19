@@ -6,6 +6,8 @@ import (
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/gouitest"
 	"github.com/mkch/goui/marker"
+	"github.com/mkch/goui/native"
+	"github.com/mkch/goui/native/mock"
 )
 
 // mockWidget is a test widget implementing [goui.Container]
@@ -42,6 +44,8 @@ func (w *mockWidget) CreateElement(ctx *goui.Context, parent goui.Element) (goui
 
 // TestBuildSuccess_BasicMenuStructure tests basic menu structure builds successfully
 func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
@@ -71,7 +75,83 @@ func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed for basic menu structure, got error: %v", err)
 		}
-	}, nil)
+
+		// Check native menu structure
+		mainMenu := nativeHandles[goui.ValueID("menu")]
+		if mainMenu == nil {
+			t.Errorf("expected main menu to be created, got nil handle")
+		}
+		os := goui.OS().(mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of main menu: %v", err)
+		}
+		if len(mainMenuItems) != 3 {
+			t.Errorf("expected main menu to have 3 items, got %d", len(mainMenuItems))
+		}
+		item1Title, err := os.Debug_MenuItemTitle(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of item1: %v", err)
+		}
+		if item1Title != "Item 1" {
+			t.Errorf("expected item1 title to be 'Item 1', got '%s'", item1Title)
+		}
+		item2IsSeparator, err := os.Debug_MenuItemIsSeparator(mainMenuItems[1])
+		if err != nil {
+			t.Errorf("failed to check if second item is separator: %v", err)
+		}
+		if !item2IsSeparator {
+			t.Errorf("expected second item to be a separator, got non-separator")
+		}
+		item3Title, err := os.Debug_MenuItemTitle(mainMenuItems[2])
+		if err != nil {
+			t.Errorf("failed to get title of item2: %v", err)
+		}
+		if item3Title != "Item 2" {
+			t.Errorf("expected item2 title to be 'Item 2', got '%s'", item3Title)
+		}
+
+		subMenu, err := os.Debug_MenuItemSubMenu(mainMenuItems[2])
+		if err != nil {
+			t.Errorf("failed to get submenu of item2: %v", err)
+		}
+		if subMenu == nil {
+			t.Errorf("expected item2 to have a submenu, got nil")
+		}
+		subMenuItems, err := os.Debug_MenuItems(subMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of submenu: %v", err)
+		}
+		if len(subMenuItems) != 1 {
+			t.Errorf("expected submenu to have 1 item, got %d", len(subMenuItems))
+		}
+		subItemTitle, err := os.Debug_MenuItemTitle(subMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of subitem: %v", err)
+		}
+		if subItemTitle != "Sub Item" {
+			t.Errorf("expected subitem title to be 'Sub Item', got '%s'", subItemTitle)
+		}
+
+		item1Title, err = os.Debug_MenuItemTitle(nativeHandles[goui.ValueID("item1")])
+		if err != nil {
+			t.Errorf("failed to get title of item1 by its own handle: %v", err)
+		}
+		if item1Title != "Item 1" {
+			t.Errorf("expected item1 title to be 'Item 1' when accessed by its own handle, got '%s'", item1Title)
+		}
+
+		item2Title, err := os.Debug_MenuItemTitle(nativeHandles[goui.ValueID("item2")])
+		if err != nil {
+			t.Errorf("failed to get title of item2 by its ID: %v", err)
+		}
+		if item2Title != "Item 2" {
+			t.Errorf("expected item2 title to be 'Item 2' when accessed by its ID, got '%s'", item2Title)
+		}
+
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 
 }
 

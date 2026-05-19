@@ -1,6 +1,9 @@
 package mockos
 
-import "errors"
+import (
+	"errors"
+	"slices"
+)
 
 var menus = make(map[Handle]*menu)
 var menuItems = make(map[Handle]*menuItem)
@@ -54,7 +57,7 @@ func DestroyMenuItem(h Handle) error {
 }
 
 func NewMenuItem(parent Handle, title string, separator bool) (Handle, error) {
-	subMenu, ok := menus[parent]
+	parentMenu, ok := menus[parent]
 	if !ok {
 		return nil, ErrInvalidMenu
 	}
@@ -63,8 +66,35 @@ func NewMenuItem(parent Handle, title string, separator bool) (Handle, error) {
 		separator: separator,
 		title:     title,
 	}
-	*subMenu = append(*subMenu, handle)
+	*parentMenu = append(*parentMenu, handle)
 	return handle, nil
+}
+
+// MenuItems returns the menu items of the given menu handle.
+func MenuItems(parent Handle) ([]Handle, error) {
+	parentMenu, ok := menus[parent]
+	if !ok {
+		return nil, ErrInvalidMenu
+	}
+	return slices.Clone(*parentMenu), nil
+}
+
+// MenuItemIsSeparator returns whether the given menu item is a separator.
+func MenuItemIsSeparator(item Handle) (bool, error) {
+	menuItem, ok := menuItems[item]
+	if !ok {
+		return false, ErrInvalidMenu
+	}
+	return menuItem.separator, nil
+}
+
+// MenuItemSubMenu returns the submenu of the given menu item handle, or nil if it has no submenu.
+func MenuItemSubMenu(item Handle) (Handle, error) {
+	menuItem, ok := menuItems[item]
+	if !ok {
+		return nil, ErrInvalidMenu
+	}
+	return menuItem.subMenu, nil
 }
 
 func SetMenuItemTitle(item Handle, title string) error {
@@ -74,6 +104,15 @@ func SetMenuItemTitle(item Handle, title string) error {
 	}
 	menuItem.title = title
 	return nil
+}
+
+// MenuItemTitle returns the title of the given menu item handle.
+func MenuItemTitle(item Handle) (string, error) {
+	menuItem, ok := menuItems[item]
+	if !ok {
+		return "", ErrInvalidMenu
+	}
+	return menuItem.title, nil
 }
 
 func SetMenuItemDisabled(item Handle, disabled bool) error {

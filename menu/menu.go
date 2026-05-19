@@ -174,6 +174,9 @@ func (e *nativeMenuElement) NativeMenu() native.Handle {
 
 // Destroy implements [goui.Element.Destroy].
 func (e *nativeMenuElement) Destroy(ctx *goui.Context) (err error) {
+	if err := e.ElementHelper.Destroy(ctx); err != nil {
+		return err
+	}
 	return goui.OS().Menu_Destroy(e.Handle)
 }
 
@@ -252,6 +255,9 @@ func (e *nativeItemElement) NativeMenuItem() native.Handle {
 
 // Destroy implements [goui.Element.Destroy].
 func (e *nativeItemElement) Destroy(ctx *goui.Context) (err error) {
+	if err := e.ElementHelper.Destroy(ctx); err != nil {
+		return err
+	}
 	return goui.OS().MenuItem_Destroy(e.Handle)
 }
 
@@ -333,6 +339,9 @@ func (e *separatorElement) NativeMenuItem() native.Handle {
 
 // Destroy implements [goui.Element.Destroy].
 func (e *separatorElement) Destroy(ctx *goui.Context) (err error) {
+	if err := e.ElementHelper.Destroy(ctx); err != nil {
+		return err
+	}
 	return goui.OS().MenuItem_Destroy(e.Handle)
 }
 

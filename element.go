@@ -128,7 +128,7 @@ func (e *ElementHelper) setChildrenSlice(children []Element) {
 // Destroy implements [Element.Destroy].
 func (e *ElementHelper) Destroy(ctx *Context) (err error) {
 	for _, child := range e.children {
-		if err = child.Destroy(ctx); err != nil {
+		if err = destroyElement(ctx, child); err != nil {
 			return
 		}
 	}
@@ -160,7 +160,7 @@ func (e *ElementHelper) setChildInSlice(n int, child Element) {
 // Using this package-level function (taking the interface `Element`)
 // preserves the original parent's dynamic type when calling
 // child.setParent(parent).
-func element_AppendChild(ctx *Context, parent, child Element) {
+func element_AppendChild(_ *Context, parent, child Element) {
 	parent.appendChildToSlice(child)
 	child.setParent(parent)
 }
@@ -174,7 +174,7 @@ func element_SetChild(ctx *Context, parent Element, n int, child Element) (err e
 	if parent.Child(n) == child {
 		return
 	}
-	if err = parent.Child(n).Destroy(ctx); err != nil {
+	if err = destroyElement(ctx, parent.Child(n)); err != nil {
 		return
 	}
 	parent.setChildInSlice(n, child)
@@ -206,9 +206,11 @@ func (e *ControlElementHelper) NativeControl() native.Handle {
 
 // Destroy implements the [ControlElement.Destroy] method.
 func (e *ControlElementHelper) Destroy(ctx *Context) error {
+	if err := e.ElementHelper.Destroy(ctx); err != nil {
+		return err
+	}
 	if e.DestroyFunc != nil {
-		err := e.DestroyFunc(ctx, e.Handle)
-		if err != nil {
+		if err := e.DestroyFunc(ctx, e.Handle); err != nil {
 			return err
 		}
 	}
@@ -232,6 +234,12 @@ func BuildElementTree(ctx *Context, widget Component) (Element, error) {
 	return buildElementTreeImpl(ctx, nil, widget)
 }
 
+// destroyElement destroys the given element and deletes its native handle record in debug.
+func destroyElement(ctx *Context, elem Element) error {
+	appDebug.deleteNativeHandleRecord(elem.Widget().WidgetID())
+	return elem.Destroy(ctx)
+}
+
 // buildElementTreeImpl builds the element tree for the given widget.
 // The parent element can be nil. If parent is not nil, the ancestor
 // tree of parent must already be established.
@@ -240,6 +248,14 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Component) (Eleme
 	elem, err := widget.CreateElement(ctx, parent)
 	if err != nil {
 		return nil, err
+	}
+
+	if ctrl, ok := elem.(ControlElement); ok {
+		appDebug.recordNativeHandle(widget.WidgetID(), ctrl.NativeControl())
+	} else if mu, ok := elem.(NativeMenuElement); ok {
+		appDebug.recordNativeHandle(widget.WidgetID(), mu.NativeMenu())
+	} else if mi, ok := elem.(NativeMenuItemElement); ok {
+		appDebug.recordNativeHandle(widget.WidgetID(), mi.NativeMenuItem())
 	}
 
 	if parent != nil {
@@ -251,7 +267,7 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Component) (Eleme
 
 	if layouter := elem.Layouter(); layouter != nil {
 		layouter.setElement(elem)
-		if appDebug != nil && appDebug.LayoutOutlineEnabled() {
+		if appDebug.layoutOutlineEnabled() {
 			layouter = &debugLayouter{
 				Layouter: layouter,
 			}
@@ -427,7 +443,7 @@ func updateContainerElement(ctx *Context, element Element, container ContainerCo
 		} else {
 			updatedElem, err = reconcileElementTreeImpl(ctx, matchedElem, widget)
 			if updatedElem != matchedElem {
-				if err = matchedElem.Destroy(ctx); err != nil {
+				if err = destroyElement(ctx, matchedElem); err != nil {
 					return err
 				}
 			}
@@ -440,13 +456,13 @@ func updateContainerElement(ctx *Context, element Element, container ContainerCo
 	}
 	// Destroy unmatched old elements
 	for _, unmatched := range unmatchedKeyedElements {
-		if err := unmatched.Destroy(ctx); err != nil {
+		if err := destroyElement(ctx, unmatched); err != nil {
 			return err
 		}
 	}
 	// Destroy unused old elements
 	for _, unusedElem := range unusedElements {
-		if err := unusedElem.Destroy(ctx); err != nil {
+		if err := destroyElement(ctx, unusedElem); err != nil {
 			return err
 		}
 	}

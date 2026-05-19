@@ -8,7 +8,6 @@ import (
 
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
-	"github.com/mkch/goui/internal/tricks"
 	"github.com/mkch/goui/internal/util"
 	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
@@ -17,7 +16,7 @@ import (
 )
 
 var appOS native.OS
-var appDebug *tricks.Debug
+var appDebug *Debug
 var appWindows map[ID]*window
 
 // OS returns the native OS interface used by the application.
@@ -42,14 +41,49 @@ type AppConfig struct {
 type Debug struct {
 	// LayoutOutline specifies whether layout outlines are drawn in debug mode.
 	LayoutOutline bool
+	// If non-nil, the native.Handle of each [Element] whose ID is non-nil will be recorded in this map.
+	NativeHandleRecords map[ID]native.Handle
 }
 
-// configDebug returns a cloned *tricks.Debug from the given AppConfig.
+// layoutOutlineEnabled returns whether layout outline is enabled in debug mode.
+// If debug is nil, it returns false.
+func (debug *Debug) layoutOutlineEnabled() bool {
+	return debug != nil && debug.LayoutOutline
+}
+
+// recordNativeHandle records the native.Handle of the Element with the given ID in debug mode.
+// If debug is nil, or debug.NativeHandleRecords is nil, or id is nil, it does nothing.
+func (debug *Debug) recordNativeHandle(id ID, handle native.Handle) {
+	if debug == nil || debug.NativeHandleRecords == nil || id == nil {
+		return
+	}
+	debug.NativeHandleRecords[id] = handle
+}
+
+// deleteNativeHandleRecord deletes the native.Handle record of the Element with the given ID in debug mode.
+// If debug is nil, or debug.NativeHandleRecords is nil, or id is nil, it does nothing.
+func (debug *Debug) deleteNativeHandleRecord(id ID) {
+	if debug == nil || debug.NativeHandleRecords == nil || id == nil {
+		return
+	}
+	delete(debug.NativeHandleRecords, id)
+}
+
+func (debug *Debug) clone() (result *Debug) {
+	if debug == nil {
+		return nil
+	}
+	result = &Debug{}
+	*result = *debug
+	return
+}
+
+// configDebug returns a cloned *Debug from the given AppConfig.
 // If config is nil, it returns nil.
-func configDebug(config *AppConfig) *tricks.Debug {
+func configDebug(config *AppConfig) *Debug {
 	return gg.IfFunc(config == nil,
-		func() *tricks.Debug { return nil },
-		func() *tricks.Debug { return (*tricks.Debug)(config.Debug).Clone() })
+		func() *Debug { return nil },
+		func() *Debug { return config.Debug.clone() })
 }
 
 // Run does the following things sequentially:
@@ -197,7 +231,7 @@ func CreateWindow(config *Window) (err error) {
 		}
 		delete(appWindows, config.ID)
 	})
-	if appDebug.LayoutOutlineEnabled() {
+	if appDebug.layoutOutlineEnabled() {
 		layer, err := appOS.Window_EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {
 				return func(yield func(native.DebugRect) bool) {}

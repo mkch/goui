@@ -4,7 +4,7 @@ package rowcol
 import (
 	"github.com/mkch/gg"
 	"github.com/mkch/goui"
-	"github.com/mkch/goui/internal/debug"
+	"github.com/mkch/goui/debug"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets/axes"
 	"github.com/mkch/goui/widgets/expanded"

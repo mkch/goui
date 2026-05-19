@@ -5,7 +5,6 @@ package goui
 import (
 	_ "unsafe" // for go:linkname
 
-	"github.com/mkch/goui/internal/tricks"
 	"github.com/mkch/goui/native"
 )
 
@@ -24,7 +23,7 @@ func link_RunContext(os native.OS, f func(ctx *Context), config *AppConfig) int 
 	return runContext(os, f, config)
 }
 
-//go:linkname link_debug github.com/mkch/goui/internal/debug.debug
-func link_debug() *tricks.Debug {
-	return appDebug
+//go:linkname link_debugEnabled github.com/mkch/goui/debug.debugEnabled
+func link_debugEnabled() bool {
+	return appDebug != nil
 }

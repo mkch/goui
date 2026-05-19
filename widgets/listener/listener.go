@@ -121,6 +121,9 @@ func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.Component) er
 
 // Destroy implements [goui.Element.Destroy]
 func (e *listenerElement) Destroy(ctx *goui.Context) error {
+	if err := e.ElementHelper.Destroy(ctx); err != nil {
+		return err
+	}
 	e.remove()
 	return nil
 }
