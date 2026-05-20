@@ -157,6 +157,8 @@ func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
 
 // TestBuildSuccess_ItemWrappedByStateless tests Item wrapped by StatelessWidget builds successfully
 func TestBuildSuccess_ItemWrappedByStateless(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
@@ -177,11 +179,43 @@ func TestBuildSuccess_ItemWrappedByStateless(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed when Item is wrapped by StatelessWidget, got error: %v", err)
 		}
-	}, nil)
+
+		// Check native menu structure
+		mainMenu := nativeHandles[goui.ValueID("menu")]
+		if mainMenu == nil {
+			t.Errorf("expected main menu to be created, got nil handle")
+		}
+		os := goui.OS().(mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of main menu: %v", err)
+		}
+		if len(mainMenuItems) != 1 {
+			t.Errorf("expected main menu to have 1 item, got %d", len(mainMenuItems))
+		}
+		itemTitle, err := os.Debug_MenuItemTitle(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of item: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item', got '%s'", itemTitle)
+		}
+
+		itemTitle, err = os.Debug_MenuItemTitle(nativeHandles[goui.ValueID("item")])
+		if err != nil {
+			t.Errorf("failed to get title of item by its own handle: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item' when accessed by its own handle, got '%s'", itemTitle)
+		}
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 }
 
 // TestBuildSuccess_ItemWrappedByStateful tests Item wrapped by StatefulWidget builds successfully
 func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
@@ -203,11 +237,43 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed when Item is wrapped by StatefulWidget, got error: %v", err)
 		}
-	}, nil)
+
+		// Check native menu structure
+		mainMenu := nativeHandles[goui.ValueID("menu")]
+		if mainMenu == nil {
+			t.Errorf("expected main menu to be created, got nil handle")
+		}
+		os := goui.OS().(mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of main menu: %v", err)
+		}
+		if len(mainMenuItems) != 1 {
+			t.Errorf("expected main menu to have 1 item, got %d", len(mainMenuItems))
+		}
+		itemTitle, err := os.Debug_MenuItemTitle(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of item: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item', got '%s'", itemTitle)
+		}
+
+		itemTitle, err = os.Debug_MenuItemTitle(nativeHandles[goui.ValueID("item")])
+		if err != nil {
+			t.Errorf("failed to get title of item by its own handle: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item' when accessed by its own handle, got '%s'", itemTitle)
+		}
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 }
 
 // TestBuildSuccess_MenuWrappedByStateless tests Menu wrapped by StatelessWidget builds successfully
 func TestBuildSuccess_MenuWrappedByStateless(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := NewStatelessMenu(
 			goui.ValueID("stateless"),
@@ -222,11 +288,28 @@ func TestBuildSuccess_MenuWrappedByStateless(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed when Menu is wrapped by StatelessWidget, got error: %v", err)
 		}
-	}, nil)
+
+		// Check native menu structure
+		mainMenu := nativeHandles[goui.ValueID("submenu")]
+		if mainMenu == nil {
+			t.Errorf("expected submenu to be created, got nil handle")
+		}
+		os := goui.OS().(mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of submenu: %v", err)
+		}
+		if len(mainMenuItems) != 0 {
+			t.Errorf("expected submenu to have 0 items, got %d", len(mainMenuItems))
+		}
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 }
 
 // TestBuildSuccess_SubmenuWrappedByStateless tests Submenu wrapped by StatelessWidget builds successfully
 func TestBuildSuccess_SubmenuWrappedByStateless(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
@@ -251,14 +334,17 @@ func TestBuildSuccess_SubmenuWrappedByStateless(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed when Submenu is wrapped by StatelessWidget, got error: %v", err)
 		}
-	}, nil)
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 }
 
 // TestBuildSuccess_SubmenuWrappedByStateful tests Submenu wrapped by StatefulWidget builds successfully
 func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := &Menu{
-			ID: goui.ValueID("menu"),
+			ID: goui.ValueID(0),
 			Items: []goui.MenuItem{
 				&Item{
 					ID:    goui.ValueID("item"),
@@ -281,11 +367,65 @@ func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed when Submenu is wrapped by StatefulWidget, got error: %v", err)
 		}
-	}, nil)
+
+		// Check native menu structure
+		t.Log(nativeHandles)
+		mainMenu := nativeHandles[goui.ValueID(0)]
+		if mainMenu == nil {
+			t.Errorf("expected main menu to be created, got nil handle")
+		}
+		os := goui.OS().(mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of main menu: %v", err)
+		}
+		if len(mainMenuItems) != 1 {
+			t.Errorf("expected main menu to have 1 item, got %d", len(mainMenuItems))
+		}
+		itemTitle, err := os.Debug_MenuItemTitle(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of item: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item', got '%s'", itemTitle)
+		}
+		subMenu, err := os.Debug_MenuItemSubMenu(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get submenu of item: %v", err)
+		}
+		if subMenu == nil {
+			t.Errorf("expected item to have a submenu, got nil")
+		}
+		subMenuItems, err := os.Debug_MenuItems(subMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of submenu: %v", err)
+		}
+		if len(subMenuItems) != 0 {
+			t.Errorf("expected submenu to have 0 items, got %d", len(subMenuItems))
+		}
+
+		itemTitle, err = os.Debug_MenuItemTitle(nativeHandles[goui.ValueID("item")])
+		if err != nil {
+			t.Errorf("failed to get title of item by its own handle: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item' when accessed by its own handle, got '%s'", itemTitle)
+		}
+		subMenuItems, err = os.Debug_MenuItems(nativeHandles[goui.ValueID("submenu")])
+		if err != nil {
+			t.Errorf("failed to get submenu by its own handle: %v", err)
+		}
+		if len(subMenuItems) != 0 {
+			t.Errorf("expected submenu to have 0 items when accessed by its own handle, got %d", len(subMenuItems))
+		}
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 }
 
 // TestBuildSuccess_NestedStatelessWidgets tests nested StatelessWidget wrappers build successfully
 func TestBuildSuccess_NestedStatelessWidgets(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
@@ -311,11 +451,43 @@ func TestBuildSuccess_NestedStatelessWidgets(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed with nested StatelessWidgets, got error: %v", err)
 		}
-	}, nil)
+
+		// Check native menu structure
+		mainMenu := nativeHandles[goui.ValueID("menu")]
+		if mainMenu == nil {
+			t.Errorf("expected main menu to be created, got nil handle")
+		}
+		os := goui.OS().(mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of main menu: %v", err)
+		}
+		if len(mainMenuItems) != 1 {
+			t.Errorf("expected main menu to have 1 item, got %d", len(mainMenuItems))
+		}
+		itemTitle, err := os.Debug_MenuItemTitle(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of item: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item', got '%s'", itemTitle)
+		}
+
+		itemTitle, err = os.Debug_MenuItemTitle(nativeHandles[goui.ValueID("item")])
+		if err != nil {
+			t.Errorf("failed to get title of item by its own handle: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item' when accessed by its own handle, got '%s'", itemTitle)
+		}
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 }
 
 // TestBuildSuccess_MixedWrappers tests mixed StatelessWidget and StatefulWidget wrappers build successfully
 func TestBuildSuccess_MixedWrappers(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
@@ -352,11 +524,56 @@ func TestBuildSuccess_MixedWrappers(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed with mixed wrappers, got error: %v", err)
 		}
-	}, nil)
+
+		// Check native menu structure
+		mainMenu := nativeHandles[goui.ValueID("menu")]
+		if mainMenu == nil {
+			t.Errorf("expected main menu to be created, got nil handle")
+		}
+		os := goui.OS().(mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of main menu: %v", err)
+		}
+		if len(mainMenuItems) != 1 {
+			t.Errorf("expected main menu to have 1 item, got %d", len(mainMenuItems))
+		}
+		itemTitle, err := os.Debug_MenuItemTitle(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of item: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item', got '%s'", itemTitle)
+		}
+		subMenu, err := os.Debug_MenuItemSubMenu(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get submenu of item: %v", err)
+		}
+		if subMenu == nil {
+			t.Errorf("expected item to have a submenu, got nil")
+		}
+		subMenuItems, err := os.Debug_MenuItems(subMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of submenu: %v", err)
+		}
+		if len(subMenuItems) != 1 {
+			t.Errorf("expected submenu to have 1 item, got %d", len(subMenuItems))
+		}
+		subItemTitle, err := os.Debug_MenuItemTitle(subMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of subitem: %v", err)
+		}
+		if subItemTitle != "Sub Item" {
+			t.Errorf("expected subitem title to be 'Sub Item', got '%s'", subItemTitle)
+		}
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 }
 
 // TestBuildSuccess_SeparatorWrappedByStateless tests Separator wrapped by StatelessWidget builds successfully
 func TestBuildSuccess_SeparatorWrappedByStateless(t *testing.T) {
+	nativeHandles := make(map[goui.ID]native.Handle)
 	gouitest.RunContext(func(ctx *goui.Context) {
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
@@ -374,6 +591,29 @@ func TestBuildSuccess_SeparatorWrappedByStateless(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed when Separator is wrapped by StatelessWidget, got error: %v", err)
 		}
-	}, nil)
+
+		// Check native menu structure
+		mainMenu := nativeHandles[goui.ValueID("menu")]
+		if mainMenu == nil {
+			t.Errorf("expected main menu to be created, got nil handle")
+		}
+		os := goui.OS().(mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of main menu: %v", err)
+		}
+		if len(mainMenuItems) != 1 {
+			t.Errorf("expected main menu to have 1 item, got %d", len(mainMenuItems))
+		}
+		isSeparator, err := os.Debug_MenuItemIsSeparator(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to check if menu item is separator: %v", err)
+		}
+		if !isSeparator {
+			t.Errorf("expected menu item to be a separator, got non-separator")
+		}
+	}, &goui.AppConfig{Debug: &goui.Debug{
+		NativeHandleRecords: nativeHandles,
+	}})
 
 }
