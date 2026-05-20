@@ -236,7 +236,7 @@ func BuildElementTree(ctx *Context, widget Component) (Element, error) {
 
 // destroyElement destroys the given element and deletes its native handle record in debug.
 func destroyElement(ctx *Context, elem Element) error {
-	appDebug.deleteNativeHandleRecord(elem.Widget().WidgetID())
+	appDebug.deleteNativeHandleRecord(elem)
 	return elem.Destroy(ctx)
 }
 
@@ -248,14 +248,6 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Component) (Eleme
 	elem, err := widget.CreateElement(ctx, parent)
 	if err != nil {
 		return nil, err
-	}
-
-	if ctrl, ok := elem.(ControlElement); ok {
-		appDebug.recordNativeHandle(widget.WidgetID(), ctrl.NativeControl())
-	} else if mu, ok := elem.(NativeMenuElement); ok {
-		appDebug.recordNativeHandle(widget.WidgetID(), mu.NativeMenu())
-	} else if mi, ok := elem.(NativeMenuItemElement); ok {
-		appDebug.recordNativeHandle(widget.WidgetID(), mi.NativeMenuItem())
 	}
 
 	if parent != nil {
@@ -278,6 +270,8 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Component) (Eleme
 	if err := elem.SetWidget(ctx, widget); err != nil {
 		return nil, err
 	}
+
+	appDebug.recordNativeHandle(elem)
 
 	if statefulWidget, ok := widget.(StatefulComponent); ok {
 		return buildStatefulElement(ctx, elem, statefulWidget)

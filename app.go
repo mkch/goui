@@ -51,19 +51,33 @@ func (debug *Debug) layoutOutlineEnabled() bool {
 	return debug != nil && debug.LayoutOutline
 }
 
-// recordNativeHandle records the native.Handle of the Element with the given ID in debug mode.
-// If debug is nil, or debug.NativeHandleRecords is nil, or id is nil, it does nothing.
-func (debug *Debug) recordNativeHandle(id ID, handle native.Handle) {
-	if debug == nil || debug.NativeHandleRecords == nil || id == nil {
+// recordNativeHandle records the native handle(if any) of the element in debug mode.
+// If debug is nil, or debug.NativeHandleRecords is nil, it does nothing.
+func (debug *Debug) recordNativeHandle(element Element) {
+	if debug == nil || debug.NativeHandleRecords == nil {
 		return
 	}
-	debug.NativeHandleRecords[id] = handle
+	id := element.Widget().WidgetID()
+	if id == nil {
+		return
+	}
+	if ctrl, ok := element.(ControlElement); ok {
+		appDebug.NativeHandleRecords[id] = ctrl.NativeControl()
+	} else if mu, ok := element.(NativeMenuElement); ok {
+		appDebug.NativeHandleRecords[id] = mu.NativeMenu()
+	} else if mi, ok := element.(NativeMenuItemElement); ok {
+		appDebug.NativeHandleRecords[id] = mi.NativeMenuItem()
+	}
 }
 
-// deleteNativeHandleRecord deletes the native.Handle record of the Element with the given ID in debug mode.
-// If debug is nil, or debug.NativeHandleRecords is nil, or id is nil, it does nothing.
-func (debug *Debug) deleteNativeHandleRecord(id ID) {
-	if debug == nil || debug.NativeHandleRecords == nil || id == nil {
+// deleteNativeHandleRecord deletes the native handle record of the element in debug mode.
+// If debug is nil, or debug.NativeHandleRecords is nil, it does nothing.
+func (debug *Debug) deleteNativeHandleRecord(element Element) {
+	if debug == nil || debug.NativeHandleRecords == nil {
+		return
+	}
+	id := element.Widget().WidgetID()
+	if id == nil {
 		return
 	}
 	delete(debug.NativeHandleRecords, id)
