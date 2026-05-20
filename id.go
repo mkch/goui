@@ -1,5 +1,7 @@
 package goui
 
+import "fmt"
+
 // ID is an opaque identifier only comparable for equality.
 // IDs are process-local and must not be serialized or passed across process boundaries.
 type ID interface {
@@ -12,6 +14,10 @@ type valueID[T comparable] struct {
 }
 
 func (valueID[T]) privateImplementsID() {}
+
+func (id valueID[T]) String() string {
+	return fmt.Sprintf("ValueID(%#v)", id.value)
+}
 
 // ValueID returns an ID backed by a comparable value.
 // Two IDs created with ValueID are equal when their underlying values are equal; otherwise they are not.
