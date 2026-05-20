@@ -46,6 +46,8 @@ func (l *mockLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) error {
 
 func Test_ColumnSize(t *testing.T) {
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		widget1 := &mockWidget{
 			ID: goui.ValueID("widget1"),
 			Element: mockElement{
@@ -110,6 +112,8 @@ func Test_ColumnSize(t *testing.T) {
 
 func Test_ColumnAlign(t *testing.T) {
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		widget1 := &mockWidget{
 			ID: goui.ValueID("widget1"),
 			Element: mockElement{

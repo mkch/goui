@@ -47,6 +47,8 @@ func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
 
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
 			Items: []goui.MenuItem{
@@ -81,7 +83,7 @@ func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
 		if mainMenu == nil {
 			t.Errorf("expected main menu to be created, got nil handle")
 		}
-		os := goui.OS().(mock.OS)
+		os := goui.OS().(*mock.OS)
 		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
 		if err != nil {
 			t.Errorf("failed to get menu items of main menu: %v", err)
@@ -148,11 +150,9 @@ func TestBuildSuccess_BasicMenuStructure(t *testing.T) {
 		if item2Title != "Item 2" {
 			t.Errorf("expected item2 title to be 'Item 2' when accessed by its ID, got '%s'", item2Title)
 		}
-
 	}, &goui.AppConfig{Debug: &goui.Debug{
 		NativeHandleRecords: nativeHandles,
 	}})
-
 }
 
 // TestBuildSuccess_ItemWrappedByStateless tests Item wrapped by StatelessWidget builds successfully
@@ -160,6 +160,8 @@ func TestBuildSuccess_ItemWrappedByStateless(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
 
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
 			Items: []goui.MenuItem{
@@ -185,7 +187,7 @@ func TestBuildSuccess_ItemWrappedByStateless(t *testing.T) {
 		if mainMenu == nil {
 			t.Errorf("expected main menu to be created, got nil handle")
 		}
-		os := goui.OS().(mock.OS)
+		os := goui.OS().(*mock.OS)
 		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
 		if err != nil {
 			t.Errorf("failed to get menu items of main menu: %v", err)
@@ -216,7 +218,10 @@ func TestBuildSuccess_ItemWrappedByStateless(t *testing.T) {
 // TestBuildSuccess_ItemWrappedByStateful tests Item wrapped by StatefulWidget builds successfully
 func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
 			Items: []goui.MenuItem{
@@ -243,7 +248,7 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 		if mainMenu == nil {
 			t.Errorf("expected main menu to be created, got nil handle")
 		}
-		os := goui.OS().(mock.OS)
+		os := goui.OS().(*mock.OS)
 		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
 		if err != nil {
 			t.Errorf("failed to get menu items of main menu: %v", err)
@@ -274,7 +279,10 @@ func TestBuildSuccess_ItemWrappedByStateful(t *testing.T) {
 // TestBuildSuccess_MenuWrappedByStateless tests Menu wrapped by StatelessWidget builds successfully
 func TestBuildSuccess_MenuWrappedByStateless(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := NewStatelessMenu(
 			goui.ValueID("stateless"),
 			func(ctx *goui.Context) goui.Menu {
@@ -294,7 +302,7 @@ func TestBuildSuccess_MenuWrappedByStateless(t *testing.T) {
 		if mainMenu == nil {
 			t.Errorf("expected submenu to be created, got nil handle")
 		}
-		os := goui.OS().(mock.OS)
+		os := goui.OS().(*mock.OS)
 		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
 		if err != nil {
 			t.Errorf("failed to get menu items of submenu: %v", err)
@@ -310,7 +318,10 @@ func TestBuildSuccess_MenuWrappedByStateless(t *testing.T) {
 // TestBuildSuccess_SubmenuWrappedByStateless tests Submenu wrapped by StatelessWidget builds successfully
 func TestBuildSuccess_SubmenuWrappedByStateless(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
 			Items: []goui.MenuItem{
@@ -334,6 +345,27 @@ func TestBuildSuccess_SubmenuWrappedByStateless(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected build to succeed when Submenu is wrapped by StatelessWidget, got error: %v", err)
 		}
+
+		// Check native menu structure
+		mainMenu := nativeHandles[goui.ValueID("menu")]
+		if mainMenu == nil {
+			t.Errorf("expected main menu to be created, got nil handle")
+		}
+		os := goui.OS().(*mock.OS)
+		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
+		if err != nil {
+			t.Errorf("failed to get menu items of main menu: %v", err)
+		}
+		if len(mainMenuItems) != 1 {
+			t.Errorf("expected main menu to have 1 item, got %d", len(mainMenuItems))
+		}
+		itemTitle, err := os.Debug_MenuItemTitle(mainMenuItems[0])
+		if err != nil {
+			t.Errorf("failed to get title of item: %v", err)
+		}
+		if itemTitle != "Item" {
+			t.Errorf("expected item title to be 'Item', got '%s'", itemTitle)
+		}
 	}, &goui.AppConfig{Debug: &goui.Debug{
 		NativeHandleRecords: nativeHandles,
 	}})
@@ -342,7 +374,10 @@ func TestBuildSuccess_SubmenuWrappedByStateless(t *testing.T) {
 // TestBuildSuccess_SubmenuWrappedByStateful tests Submenu wrapped by StatefulWidget builds successfully
 func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := &Menu{
 			ID: goui.ValueID(0),
 			Items: []goui.MenuItem{
@@ -369,12 +404,11 @@ func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
 		}
 
 		// Check native menu structure
-		t.Log(nativeHandles)
 		mainMenu := nativeHandles[goui.ValueID(0)]
 		if mainMenu == nil {
 			t.Errorf("expected main menu to be created, got nil handle")
 		}
-		os := goui.OS().(mock.OS)
+		os := goui.OS().(*mock.OS)
 		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
 		if err != nil {
 			t.Errorf("failed to get menu items of main menu: %v", err)
@@ -426,7 +460,10 @@ func TestBuildSuccess_SubmenuWrappedByStateful(t *testing.T) {
 // TestBuildSuccess_NestedStatelessWidgets tests nested StatelessWidget wrappers build successfully
 func TestBuildSuccess_NestedStatelessWidgets(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
 			Items: []goui.MenuItem{
@@ -457,7 +494,7 @@ func TestBuildSuccess_NestedStatelessWidgets(t *testing.T) {
 		if mainMenu == nil {
 			t.Errorf("expected main menu to be created, got nil handle")
 		}
-		os := goui.OS().(mock.OS)
+		os := goui.OS().(*mock.OS)
 		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
 		if err != nil {
 			t.Errorf("failed to get menu items of main menu: %v", err)
@@ -488,7 +525,10 @@ func TestBuildSuccess_NestedStatelessWidgets(t *testing.T) {
 // TestBuildSuccess_MixedWrappers tests mixed StatelessWidget and StatefulWidget wrappers build successfully
 func TestBuildSuccess_MixedWrappers(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
 			Items: []goui.MenuItem{
@@ -530,7 +570,7 @@ func TestBuildSuccess_MixedWrappers(t *testing.T) {
 		if mainMenu == nil {
 			t.Errorf("expected main menu to be created, got nil handle")
 		}
-		os := goui.OS().(mock.OS)
+		os := goui.OS().(*mock.OS)
 		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
 		if err != nil {
 			t.Errorf("failed to get menu items of main menu: %v", err)
@@ -574,7 +614,10 @@ func TestBuildSuccess_MixedWrappers(t *testing.T) {
 // TestBuildSuccess_SeparatorWrappedByStateless tests Separator wrapped by StatelessWidget builds successfully
 func TestBuildSuccess_SeparatorWrappedByStateless(t *testing.T) {
 	nativeHandles := make(map[goui.ID]native.Handle)
+
 	gouitest.RunContext(func(ctx *goui.Context) {
+		defer goui.Exit(0)
+
 		menu := &Menu{
 			ID: goui.ValueID("menu"),
 			Items: []goui.MenuItem{
@@ -597,7 +640,7 @@ func TestBuildSuccess_SeparatorWrappedByStateless(t *testing.T) {
 		if mainMenu == nil {
 			t.Errorf("expected main menu to be created, got nil handle")
 		}
-		os := goui.OS().(mock.OS)
+		os := goui.OS().(*mock.OS)
 		mainMenuItems, err := os.Debug_MenuItems(mainMenu)
 		if err != nil {
 			t.Errorf("failed to get menu items of main menu: %v", err)

@@ -14,8 +14,8 @@ func link_BuildElementTree(ctx *Context, widget Component) (Element, Layouter, e
 }
 
 //go:linkname link_RunOS github.com/mkch/goui/gouitest.app_RunOS
-func link_RunOS(f func(), config *AppConfig) int {
-	return runOS(newOS(), f, config)
+func link_RunOS(os native.OS, f func(), config *AppConfig) int {
+	return runOS(os, f, config)
 }
 
 //go:linkname link_RunContext github.com/mkch/goui/gouitest.app_RunContext

@@ -135,7 +135,8 @@ func runOS(os native.OS, f func(), config *AppConfig) int {
 	return appOS.App_Run(f)
 }
 
-// runContext initializes the application and creates a Context with a new window.
+// runContext runs the application with the given native OS implementation
+// and creates a Context with a new empty window.
 func runContext(os native.OS, f func(ctx *Context), config *AppConfig) int {
 	defer func() {
 		appOS = nil
@@ -154,11 +155,11 @@ func runContext(os native.OS, f func(ctx *Context), config *AppConfig) int {
 		id := UniqueID()
 		CreateWindow(&Window{ID: id})
 		f(&Context{appWindows[id]})
-		Exit(0)
 	})
 }
 
 // runContextMock calls [runContext] with a mock native OS implementation.
+// Used for testing in this package because this package don't import goui/gouitest to avoid import cycle.
 func runContextMock(f func(ctx *Context), config *AppConfig) int {
 	return runContext(mock.NewOS(), f, config)
 }

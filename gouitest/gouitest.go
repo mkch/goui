@@ -22,8 +22,7 @@ func BuildElementTree(ctx *goui.Context, widget goui.Component, parentLayouter g
 //go:linkname app_RunOS
 func app_RunOS(os native.OS, f func(), config *goui.AppConfig) int
 
-// NewContext creates and returns a new mock goui.Context for testing.
-// No OS specific resources are allocated.
+// Run runs the application with a mock native OS implementation.
 func Run(f func(), config *goui.AppConfig) int {
 	return app_RunOS(mock.NewOS(), f, config)
 }
@@ -31,6 +30,8 @@ func Run(f func(), config *goui.AppConfig) int {
 //go:linkname app_RunContext
 func app_RunContext(os native.OS, f func(ctx *goui.Context), config *goui.AppConfig) int
 
+// RunContext runs the application with the mock native OS implementation
+// and creates a Context with a new empty window.
 func RunContext(f func(ctx *goui.Context), config *goui.AppConfig) int {
 	return app_RunContext(mock.NewOS(), f, config)
 }
