@@ -120,14 +120,14 @@ func RunAndExit(f func(), config *AppConfig) {
 // runOS runs the application with the given native OS implementation.
 func runOS(os native.OS, f func(), config *AppConfig) int {
 	defer func() {
-		appOS = nil
-		appDebug = nil
 		for _, w := range appWindows {
 			if err := appOS.Window_Destroy(w.Handle); err != nil {
 				errortrace.Panic(err)
 			}
 		}
 		appWindows = nil
+		appOS = nil
+		appDebug = nil
 	}()
 	appOS = os
 	appDebug = configDebug(config)
