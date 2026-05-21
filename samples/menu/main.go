@@ -4,6 +4,7 @@ package main
 //go:generate rsrc -arch 386 -manifest manifest.xml
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/listener"
+	"golang.org/x/sys/windows"
 )
 
 func main() {
@@ -41,7 +43,7 @@ func ui() {
 				if screenCoord {
 					spec = &menu.PopupSpec{Pos: metrics.Point{X: 10, Y: 20}}
 				}
-				if event.Button&listener.SecondaryMouseButton != 0 {
+				if event.Button == listener.SecondaryMouseButton {
 					err := menu.Popup(ctx, &menu.Menu{Items: []goui.MenuItem{
 						&menu.Item{Title: "Item1"},
 						&menu.Item{
@@ -59,7 +61,7 @@ func ui() {
 							}},
 						},
 					}}, spec)
-					if err != nil {
+					if err != nil && !errors.Is(err, windows.ERROR_POPUP_ALREADY_ACTIVE) {
 						errortrace.Panic(err)
 					}
 				}

@@ -1,7 +1,7 @@
 package listener
 
 //go:generate stringer -type=PointerKind
-//go:generate stringer -type=ButtonMask
+//go:generate stringer -type=Button
 
 import (
 	"fmt"
@@ -22,10 +22,10 @@ const (
 )
 
 // ButtonMask represents pointer buttons.
-type ButtonMask int
+type Button int
 
 const (
-	PrimaryMouseButton ButtonMask = 1 << iota
+	PrimaryMouseButton Button = iota + 1
 	SecondaryMouseButton
 	MiddleMouseButton
 )
@@ -33,7 +33,7 @@ const (
 // PointerEvent represents a pointer event.
 type PointerEvent struct {
 	Kind   PointerKind
-	Button ButtonMask
+	Button Button
 	Pos    metrics.Point // Listener-local position
 
 	ctx            *goui.Context
@@ -129,7 +129,7 @@ func (e *listenerElement) Destroy(ctx *goui.Context) error {
 }
 
 func (e *listenerElement) callPointerEventMethod(method func(ctx *goui.Context, event *PointerEvent),
-	button ButtonMask, parent native.Handle, x, y metrics.DP) {
+	button Button, parent native.Handle, x, y metrics.DP) {
 	if method != nil &&
 		x >= e.offset.X && x < e.offset.X+e.size.Width &&
 		y >= e.offset.Y && y < e.offset.Y+e.size.Height {

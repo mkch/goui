@@ -15,6 +15,8 @@ type PopupSpec struct {
 
 // Popup displays the given menu as a popup menu.
 // If spec is nil, the default settings are used.
+// If Popup is called from [listener.OnPointerUp] with [listener.SecondaryMouseButton],
+// Popup may fail with golang.org/x/sys/windows.ERROR_POPUP_ALREADY_ACTIVE error which can be ignored.
 func Popup(ctx *goui.Context, menu *Menu, spec *PopupSpec) (err error) {
 	elem, err := goui.BuildElementTree(ctx, menu)
 	if err != nil {
