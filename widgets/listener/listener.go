@@ -46,7 +46,7 @@ func (evt *PointerEvent) String() string {
 	return fmt.Sprintf("PointerEvent{Kind:%s, Button:%s, Pos:%s}", evt.Kind, evt.Button, evt.Pos)
 }
 
-// WindowClientPos returns the position of the pointer event in the coordinate system of the native window's client area.
+// WindowClientPos returns the position of the pointer event in the coordinate system of the top-level native window's client area.
 func (evt *PointerEvent) WindowClientPos() (pos metrics.Point, err error) {
 	x, y, err := goui.OS().Util_ClientCoordinatesConv(evt.nativeParent, evt.nativeWindow,
 		evt.listenerOffset.X+evt.Pos.X, evt.listenerOffset.Y+evt.Pos.Y)
