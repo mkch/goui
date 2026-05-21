@@ -273,20 +273,24 @@ func (OS) Control_SetDimensions(handle native.Handle, rect metrics.Rect) error {
 	if err != nil {
 		return errortrace.WithStack(err)
 	}
-	err = win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
-		win32.INT(rect.Left.Px(uint(dpi))), win32.INT(rect.Top.Px(uint(dpi))),
-		win32.INT(rect.Width().Px(uint(dpi))), win32.INT(rect.Height().Px(uint(dpi))),
-		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE)
-	if err != nil {
-		return errortrace.WithStack(err)
-	}
 
 	// Get the rect in parent's client area after moving/resizing.
-	clientAfter, err := win.GetWindowRect()
-	if err != nil {
-		return errortrace.WithStack(err)
+	clientAfter := win32.RECT{
+		Left:   win32.LONG(rect.Left.Px(uint(dpi))),
+		Top:    win32.LONG(rect.Top.Px(uint(dpi))),
+		Right:  win32.LONG(rect.Right.Px(uint(dpi))),
+		Bottom: win32.LONG(rect.Bottom.Px(uint(dpi))),
 	}
-	if err = win32util.ScreenToClient(parent, clientAfter); err != nil {
+
+	if clientAfter == *clientBefore {
+		return nil
+	}
+
+	err = win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
+		win32.INT(clientAfter.Left), win32.INT(clientAfter.Top),
+		win32.INT(clientAfter.Width()), win32.INT(clientAfter.Height()),
+		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE)
+	if err != nil {
 		return errortrace.WithStack(err)
 	}
 
