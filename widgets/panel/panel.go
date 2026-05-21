@@ -70,7 +70,8 @@ func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Component) (e
 	}
 
 	if oldPanel != nil {
-		if oldPanel.BackgroundColor != newPanel.BackgroundColor {
+		if oldPanel.BackgroundColor != newPanel.BackgroundColor &&
+			(oldPanel.BackgroundColor == nil || newPanel.BackgroundColor == nil || *oldPanel.BackgroundColor != *newPanel.BackgroundColor) {
 			if err = goui.OS().Panel_SetBackgroundColor(elem.Handle, newPanel.BackgroundColor); err != nil {
 				return
 			}

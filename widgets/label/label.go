@@ -77,8 +77,8 @@ func (e *labelElement) SetWidget(ctx *goui.Context, widget goui.Component) (err 
 				return
 			}
 		}
-		if oldLabel.BackgroundColor != newLabel.BackgroundColor ||
-			oldLabel.BackgroundColor != nil && *newLabel.BackgroundColor != *oldLabel.BackgroundColor {
+		if oldLabel.BackgroundColor != newLabel.BackgroundColor &&
+			(oldLabel.BackgroundColor == nil || newLabel.BackgroundColor == nil || *oldLabel.BackgroundColor != *newLabel.BackgroundColor) {
 			if err = goui.OS().Label_SetBackgroundColor(e.Handle, newLabel.BackgroundColor); err != nil {
 				return
 			}
