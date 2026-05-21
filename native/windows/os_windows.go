@@ -470,6 +470,7 @@ func (OS) Panel_SetBackgroundColor(handle native.Handle, color *color.NRGBA) err
 }
 
 type eventListenerRecord struct {
+	mouseEventHookProc  uintptr
 	mouseEventHook      win32.HHOOK
 	mouseEventListeners map[*native.MouseEventListener]native.Handle
 }
@@ -478,10 +479,10 @@ var evtListeners eventListenerRecord
 
 // callMouseEventListeners calls the specified method of all registered mouse event listeners.
 // screenPt is the mouse position in screen coordinates.
-func callMouseEventListeners(screenPt win32.POINT, method func(listener native.MouseEventListener, parent native.Handle, x metrics.DP, y metrics.DP)) {
+func callMouseEventListeners(screenPt *win32.POINT, method func(listener native.MouseEventListener, parent native.Handle, x metrics.DP, y metrics.DP)) {
 	for listener, win := range evtListeners.mouseEventListeners {
 		target := win.(winBase)
-		pt := screenPt
+		pt := *screenPt
 		chkerr.MustOK(win32.ScreenToClient(target.HWND(), &pt)) // to target's client coordinates
 		dpi := uint(chkerr.Must(target.DPI()))
 		x := metrics.Px(int(pt.X), dpi)
@@ -493,34 +494,35 @@ func callMouseEventListeners(screenPt win32.POINT, method func(listener native.M
 func (os *OS) App_AddMouseEventListener(win native.Handle, listener native.MouseEventListener) (remove func()) {
 	if evtListeners.mouseEventListeners == nil {
 		evtListeners.mouseEventListeners = make(map[*native.MouseEventListener]native.Handle)
-		if evtListeners.mouseEventHook == 0 {
-			proc := windows.NewCallback(func(code win32.HookCode, wParam win32.WPARAM, lParam win32.LPARAM) win32.LRESULT {
-				if code != win32.HC_ACTION {
-					return win32.CallNextHookEx(evtListeners.mouseEventHook, code, wParam, lParam)
-				}
-
-				data := (*win32.MOUSEHOOKSTRUCT)(unsafe.Add(nil, lParam))
-				// For WH_MOUSE, wParam is the message ID; data.Pt is in screen coordinates.
-				switch win32.UINT(wParam) {
-				case win32.WM_LBUTTONDOWN:
-					callMouseEventListeners(data.Pt, native.MouseEventListener.OnMousePrimaryDown)
-				case win32.WM_LBUTTONUP:
-					callMouseEventListeners(data.Pt, native.MouseEventListener.OnMousePrimaryUp)
-				case win32.WM_RBUTTONDOWN:
-					callMouseEventListeners(data.Pt, native.MouseEventListener.OnMouseSecondaryDown)
-				case win32.WM_RBUTTONUP:
-					callMouseEventListeners(data.Pt, native.MouseEventListener.OnMouseSecondaryUp)
-				case win32.WM_MBUTTONDOWN:
-					callMouseEventListeners(data.Pt, native.MouseEventListener.OnMouseMiddleDown)
-				case win32.WM_MBUTTONUP:
-					callMouseEventListeners(data.Pt, native.MouseEventListener.OnMouseMiddleUp)
-				case win32.WM_MOUSEMOVE:
-					callMouseEventListeners(data.Pt, native.MouseEventListener.OnMousePointerMove)
-				}
+	}
+	if evtListeners.mouseEventHookProc == 0 {
+		evtListeners.mouseEventHookProc = windows.NewCallback(func(code win32.HookCode, wParam win32.WPARAM, lParam win32.LPARAM) win32.LRESULT {
+			if code != win32.HC_ACTION {
 				return win32.CallNextHookEx(evtListeners.mouseEventHook, code, wParam, lParam)
-			})
-			evtListeners.mouseEventHook = chkerr.Must(win32.SetWindowsHookExW(win32.WH_MOUSE, proc, 0, win32.DWORD(windows.GetCurrentThreadId())))
-		}
+			}
+			pt := &(*win32.MOUSEHOOKSTRUCT)(unsafe.Add(nil, lParam)).Pt
+			// For WH_MOUSE, wParam is the message ID; data.Pt is in screen coordinates.
+			switch win32.UINT(wParam) {
+			case win32.WM_LBUTTONDOWN:
+				callMouseEventListeners(pt, native.MouseEventListener.OnMousePrimaryDown)
+			case win32.WM_LBUTTONUP:
+				callMouseEventListeners(pt, native.MouseEventListener.OnMousePrimaryUp)
+			case win32.WM_RBUTTONDOWN:
+				callMouseEventListeners(pt, native.MouseEventListener.OnMouseSecondaryDown)
+			case win32.WM_RBUTTONUP:
+				callMouseEventListeners(pt, native.MouseEventListener.OnMouseSecondaryUp)
+			case win32.WM_MBUTTONDOWN:
+				callMouseEventListeners(pt, native.MouseEventListener.OnMouseMiddleDown)
+			case win32.WM_MBUTTONUP:
+				callMouseEventListeners(pt, native.MouseEventListener.OnMouseMiddleUp)
+			case win32.WM_MOUSEMOVE:
+				callMouseEventListeners(pt, native.MouseEventListener.OnMousePointerMove)
+			}
+			return win32.CallNextHookEx(evtListeners.mouseEventHook, code, wParam, lParam)
+		})
+	}
+	if evtListeners.mouseEventHook == 0 {
+		evtListeners.mouseEventHook = chkerr.Must(win32.SetWindowsHookExW(win32.WH_MOUSE, evtListeners.mouseEventHookProc, 0, win32.DWORD(windows.GetCurrentThreadId())))
 	}
 	evtListeners.mouseEventListeners[&listener] = win
 	return func() {
