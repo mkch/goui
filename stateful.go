@@ -8,15 +8,15 @@ import (
 )
 
 // StatefulComponent is a [Component] that has mutable state.
-// The state is stored in a separate State object associated with the widget.
-// The state can be updated via [WidgetState].Update method, which triggers a rebuild of the widget tree.
+// The state is stored in a separate [ComponentState] object associated with the widget.
+// The state can be updated via [ComponentState.Update] method, which triggers a rebuild of the component tree.
 type StatefulComponent interface {
 	Component
 	CreateState(ctx *StateContext) ComponentState
 	ExclusiveKind(marker.KindStateful)
 }
 
-// StatefulWidgets is a [Widget] that has mutable state.
+// StatefulWidget is a [Widget] that has mutable state.
 type StatefulWidget interface {
 	StatefulComponent
 	ExclusiveType(marker.TypeWidget)
@@ -50,7 +50,7 @@ type statefulWidget struct {
 
 func (*statefulWidget) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
-// stateAdapter adapts a State to an [ComponentState].
+// stateAdapter adapts a [WidgetState] to an [ComponentState].
 type stateAdapter struct {
 	WidgetState
 }
@@ -59,7 +59,7 @@ func (a *stateAdapter) Build() Component {
 	return a.WidgetState.Build()
 }
 
-// NewStatefulWidget creates a new StatefulWidget with the given ID and state creator function.
+// NewStatefulWidget creates a new [StatefulWidget] with the given ID and state creator function.
 func NewStatefulWidget(ID ID, stateCreator func(ctx *StateContext) WidgetState) StatefulWidget {
 	return &statefulWidget{
 		StatefulHelper: StatefulHelper{
@@ -162,11 +162,11 @@ func (s *widgetState) Destroy() {
 	}
 }
 
-// NewWidgetState creates a new State with the given context, a build function, and a destroy function.
-// The returned State uses the build function to build its widget tree, and the destroy function
+// NewWidgetState creates a new [WidgetState] with the given context, a build function, and a destroy function.
+// The returned state uses the build function to build its widget tree, and the destroy function
 // to clean up resources.
 // The destroy func can be nil.
-// This function is convenient to create simple states without defining a new struct type.
+// This function is convenient to create simple [WidgetState] without defining a new struct type.
 func NewWidgetState(ctx *StateContext, build func() Widget, destroy func()) WidgetState {
 	return &widgetState{
 		StateUpdater: NewStateUpdater(ctx),
@@ -182,14 +182,14 @@ type NopDestroyer struct{}
 // Destroy does nothing.
 func (NopDestroyer) Destroy() { /*NOP*/ }
 
-// StateUpdater implements [ComponentState].Update method.
-// Embedding StateUpdater in a struct and implementing other methods of [WidgetState]
-// allows the struct type to satisfy the [WidgetState] interface.
+// StateUpdater implements Update method of [ComponentState] and [WidgetState].
+// Embedding StateUpdater in a struct and implementing other methods of [ComponentState] or [WidgetState]
+// allows the struct type to satisfy interface [ComponentState] or [WidgetState].
 type StateUpdater stateUpdater
 
 type stateUpdater func(updater func()) error
 
-// Update implements [WidgetState].Update.
+// Update implements Update method of [ComponentState] and [WidgetState].
 func (h StateUpdater) Update(updater func()) error {
 	return h(updater)
 }
