@@ -495,7 +495,7 @@ func callMouseEventListeners(screenPt *win32.POINT, method func(listener native.
 
 func makeScreenPoint(hwnd win32.HWND, lParam win32.LPARAM) *win32.POINT {
 	var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-	win32.ClientToScreen(hwnd, &pt)
+	chkerr.MustOK(win32.ClientToScreen(hwnd, &pt)) // to screen coordinates
 	return &pt
 }
 
@@ -507,33 +507,19 @@ func (os *OS) App_AddMouseEventListener(win native.Handle, listener native.Mouse
 		evtListeners.listenerKey = window.AddMessageRetListener(func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM, result win32.LRESULT) {
 			switch message {
 			case win32.WM_LBUTTONDOWN:
-				var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-				win32.ClientToScreen(hwnd, &pt)
-				callMouseEventListeners(&pt, native.MouseEventListener.OnMousePrimaryDown)
+				callMouseEventListeners(makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMousePrimaryDown)
 			case win32.WM_LBUTTONUP:
-				var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-				win32.ClientToScreen(hwnd, &pt)
-				callMouseEventListeners(&pt, native.MouseEventListener.OnMousePrimaryUp)
+				callMouseEventListeners(makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMousePrimaryUp)
 			case win32.WM_RBUTTONDOWN:
-				var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-				win32.ClientToScreen(hwnd, &pt)
-				callMouseEventListeners(&pt, native.MouseEventListener.OnMouseSecondaryDown)
+				callMouseEventListeners(makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMouseSecondaryDown)
 			case win32.WM_RBUTTONUP:
-				var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-				win32.ClientToScreen(hwnd, &pt)
-				callMouseEventListeners(&pt, native.MouseEventListener.OnMouseSecondaryUp)
+				callMouseEventListeners(makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMouseSecondaryUp)
 			case win32.WM_MBUTTONDOWN:
-				var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-				win32.ClientToScreen(hwnd, &pt)
-				callMouseEventListeners(&pt, native.MouseEventListener.OnMouseMiddleDown)
+				callMouseEventListeners(makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMouseMiddleDown)
 			case win32.WM_MBUTTONUP:
-				var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-				win32.ClientToScreen(hwnd, &pt)
-				callMouseEventListeners(&pt, native.MouseEventListener.OnMouseMiddleUp)
+				callMouseEventListeners(makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMouseMiddleUp)
 			case win32.WM_MOUSEMOVE:
-				var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-				win32.ClientToScreen(hwnd, &pt)
-				callMouseEventListeners(&pt, native.MouseEventListener.OnMousePointerMove)
+				callMouseEventListeners(makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMousePointerMove)
 			}
 		})
 	}
