@@ -23,12 +23,14 @@ func main() {
 	}))
 }
 
+var window3ID = goui.ValueID("window3")
+var window3Closed bool
+var mainWindowID = goui.ValueID("main window")
+var closeWindow3ButtonID = goui.ValueID("close window3 button")
+
 func ui() {
-	var window3ID = goui.ValueID("window3")
-	closeWindow3Button, enableCloseWindow3Button := newEnableDisableButton("Close Window3", func() {
-		goui.CloseWindow(window3ID)
-	})
 	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		ID:        mainWindowID,
 		OnDestroy: func(*goui.Context) { goui.Exit(0) },
 		Title:     "Window 1",
 		Width:     800,
@@ -45,36 +47,36 @@ func ui() {
 						},
 					},
 					&widgets.SizedBox{Width: 20},
-					closeWindow3Button,
+					goui.NewStatefulWidget(closeWindow3ButtonID, func(ctx *goui.StateContext) goui.WidgetState {
+						return goui.NewWidgetState(ctx, func() goui.Widget {
+							return &widgets.Button{
+								Label:    gg.If(window3Closed, "Close Window3 (Already Closed)", "Close Window3"),
+								Disabled: window3Closed,
+								OnClick: func(ctx *goui.Context) {
+									goui.CloseWindow(window3ID)
+								},
+							}
+						}, nil)
+					}),
 				},
 			},
 		},
 	}))
-	createWindow3(window3ID, func(*goui.Context) {
-		enableCloseWindow3Button(false)
-	})
-}
-
-func newEnableDisableButton(label string, onClick func()) (btn goui.StatefulWidget, setEnabled func(bool)) {
-	var enabled bool = true
-	var updater goui.StateUpdater
-	btn = goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.WidgetState {
-		updater = goui.NewStateUpdater(ctx)
-		return goui.NewWidgetState(ctx, func() goui.Widget {
-			return &widgets.Button{
-				Label:    gg.If(enabled, label, label+" (Disabled)"),
-				Disabled: !enabled,
-				OnClick: func(ctx *goui.Context) {
-					onClick()
-				},
-			}
-		}, nil)
-	},
-	)
-	setEnabled = func(value bool) {
-		updater.Update(func() { enabled = value })
-	}
-	return
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		ID:     window3ID,
+		Title:  "Window 3",
+		Width:  600,
+		Height: 400,
+		Root: &widgets.Center{Widget: &widgets.Button{
+			Label: "Hello from Window3",
+			OnClick: func(ctx *goui.Context) {
+				messagebox.Show(ctx, "Window 3", "Hello from Window3!", 0, 0)
+			},
+		}},
+		OnDestroy: func(ctx *goui.Context) {
+			goui.UpdateWindow(mainWindowID, func() { window3Closed = true }, closeWindow3ButtonID)
+		},
+	}))
 }
 
 func createWindow2() {
@@ -103,20 +105,4 @@ func CountButton(ctx *goui.StateContext) goui.WidgetState {
 			},
 		}
 	}, nil)
-}
-
-func createWindow3(id goui.ID, onDestroy func(*goui.Context)) {
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
-		ID:     id,
-		Title:  "Window 3",
-		Width:  600,
-		Height: 400,
-		Root: &widgets.Center{Widget: &widgets.Button{
-			Label: "Hello from Window3",
-			OnClick: func(ctx *goui.Context) {
-				messagebox.Show(ctx, "Window 3", "Hello from Window3!", 0, 0)
-			},
-		}},
-		OnDestroy: onDestroy,
-	}))
 }

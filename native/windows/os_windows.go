@@ -6,7 +6,6 @@ import (
 
 	"github.com/mkch/gg"
 	"github.com/mkch/gg/errortrace"
-	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 	"github.com/mkch/gw/app/gwapp"
@@ -481,34 +480,42 @@ var evtListeners eventListenerRecord
 
 // callMouseEventListeners calls the specified method of all registered mouse event listeners.
 // screenPt is the mouse position in screen coordinates.
-func callMouseEventListeners(srcHwnd win32.HWND, screenPt *win32.POINT, method func(listener native.MouseEventListener, parent native.Handle, x metrics.DP, y metrics.DP)) {
+func callMouseEventListeners(srcHwnd win32.HWND, screenPt win32.POINT, method func(listener native.MouseEventListener, parent native.Handle, x metrics.DP, y metrics.DP)) {
 	for listener, win := range evtListeners.eventListeners {
 		target := win.(winBase)
 		// ignore error of GetAncestor because mouse events are posted to the message queue
 		// and the window may have been destroyed when the event is processed.
-		if root, _ := win32.GetAncestor(srcHwnd, win32.GA_ROOT); root != target.HWND() {
+		if root, err := win32.GetAncestor(srcHwnd, win32.GA_ROOT); err != nil {
+			return
+		} else if root != target.HWND() {
 			// Only capture messages in target, including target itself an all its descendants.
 			continue
 		}
-		pt := *screenPt
-		chkerr.MustOK(win32.ScreenToClient(target.HWND(), &pt)) // to target's client coordinates
-		dpi := uint(chkerr.Must(target.DPI()))
-		x := metrics.Px(int(pt.X), dpi)
-		y := metrics.Px(int(pt.Y), dpi)
+		pt := screenPt
+		// to target's client coordinates
+		if err := win32.ScreenToClient(target.HWND(), &pt); err != nil {
+			return
+		}
+		dpi, err := target.DPI()
+		if err != nil {
+			return
+		}
+		x := metrics.Px(int(pt.X), uint(dpi))
+		y := metrics.Px(int(pt.Y), uint(dpi))
 		method(*listener, win, x, y)
 	}
 }
 
-func makeScreenPoint(hwnd win32.HWND, lParam win32.LPARAM) *win32.POINT {
+func makeScreenPoint(hwnd win32.HWND, lParam win32.LPARAM) (win32.POINT, error) {
 	var pt = win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
-	// ignore error because mouse events are posted to the message queue
-	// and the window may have been destroyed when the event is processed.
-	win32.ClientToScreen(hwnd, &pt) // to screen coordinates
-	return &pt
+	if err := win32.ClientToScreen(hwnd, &pt); err != nil { // to screen coordinates
+		return win32.POINT{}, err
+	}
+	return pt, nil
 }
 
-func parseScreenPoint(lParam win32.LPARAM) *win32.POINT {
-	return &win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
+func parseScreenPoint(lParam win32.LPARAM) win32.POINT {
+	return win32.POINT{X: win32.LONG(win32.GET_X_LPARAM(lParam)), Y: win32.LONG(win32.GET_Y_LPARAM(lParam))}
 }
 
 func (os *OS) App_AddMouseEventListener(win native.Handle, listener native.MouseEventListener) (remove func()) {
@@ -519,19 +526,47 @@ func (os *OS) App_AddMouseEventListener(win native.Handle, listener native.Mouse
 		evtListeners.listenerKey = window.AddMessageRetListener(func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM, result win32.LRESULT) {
 			switch message {
 			case win32.WM_LBUTTONDOWN:
-				callMouseEventListeners(hwnd, makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMousePrimaryDown)
+				pt, err := makeScreenPoint(hwnd, lParam)
+				if err != nil {
+					return
+				}
+				callMouseEventListeners(hwnd, pt, native.MouseEventListener.OnMousePrimaryDown)
 			case win32.WM_LBUTTONUP:
-				callMouseEventListeners(hwnd, makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMousePrimaryUp)
+				pt, err := makeScreenPoint(hwnd, lParam)
+				if err != nil {
+					return
+				}
+				callMouseEventListeners(hwnd, pt, native.MouseEventListener.OnMousePrimaryUp)
 			case win32.WM_RBUTTONDOWN:
-				callMouseEventListeners(hwnd, makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMouseSecondaryDown)
+				pt, err := makeScreenPoint(hwnd, lParam)
+				if err != nil {
+					return
+				}
+				callMouseEventListeners(hwnd, pt, native.MouseEventListener.OnMouseSecondaryDown)
 			case win32.WM_RBUTTONUP:
-				callMouseEventListeners(hwnd, makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMouseSecondaryUp)
+				pt, err := makeScreenPoint(hwnd, lParam)
+				if err != nil {
+					return
+				}
+				callMouseEventListeners(hwnd, pt, native.MouseEventListener.OnMouseSecondaryUp)
 			case win32.WM_MBUTTONDOWN:
-				callMouseEventListeners(hwnd, makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMouseMiddleDown)
+				pt, err := makeScreenPoint(hwnd, lParam)
+				if err != nil {
+					return
+				}
+				callMouseEventListeners(hwnd, pt, native.MouseEventListener.OnMouseMiddleDown)
 			case win32.WM_MBUTTONUP:
-				callMouseEventListeners(hwnd, makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMouseMiddleUp)
+				pt, err := makeScreenPoint(hwnd, lParam)
+				if err != nil {
+					return
+				}
+				callMouseEventListeners(hwnd, pt, native.MouseEventListener.OnMouseMiddleUp)
 			case win32.WM_MOUSEMOVE:
-				callMouseEventListeners(hwnd, makeScreenPoint(hwnd, lParam), native.MouseEventListener.OnMousePointerMove)
+				pt, err := makeScreenPoint(hwnd, lParam)
+				if err != nil {
+					return
+				}
+				callMouseEventListeners(hwnd, pt, native.MouseEventListener.OnMousePointerMove)
 
 			case win32.WM_NCLBUTTONDOWN:
 				callMouseEventListeners(hwnd, parseScreenPoint(lParam), native.MouseEventListener.OnMousePrimaryDown)

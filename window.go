@@ -25,6 +25,7 @@ type Window struct {
 }
 
 type window struct {
+	ctx        *Context // The [Context] associated with this window. Can't be nil.
 	ID         ID
 	Handle     native.Handle
 	Root       Element       // Root element.
