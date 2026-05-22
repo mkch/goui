@@ -234,6 +234,12 @@ func updateWidgetState(ctx *Context, f func(), statefulElement *StatefulElement)
 		return nil
 	}
 
+	if statefulElement == ctx.window.Root {
+		ctx.window.Root = statefulElement
+		ctx.window.Layouter = layouter
+		return layoutWindow(ctx)
+	}
+
 	if err = replayParentLayouter(ctx, layouter); err == nil {
 		return nil
 	}
