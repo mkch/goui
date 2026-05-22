@@ -7,7 +7,6 @@ import (
 	"github.com/mkch/goui"
 	"github.com/mkch/goui/internal/util"
 	"github.com/mkch/goui/marker"
-	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
 
@@ -125,9 +124,6 @@ func createMenuElement(_ *goui.Context, parent goui.Element, popup bool) (elemen
 		}
 	}
 	return &nativeMenuElement{
-		ElementHelper: goui.ElementHelper{
-			ElementLayouter: &menuLayouter{},
-		},
 		Handle: handle,
 	}, nil
 }
@@ -217,9 +213,6 @@ func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element
 		return
 	}
 	element = &nativeItemElement{
-		ElementHelper: goui.ElementHelper{
-			ElementLayouter: &menuLayouter{},
-		},
 		Handle: handle,
 	}
 	return
@@ -317,9 +310,6 @@ func (sep *Separator) CreateElement(ctx *goui.Context, parent goui.Element) (ele
 		return
 	}
 	element = &separatorElement{
-		ElementHelper: goui.ElementHelper{
-			ElementLayouter: &menuLayouter{},
-		},
 		Handle: handle,
 	}
 	return
@@ -343,35 +333,6 @@ func (e *separatorElement) Destroy(ctx *goui.Context) (err error) {
 		return err
 	}
 	return goui.OS().MenuItem_Destroy(e.Handle)
-}
-
-// menuLayouter is a simple layouter for menu elements.
-// Menu and menuitem do not need layouters, but we can't prevent users from
-// adding non-menu(item) children to menu and menu item elements,
-// so we provide menu and menuitem this type of layouter.
-// Of course the non-menu(item) children will not be displayed in the actual menu,
-// but in the ancestor native control(if any) or the root window.
-type menuLayouter struct {
-	goui.LayouterHelper
-}
-
-// Layout implements [goui.Layouter.Layout].
-func (l *menuLayouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (metrics.Size, error) {
-	return constraints.MinSize(), nil
-}
-
-// PositionAt implements [goui.Layouter.PositionAt].
-func (l *menuLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
-	// Nop positioning.
-	return nil
-}
-
-// Replayer implements [goui.Layouter.Replayer].
-func (l *menuLayouter) Replayer() func(*goui.Context) error {
-	return func(ctx *goui.Context) error {
-		// Nop replaying to prevent the layout updating from going up to the window.
-		return nil
-	}
 }
 
 // Items is a menu that contains menu items.
