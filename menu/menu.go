@@ -145,12 +145,12 @@ func (m *WindowMenu) CreateElement(ctx *goui.Context, parent goui.Element) (goui
 
 // NumChildren implements [goui.Container.NumChildren].
 func (m *WindowMenu) NumChildren() int {
-	return len(m.Items)
+	return (*Menu)(m).NumChildren()
 }
 
 // Child implements [goui.Container.Child].
 func (m *WindowMenu) Child(index int) goui.Component {
-	return m.Items[index]
+	return (*Menu)(m).Child(index)
 }
 
 func (*WindowMenu) ExclusiveType(marker.TypeMenu)      { /*Nop*/ }
@@ -341,24 +341,52 @@ func (e *separatorElement) Destroy(ctx *goui.Context) (err error) {
 type Items []goui.MenuItem
 
 // WidgetID implements [goui.Menu.WidgetID] and always returns nil.
-func (items Items) WidgetID() goui.ID {
+func (i Items) WidgetID() goui.ID {
 	return nil
 }
 
 // CreateElement implements [goui.Menu.CreateElement].
-func (items Items) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
+func (i Items) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
 	return createMenuElement(ctx, parent, true)
 }
 
 // NumChildren implements [goui.ContainerComponent.NumChildren].
-func (items Items) NumChildren() int {
-	return len(items)
+func (i Items) NumChildren() int {
+	return len(i)
 }
 
 // Child implements [goui.ContainerComponent.Child].
-func (items Items) Child(index int) goui.Component {
-	return items[index]
+func (i Items) Child(index int) goui.Component {
+	return i[index]
 }
 
 func (Items) ExclusiveType(marker.TypeMenu)      { /*Nop*/ }
 func (Items) ExclusiveKind(marker.KindContainer) { /*Nop*/ }
+
+// WindowMenuItems is a window menu that contains menu items.
+// It is convenient to use when defining menus inline.
+// See [WindowMenu] for details.
+type WindowMenuItems Items
+
+// WidgetID implements [goui.Menu.WidgetID] and always returns nil.
+func (wi WindowMenuItems) WidgetID() goui.ID {
+	return nil
+}
+
+// CreateElement implements [goui.Menu.CreateElement].
+func (wi WindowMenuItems) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
+	return createMenuElement(ctx, parent, false)
+}
+
+// NumChildren implements [goui.ContainerComponent.NumChildren].
+func (wi WindowMenuItems) NumChildren() int {
+	return Items(wi).NumChildren()
+}
+
+// Child implements [goui.ContainerComponent.Child].
+func (wi WindowMenuItems) Child(index int) goui.Component {
+	return Items(wi).Child(index)
+}
+
+func (WindowMenuItems) ExclusiveType(marker.TypeMenu)      { /*Nop*/ }
+func (WindowMenuItems) ExclusiveKind(marker.KindContainer) { /*Nop*/ }

@@ -9,7 +9,7 @@ import (
 
 // CountState is a state of selection count.
 type CountState struct {
-	goui.StateUpdater     // Will create in CountItem function.
+	goui.StateUpdater     // See [NewCounterItem] function.
 	goui.NopDestroyer     // No special cleanup needed.
 	count             int // The actual state value, selection count.
 }
