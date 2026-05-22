@@ -21,7 +21,7 @@ const (
 	Mouse PointerKind = iota
 )
 
-// ButtonMask represents pointer buttons.
+// Button represents pointer buttons.
 type Button int
 
 const (

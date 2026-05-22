@@ -4,7 +4,6 @@ package main
 //go:generate rsrc -arch 386 -manifest manifest.xml
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -17,7 +16,6 @@ import (
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/widgets"
 	"github.com/mkch/goui/widgets/listener"
-	"golang.org/x/sys/windows"
 )
 
 func main() {
@@ -61,7 +59,7 @@ func ui() {
 							}},
 						},
 					}}, spec)
-					if err != nil && !errors.Is(err, windows.ERROR_POPUP_ALREADY_ACTIVE) {
+					if err != nil {
 						errortrace.Panic(err)
 					}
 				}
