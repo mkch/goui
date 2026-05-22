@@ -42,7 +42,7 @@ func ui() {
 
 var showHelp = true
 var screenCoord = false // Use screen coordinates for menu popup
-var useListener = false
+var useListener = true
 
 func newRootWidget() (widget goui.StatefulWidget, updater func()) {
 	var stateUpdater goui.StateUpdater
@@ -51,7 +51,7 @@ func newRootWidget() (widget goui.StatefulWidget, updater func()) {
 		return goui.NewWidgetState(ctx, func() goui.Widget {
 			if !useListener {
 				return &widgets.Center{
-					//Widget: &widgets.Label{Text: "Empty"},
+					Widget: &widgets.Label{Text: "Empty"},
 				}
 			}
 			return &widgets.Listener{
