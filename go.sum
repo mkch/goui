@@ -1,10 +1,8 @@
 github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56 h1:aiA/VclybGoNtFMkFPWhtw66ywwbjMEesUzfIemTy50=
 github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56/go.mod h1:U5RQAS2LPwnWs/CX+LwZOioBmDcK3htt8yZe0PUAk04=
-github.com/mkch/gw v0.0.0-20260105144810-3929c033d13e h1:ifp8Mj0AvD2AUwnEpi916MxNSnGXNKQWbERX27HMVyA=
-github.com/mkch/gw v0.0.0-20260105144810-3929c033d13e/go.mod h1:93h3vuXuBiiMBGmnmDoRCIjPUz1stAWXdKSKbXnj9YA=
-github.com/mkch/gw v0.0.0-20260521105436-dd1651cf5015 h1:tmKl/6SssaJlMhSLfye2F4uot8IEqUqP8dsO/Rp62vY=
-github.com/mkch/gw v0.0.0-20260521105436-dd1651cf5015/go.mod h1:YRb3PTFYMCsVdsFlEu00+mwuX2Vuji2xzAjB6Jv6FOU=
-golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb h1:c0vyKkb6yr3KR7jEfJaOSv4lG7xPkbN6r52aJz1d8a8=
-golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb/go.mod h1:iRJReGqOEeBhDZGkGbynYwcHlctCvnjTYIamk7uXpHI=
-golang.org/x/sys v0.15.0 h1:h48lPFYpsTvQJZF4EKyI4aLHaev3CxivZmv7yZig9pc=
-golang.org/x/sys v0.15.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+github.com/mkch/gw v0.0.0-20260522041957-ec21f90a5d6e h1:dhih43Eg6HtSyRH4K7DP1ByST8m8uEwTkuIDctMnigU=
+github.com/mkch/gw v0.0.0-20260522041957-ec21f90a5d6e/go.mod h1:YRb3PTFYMCsVdsFlEu00+mwuX2Vuji2xzAjB6Jv6FOU=
+golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a h1:+3jdDGGB8NGb1Zktc737jlt3/A5f6UlwSzmvqUuufxw=
+golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a/go.mod h1:d2fgXJLVs4dYDHUk5lwMIfzRzSrWCfGZb0ZqeLa/Vcw=
+golang.org/x/sys v0.45.0 h1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=
+golang.org/x/sys v0.45.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=

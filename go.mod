@@ -1,11 +1,13 @@
 module github.com/mkch/goui
 
-go 1.25.4
+go 1.26.0
 
 require (
 	github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56
-	github.com/mkch/gw v0.0.0-20260521105436-dd1651cf5015
-	golang.org/x/sys v0.15.0
+	github.com/mkch/gw v0.0.0-20260522041957-ec21f90a5d6e
 )
 
-require golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
+require (
+	golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a // indirect
+	golang.org/x/sys v0.45.0 // indirect
+)
