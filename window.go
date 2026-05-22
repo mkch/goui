@@ -6,10 +6,11 @@ import (
 )
 
 type Window struct {
-	ID     ID
-	Title  string
-	Width  metrics.DP
-	Height metrics.DP
+	ID       ID
+	Title    string
+	Width    metrics.DP
+	Height   metrics.DP
+	Disabled bool
 	// The root widget to display in the window.
 	// If Root is nil, an empty window is created.
 	Root Widget

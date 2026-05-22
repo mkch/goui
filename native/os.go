@@ -88,6 +88,8 @@ type OS interface {
 	Window_RefreshMenu(win Handle) error
 	Window_TrackPopupMenu(win Handle, menuToTrack Handle, spec *TrackPopupSpec) error
 	Window_EnableDrawDebugRect(win Handle, rects func() iter.Seq[DebugRect]) (layer Handle, err error)
+	Window_Enabled(win Handle) (bool, error)
+	Window_SetEnabled(win Handle, enabled bool) error
 
 	NewMenu(popup bool) (Handle, error)
 	Menu_Destroy(m Handle) error

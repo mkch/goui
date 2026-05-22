@@ -540,12 +540,12 @@ func Test_Enabled(t *testing.T) {
 			clicked++
 		})
 
-		enabled, err := ControlEnabled(btn)
+		enabled, err := Enabled(btn)
 		if err != nil {
-			t.Fatalf("ControlEnabled failed: %v", err)
+			t.Fatalf("Enabled failed: %v", err)
 		}
 		if !enabled {
-			t.Fatalf("ControlEnabled = %v, want true", enabled)
+			t.Fatalf("Enabled = %v, want true", enabled)
 		}
 
 		err = Debug_SimulateButtonClick(btn)
@@ -556,15 +556,15 @@ func Test_Enabled(t *testing.T) {
 			t.Fatalf("clicked = %d, want 1", clicked)
 		}
 
-		if err := SetControlEnabled(btn, false); err != nil {
-			t.Fatalf("SetControlEnabled failed: %v", err)
+		if err := SetEnabled(btn, false); err != nil {
+			t.Fatalf("SetEnabled failed: %v", err)
 		}
-		enabled, err = ControlEnabled(btn)
+		enabled, err = Enabled(btn)
 		if err != nil {
-			t.Fatalf("ControlEnabled failed: %v", err)
+			t.Fatalf("Enabled failed: %v", err)
 		}
 		if enabled {
-			t.Fatalf("ControlEnabled = %v, want false", enabled)
+			t.Fatalf("Enabled = %v, want false", enabled)
 		}
 		err = Debug_SimulateButtonClick(btn)
 		if err != nil {

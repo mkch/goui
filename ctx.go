@@ -10,3 +10,13 @@ type Context struct {
 func (ctx *Context) NativeWindow() native.Handle {
 	return ctx.window.Handle
 }
+
+// WindowEnabled returns whether the window associated with this context is enabled.
+func (ctx *Context) WindowEnabled() (bool, error) {
+	return appOS.Window_Enabled(ctx.window.Handle)
+}
+
+// SetWindowEnabled sets whether the window associated with this context is enabled.
+func (ctx *Context) SetWindowEnabled(enabled bool) error {
+	return appOS.Window_SetEnabled(ctx.window.Handle, enabled)
+}

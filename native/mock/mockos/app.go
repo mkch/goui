@@ -393,8 +393,8 @@ func SetControlDimensions(ctrl Handle, rect metrics.Rect) error {
 	return SetWindowRect(ctrl, rect)
 }
 
-func SetControlEnabled(ctrl Handle, enabled bool) error {
-	w, ok := windows[ctrl]
+func SetEnabled(h Handle, enabled bool) error {
+	w, ok := windows[h]
 	if !ok {
 		return ErrInvalidWindow
 	}
@@ -402,8 +402,8 @@ func SetControlEnabled(ctrl Handle, enabled bool) error {
 	return nil
 }
 
-func ControlEnabled(ctrl Handle) (bool, error) {
-	w, ok := windows[ctrl]
+func Enabled(h Handle) (bool, error) {
+	w, ok := windows[h]
 	if !ok {
 		return false, ErrInvalidWindow
 	}

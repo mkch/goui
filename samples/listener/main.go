@@ -25,7 +25,21 @@ func main() {
 
 func ui() {
 	chkerr.MustOK(goui.CreateWindow(&goui.Window{
-		Title: "Listener Sample",
+		Title: "Listener Sample Disabled Window",
+		Width: 1200, Height: 400,
+		Disabled:  true,
+		OnDestroy: func(ctx *goui.Context) { goui.Exit(0) },
+		Root: &widgets.Center{
+			Widget: goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.WidgetState {
+				return &ListenerLabelState{
+					StateUpdater: goui.NewStateUpdater(ctx),
+				}
+			}),
+		},
+	}))
+
+	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+		Title: "Listener Sample window2",
 		Width: 1200, Height: 400,
 		OnDestroy: func(ctx *goui.Context) { goui.Exit(0) },
 		Root: &widgets.Center{
@@ -65,6 +79,13 @@ func (state *ListenerLabelState) Build() goui.Widget {
 			Widget: &widgets.Expanded{
 				Widget: &widgets.Column{
 					Widgets: []goui.Widget{
+						&widgets.Button{
+							Label: "Enabled",
+						},
+						&widgets.Button{
+							Label:    "Disabled",
+							Disabled: true,
+						},
 						&widgets.Label{
 							Multiline:     true,
 							TextAlignment: label.Center,

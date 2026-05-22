@@ -126,6 +126,12 @@ func (*OS) Window_TrackPopupMenu(win native.Handle, menuToTrack native.Handle, s
 func (*OS) Window_EnableDrawDebugRect(win native.Handle, rects func() iter.Seq[native.DebugRect]) (layer native.Handle, err error) {
 	return mockos.EnableDrawDebugRect(win.(mockos.Handle), rects)
 }
+func (*OS) Window_Enabled(win native.Handle) (bool, error) {
+	return mockos.Enabled(win.(mockos.Handle))
+}
+func (*OS) Window_SetEnabled(win native.Handle, enabled bool) error {
+	return mockos.SetEnabled(win.(mockos.Handle), enabled)
+}
 
 func (*OS) NewMenu(popup bool) (native.Handle, error) {
 	return mockos.NewMenu(), nil
@@ -226,10 +232,10 @@ func (*OS) Control_SetDimensions(ctrl native.Handle, rect metrics.Rect) error {
 	return mockos.SetControlDimensions(ctrl.(mockos.Handle), rect)
 }
 func (*OS) Control_SetEnabled(ctrl native.Handle, enabled bool) error {
-	return mockos.SetControlEnabled(ctrl.(mockos.Handle), enabled)
+	return mockos.SetEnabled(ctrl.(mockos.Handle), enabled)
 }
 func (*OS) Control_Enabled(ctrl native.Handle) (bool, error) {
-	return mockos.ControlEnabled(ctrl.(mockos.Handle))
+	return mockos.Enabled(ctrl.(mockos.Handle))
 }
 func (*OS) Control_SetOnDestroyListener(handle native.Handle, listener func()) error {
 	return mockos.SetOnDestroyListener(handle.(mockos.Handle), listener)

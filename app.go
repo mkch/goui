@@ -224,6 +224,12 @@ func CreateWindow(config *Window) (err error) {
 		}
 	}()
 
+	if config.Disabled {
+		if err = appOS.Window_SetEnabled(handle, false); err != nil {
+			return err
+		}
+	}
+
 	window := &window{
 		ID:     config.ID,
 		Handle: handle,
@@ -337,4 +343,24 @@ func CloseWindow(windowID ID) error {
 		return ErrNoSuchWindow
 	}
 	return appOS.Window_Close(appWindows[windowID].Handle)
+}
+
+// WindowEnabled returns whether the window with the given ID is enabled.
+// If no such window exists, it returns [ErrNoSuchWindow].
+func WindowEnabled(windowID ID) (bool, error) {
+	win := appWindows[windowID]
+	if win == nil {
+		return false, ErrNoSuchWindow
+	}
+	return appOS.Window_Enabled(win.Handle)
+}
+
+// SetWindowEnabled sets whether the window with the given ID is enabled.
+// If no such window exists, it returns [ErrNoSuchWindow].
+func SetWindowEnabled(windowID ID, enabled bool) error {
+	win := appWindows[windowID]
+	if win == nil {
+		return ErrNoSuchWindow
+	}
+	return appOS.Window_SetEnabled(win.Handle, enabled)
 }
