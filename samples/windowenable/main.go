@@ -19,7 +19,11 @@ func main() {
 }
 
 func safeWindowEnabled(id goui.ID) bool {
-	enabled, err := goui.WindowEnabled(id)
+	win, err := goui.WindowContext(id)
+	if err != nil {
+		return true
+	}
+	enabled, err := win.WindowEnabled()
 	if err != nil {
 		return true
 	}
@@ -39,8 +43,9 @@ func ui() {
 					return &widgets.Button{
 						Label: gg.If(safeWindowEnabled(goui.ValueID("window2")), "Disable Window 2", "Enable Window 2"),
 						OnClick: func(ctx *goui.Context) {
-							enabled := chkerr.Must(goui.WindowEnabled(goui.ValueID("window2")))
-							chkerr.MustOK(goui.SetWindowEnabled(goui.ValueID("window2"), !enabled))
+							window2 := chkerr.Must(goui.WindowContext(goui.ValueID("window2")))
+							enabled := chkerr.Must(window2.WindowEnabled())
+							chkerr.MustOK(window2.SetWindowEnabled(!enabled))
 							state.Update(func() {})
 						},
 					}
@@ -62,8 +67,9 @@ func ui() {
 					return &widgets.Button{
 						Label: gg.If(safeWindowEnabled(goui.ValueID("window1")), "Disable Window 1", "Enable Window 1"),
 						OnClick: func(ctx *goui.Context) {
-							enabled := chkerr.Must(goui.WindowEnabled(goui.ValueID("window1")))
-							chkerr.MustOK(goui.SetWindowEnabled(goui.ValueID("window1"), !enabled))
+							window1 := chkerr.Must(goui.WindowContext(goui.ValueID("window1")))
+							enabled := chkerr.Must(window1.WindowEnabled())
+							chkerr.MustOK(window1.SetWindowEnabled(!enabled))
 							state.Update(func() {})
 						},
 					}

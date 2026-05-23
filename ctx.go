@@ -1,6 +1,9 @@
 package goui
 
-import "github.com/mkch/goui/native"
+import (
+	"github.com/mkch/goui/internal/util"
+	"github.com/mkch/goui/native"
+)
 
 type Context struct {
 	window *window // can't be nil
@@ -11,14 +14,45 @@ func (ctx *Context) NativeWindow() native.Handle {
 	return ctx.window.Handle
 }
 
+// CloseWindow closes the window associated with this context.
+// If no such window exists, it returns [ErrNoSuchWindow].
+func (ctx *Context) CloseWindow() error {
+	return appOS.Window_Close(ctx.window.Handle)
+}
+
 // WindowEnabled returns whether the window associated with this context is enabled.
 func (ctx *Context) WindowEnabled() (bool, error) {
-	return windowEnabled(ctx.window)
+	return appOS.Window_Enabled(ctx.window.Handle)
 }
 
 // SetWindowEnabled sets whether the window associated with this context is enabled.
 func (ctx *Context) SetWindowEnabled(enabled bool) error {
-	return setWindowEnabled(ctx.window, enabled)
+	return appOS.Window_SetEnabled(ctx.window.Handle, enabled)
+}
+
+// updateElementState updates the state of an element by calling f.
+// If widgetID is nil, the target is elem itself;
+// otherwise, the target is the first element in the element tree rooted at elem that has the given ID.
+// If the target element cannot be found or is not a [*StatefulElement], it does nothing and returns nil.
+func updateElementState(ctx *Context, elem Element, f func(), widgetID ID) error {
+	var stateful *StatefulElement
+	if widgetID == nil {
+		// try to update element itself
+		stateful, _ = elem.(*StatefulElement)
+	} else {
+		// try to find the stateful element with the given widget ID
+		stateful, _ = util.LookupChild(elem, func(e Element) (stateful *StatefulElement, found bool) {
+			found = e.Widget().WidgetID() == widgetID
+			if found {
+				stateful, _ = e.(*StatefulElement)
+			}
+			return
+		})
+	}
+	if stateful == nil {
+		return nil
+	}
+	return updateWidgetState(ctx, f, stateful)
 }
 
 // UpdateWindow updates the state of a [Widget] in the root widget tree of the window

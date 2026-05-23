@@ -336,87 +336,12 @@ func unwrapNativeMenu(element Element) native.Handle {
 // an ID that does not exist.
 var ErrNoSuchWindow = errors.New("no such window exists")
 
-// CloseWindow closes the window with the given ID.
+// WindowContext returns the [Context] of the window with the given ID.
 // If no such window exists, it returns [ErrNoSuchWindow].
-func CloseWindow(windowID ID) error {
+func WindowContext(windowID ID) (*Context, error) {
 	win := appWindows[windowID]
 	if win == nil {
-		return ErrNoSuchWindow
+		return nil, ErrNoSuchWindow
 	}
-	return appOS.Window_Close(appWindows[windowID].Handle)
-}
-
-func windowEnabled(window *window) (bool, error) {
-	return appOS.Window_Enabled(window.Handle)
-}
-
-// WindowEnabled returns whether the window with the given ID is enabled.
-// If no such window exists, it returns [ErrNoSuchWindow].
-func WindowEnabled(windowID ID) (bool, error) {
-	win := appWindows[windowID]
-	if win == nil {
-		return false, ErrNoSuchWindow
-	}
-	return windowEnabled(win)
-}
-
-func setWindowEnabled(window *window, enabled bool) error {
-	return appOS.Window_SetEnabled(window.Handle, enabled)
-}
-
-// SetWindowEnabled sets whether the window with the given ID is enabled.
-// If no such window exists, it returns [ErrNoSuchWindow].
-func SetWindowEnabled(windowID ID, enabled bool) error {
-	win := appWindows[windowID]
-	if win == nil {
-		return ErrNoSuchWindow
-	}
-	return setWindowEnabled(win, enabled)
-}
-
-// updateElementState updates the state of an element by calling f.
-// If widgetID is nil, the target is elem itself;
-// otherwise, the target is the first element in the element tree rooted at elem that has the given ID.
-// If the target element cannot be found or is not a [*StatefulElement], it does nothing and returns nil.
-func updateElementState(ctx *Context, elem Element, f func(), widgetID ID) error {
-	var stateful *StatefulElement
-	if widgetID == nil {
-		// try to update element itself
-		stateful, _ = elem.(*StatefulElement)
-	} else {
-		// try to find the stateful element with the given widget ID
-		stateful, _ = util.LookupChild(elem, func(e Element) (stateful *StatefulElement, found bool) {
-			found = e.Widget().WidgetID() == widgetID
-			if found {
-				stateful, _ = e.(*StatefulElement)
-			}
-			return
-		})
-	}
-	if stateful == nil {
-		return nil
-	}
-	return updateWidgetState(ctx, f, stateful)
-}
-
-// UpdateWindow updates the state of a [Widget] in the root widget tree of the window by calling f.
-// See [Context.UpdateWindow] for details.
-// If no window with windowID exists, it returns [ErrNoSuchWindow].
-func UpdateWindow(windowID ID, f func(), widgetID ID) error {
-	win := appWindows[windowID]
-	if win == nil {
-		return ErrNoSuchWindow
-	}
-	return win.ctx.UpdateWindow(f, widgetID)
-}
-
-// UpdateMenu updates the state of a [Menu] or [MenuItem] in the root menu tree of the window by calling f.
-// See [Context.UpdateMenu] for details.
-// If no window with windowID exists, it returns [ErrNoSuchWindow].
-func UpdateMenu(windowID ID, f func(), widgetID ID) error {
-	win := appWindows[windowID]
-	if win == nil {
-		return ErrNoSuchWindow
-	}
-	return win.ctx.UpdateMenu(f, widgetID)
+	return win.ctx, nil
 }

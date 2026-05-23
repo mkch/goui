@@ -53,7 +53,8 @@ func ui() {
 								Label:    gg.If(window3Closed, "Close Window3 (Already Closed)", "Close Window3"),
 								Disabled: window3Closed,
 								OnClick: func(ctx *goui.Context) {
-									goui.CloseWindow(window3ID)
+									window3 := chkerr.Must(goui.WindowContext(window3ID))
+									chkerr.MustOK(window3.CloseWindow())
 								},
 							}
 						}, nil)
@@ -74,7 +75,8 @@ func ui() {
 			},
 		}},
 		OnDestroy: func(ctx *goui.Context) {
-			goui.UpdateWindow(mainWindowID, func() { window3Closed = true }, closeWindow3ButtonID)
+			mainWindow := chkerr.Must(goui.WindowContext(mainWindowID))
+			chkerr.MustOK(mainWindow.UpdateWindow(func() { window3Closed = true }, closeWindow3ButtonID))
 		},
 	}))
 }
