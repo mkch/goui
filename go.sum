@@ -1,7 +1,7 @@
 github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56 h1:aiA/VclybGoNtFMkFPWhtw66ywwbjMEesUzfIemTy50=
 github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56/go.mod h1:U5RQAS2LPwnWs/CX+LwZOioBmDcK3htt8yZe0PUAk04=
-github.com/mkch/gw v0.0.0-20260522134918-5c8c7f2fee20 h1:uF9FP6yMpKaecQdkfcs/mapTJnPsLG24dVWlQkC6jrk=
-github.com/mkch/gw v0.0.0-20260522134918-5c8c7f2fee20/go.mod h1:YRb3PTFYMCsVdsFlEu00+mwuX2Vuji2xzAjB6Jv6FOU=
+github.com/mkch/gw v0.0.0-20260523152812-644362a391de h1:lNWO9uPawIjSda16hsE+kcXOiZ63+bf5IdwkaB4OUP4=
+github.com/mkch/gw v0.0.0-20260523152812-644362a391de/go.mod h1:SBoAFLuk/bxGf0kWzyJ8fBeO/0R40YZZUpHduQaQhCQ=
 golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a h1:+3jdDGGB8NGb1Zktc737jlt3/A5f6UlwSzmvqUuufxw=
 golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a/go.mod h1:d2fgXJLVs4dYDHUk5lwMIfzRzSrWCfGZb0ZqeLa/Vcw=
 golang.org/x/sys v0.45.0 h1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=

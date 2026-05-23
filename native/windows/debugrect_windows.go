@@ -60,7 +60,8 @@ func (OS) Window_EnableDrawDebugRect(winHandle native.Handle, rects func() iter.
 		return
 	}
 	layeredPanel, err := panel.New(win.HWND(), &panel.Spec{
-		ExStyle: win32.WS_EX_LAYERED | win32.WS_EX_TRANSPARENT,
+		ClassName: "github.com/mkch/goui#DebugRectLayer",
+		ExStyle:   win32.WS_EX_LAYERED | win32.WS_EX_TRANSPARENT,
 	})
 	if layeredPanel == nil {
 		// Layered child windows are only supported on Windows 8 or greater.

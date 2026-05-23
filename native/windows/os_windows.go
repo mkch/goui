@@ -57,9 +57,10 @@ func (os *OS) App_Quit(exitCode int) error {
 
 func (OS) NewWindow(title string, size metrics.Size) (handle native.Handle, err error) {
 	win, err := window.New(&window.Spec{
-		Text:  title,
-		Style: win32.WS_OVERLAPPEDWINDOW | win32.WS_VISIBLE,
-		X:     window.CW_USEDEFAULT,
+		ClassName: "github.com/mkch/goui#Window",
+		Text:      title,
+		Style:     win32.WS_OVERLAPPEDWINDOW | win32.WS_VISIBLE,
+		X:         window.CW_USEDEFAULT,
 	})
 	if err != nil {
 		err = errortrace.WithStack(err)
@@ -463,7 +464,9 @@ func (os OS) Button_MinimumSize(handle native.Handle, label string) (size metric
 }
 
 func (OS) NewPanel(parent native.Handle) (handle native.Handle, err error) {
-	handle, err = panel.New(parent.(winBase).HWND(), &panel.Spec{})
+	handle, err = panel.New(parent.(winBase).HWND(), &panel.Spec{
+		ClassName: "github.com/mkch/goui#Panel",
+	})
 	return
 }
 
