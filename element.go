@@ -236,7 +236,7 @@ func BuildElementTree(ctx *Context, widget Component) (Element, error) {
 
 // destroyElement destroys the given element and deletes its native handle record in debug.
 func destroyElement(ctx *Context, elem Element) error {
-	appDebug.deleteNativeHandleRecord(elem)
+	ctx.app.debug.deleteNativeHandleRecord(elem)
 	return elem.Destroy(ctx)
 }
 
@@ -259,7 +259,7 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Component) (Eleme
 
 	if layouter := elem.Layouter(); layouter != nil {
 		layouter.setElement(elem)
-		if appDebug.layoutOutlineEnabled() {
+		if ctx.app.debug.layoutOutlineEnabled() {
 			layouter = &debugLayouter{
 				Layouter: layouter,
 			}
@@ -271,7 +271,7 @@ func buildElementTreeImpl(ctx *Context, parent Element, widget Component) (Eleme
 		return nil, err
 	}
 
-	appDebug.recordNativeHandle(elem)
+	ctx.app.debug.recordNativeHandle(elem)
 
 	if statefulWidget, ok := widget.(StatefulComponent); ok {
 		return buildStatefulElement(ctx, elem, statefulWidget)

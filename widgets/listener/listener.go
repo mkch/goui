@@ -48,7 +48,7 @@ func (evt *PointerEvent) String() string {
 
 // WindowClientPos returns the position of the pointer event in the coordinate system of the top-level native window's client area.
 func (evt *PointerEvent) WindowClientPos() (pos metrics.Point, err error) {
-	x, y, err := goui.OS().Util_ClientCoordinatesConv(evt.nativeParent, evt.nativeWindow,
+	x, y, err := evt.ctx.App().OS().Util_ClientCoordinatesConv(evt.nativeParent, evt.nativeWindow,
 		evt.listenerOffset.X+evt.Pos.X, evt.listenerOffset.Y+evt.Pos.Y)
 	if err != nil {
 		return
@@ -114,7 +114,7 @@ func (e *listenerElement) SetWidget(ctx *goui.Context, widget goui.Component) er
 		if err != nil {
 			return errortrace.ErrorfStack("configure Listener failed: %w", err)
 		}
-		e.remove = goui.OS().App_AddMouseEventListener(parent, e)
+		e.remove = ctx.App().OS().App_AddMouseEventListener(parent, e)
 	}
 	return e.ElementHelper.SetWidget(ctx, widget)
 }

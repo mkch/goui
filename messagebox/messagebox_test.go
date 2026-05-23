@@ -10,14 +10,14 @@ import (
 	"github.com/mkch/goui/native/mock"
 )
 
-func TestMessageBox_NoContext(t *testing.T) {
-	gouitest.Run(func() {
-		defer goui.Exit(0)
+func TestMessageBoxApp(t *testing.T) {
+	gouitest.Run(func(app *goui.App) {
+		defer app.Exit(0)
 
-		os := goui.OS().(*mock.OS)
+		os := app.OS().(*mock.OS)
 		os.Debug_SetNextMessageBoxReturn(native.MessageBoxReturnOK, nil)
 
-		ret, err := messagebox.Show(nil, "Title", "Message", messagebox.IconInfo, messagebox.ButtonOK)
+		ret, err := messagebox.ShowApp(app, "Title", "Message", messagebox.IconInfo, messagebox.ButtonOK)
 		if err != nil {
 			t.Fatalf("Show returned error: %v", err)
 		}
@@ -43,9 +43,9 @@ func TestMessageBox_NoContext(t *testing.T) {
 
 func TestMessageBox(t *testing.T) {
 	gouitest.RunContext(func(ctx *goui.Context) {
-		defer goui.Exit(0)
+		defer ctx.App().Exit(0)
 
-		os := goui.OS().(*mock.OS)
+		os := ctx.App().OS().(*mock.OS)
 		os.Debug_SetNextMessageBoxReturn(native.MessageBoxReturnOK, nil)
 
 		ret, err := messagebox.Show(ctx, "Title", "Message", messagebox.IconInfo, messagebox.ButtonOK)

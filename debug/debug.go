@@ -13,13 +13,13 @@ import (
 
 // debugEnabled returns whether debug mode is enabled.
 // It is implemented in goui/link.go and is linked here to avoid import cycle.
-func debugEnabled() bool
+func debugEnabled(ctx *goui.Context) bool
 
 // CheckLayoutOverflow returns an [goui.OverflowConstraintsError] if the given size exceeds the given constraints and debug mode is on.
 // Widget can be nil and if widget is not nil, it is included in the error for better debugging.
 // It is recommended to call this function in the Layout method of a custom layouter to detect children layout overflow issues.
 func CheckLayoutOverflow(ctx *goui.Context, widget goui.Component, size metrics.Size, constraints metrics.Constraints) error {
-	if !debugEnabled() {
+	if !debugEnabled(ctx) {
 		return nil
 	}
 	if size.Width < constraints.MinWidth || size.Width > constraints.MaxWidth ||

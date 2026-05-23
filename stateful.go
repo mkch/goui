@@ -225,7 +225,7 @@ func updateWidgetState(ctx *Context, f func(), statefulElement *StatefulElement)
 	}
 
 	if attachment == attachAsWindowMenu {
-		return appOS.Window_RefreshMenu(ctx.NativeWindow())
+		return ctx.App().OS().Window_RefreshMenu(ctx.NativeWindow())
 	}
 
 	// Layout

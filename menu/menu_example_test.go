@@ -6,8 +6,8 @@ import (
 )
 
 func ExampleMenu() {
-	goui.Run(func() {
-		goui.CreateWindow(&goui.Window{
+	goui.Run(func(app *goui.App) {
+		app.CreateWindow(&goui.Window{
 			Title:  "Menu Example",
 			Width:  400,
 			Height: 300,
@@ -22,7 +22,7 @@ func ExampleMenu() {
 						&menu.Separator{},
 						&menu.Item{
 							Title:    "Exit",
-							OnSelect: func(ctx *goui.Context) { goui.Exit(0) },
+							OnSelect: func(ctx *goui.Context) { app.Exit(0) },
 						},
 					},
 				}},

@@ -14,7 +14,7 @@ func link_BuildElementTree(ctx *Context, widget Component) (Element, Layouter, e
 }
 
 //go:linkname link_RunOS github.com/mkch/goui/gouitest.app_RunOS
-func link_RunOS(os native.OS, f func(), config *AppConfig) int {
+func link_RunOS(os native.OS, f func(app *App), config *AppConfig) int {
 	return runOS(os, f, config)
 }
 
@@ -24,6 +24,6 @@ func link_RunContext(os native.OS, f func(ctx *Context), config *AppConfig) int 
 }
 
 //go:linkname link_debugEnabled github.com/mkch/goui/debug.debugEnabled
-func link_debugEnabled() bool {
-	return appDebug != nil
+func link_debugEnabled(ctx *Context) bool {
+	return ctx.app.debug != nil
 }

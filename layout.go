@@ -124,13 +124,13 @@ func (l *debugLayouter) Layout(ctx *Context, constraints metrics.Constraints) (s
 				return // do not show highlight if layout fails
 			}
 			// Show highlight after laying out(include children) is done
-			appOS.Window_Invalidate(ctx.window.DebugLayer, nil)
+			ctx.app.os.Window_Invalidate(ctx.window.DebugLayer, nil)
 			// Schedule canceling all highlights in the batch after a delay
 			const delay = 100 * time.Millisecond
 			batch := *l.cancelHighlightBatch
 			*l.cancelHighlightBatch = nil
 			time.AfterFunc(delay, func() {
-				appOS.App_Post(func() {
+				ctx.app.os.App_Post(func() {
 					// Cancel all highlights in a batch
 					var cancelled bool
 					for _, record := range batch {
@@ -143,7 +143,7 @@ func (l *debugLayouter) Layout(ctx *Context, constraints metrics.Constraints) (s
 					}
 					// Request a redraw to remove the highlights
 					if cancelled {
-						appOS.Window_Invalidate(ctx.window.DebugLayer, nil)
+						ctx.app.os.Window_Invalidate(ctx.window.DebugLayer, nil)
 					}
 				})
 			})

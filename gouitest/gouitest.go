@@ -20,10 +20,10 @@ import (
 func BuildElementTree(ctx *goui.Context, widget goui.Component, parentLayouter goui.Layouter) (goui.Element, goui.Layouter, error)
 
 //go:linkname app_RunOS
-func app_RunOS(os native.OS, f func(), config *goui.AppConfig) int
+func app_RunOS(os native.OS, f func(app *goui.App), config *goui.AppConfig) int
 
 // Run runs the application with a mock native OS implementation.
-func Run(f func(), config *goui.AppConfig) int {
+func Run(f func(app *goui.App), config *goui.AppConfig) int {
 	return app_RunOS(mock.NewOS(), f, config)
 }
 

@@ -62,7 +62,7 @@ func (l *visibilityLayouter) Layout(ctx *goui.Context, constraints metrics.Const
 				return
 			}
 			var rect metrics.Rect
-			if rect, err = goui.OS().Window_ClientRect(parentHandle); err != nil {
+			if rect, err = ctx.App().OS().Window_ClientRect(parentHandle); err != nil {
 				err = errortrace.ErrorfStack("Layout Visibility failed: %w", err)
 				return
 			} else {

@@ -6,7 +6,18 @@ import (
 )
 
 type Context struct {
+	app    *App    // can't be nil
 	window *window // can't be nil
+}
+
+// App returns the [App] that this context belongs to.
+func (ctx *Context) App() *App {
+	return ctx.app
+}
+
+// Post calls ctx.App().Post(f).
+func (ctx *Context) Post(f func()) error {
+	return ctx.App().Post(f)
 }
 
 // NativeWindow returns the native window handle associated with this context.
@@ -17,17 +28,17 @@ func (ctx *Context) NativeWindow() native.Handle {
 // CloseWindow closes the window associated with this context.
 // If no such window exists, it returns [ErrNoSuchWindow].
 func (ctx *Context) CloseWindow() error {
-	return appOS.Window_Close(ctx.window.Handle)
+	return ctx.app.os.Window_Close(ctx.window.Handle)
 }
 
 // WindowEnabled returns whether the window associated with this context is enabled.
 func (ctx *Context) WindowEnabled() (bool, error) {
-	return appOS.Window_Enabled(ctx.window.Handle)
+	return ctx.app.os.Window_Enabled(ctx.window.Handle)
 }
 
 // SetWindowEnabled sets whether the window associated with this context is enabled.
 func (ctx *Context) SetWindowEnabled(enabled bool) error {
-	return appOS.Window_SetEnabled(ctx.window.Handle, enabled)
+	return ctx.app.os.Window_SetEnabled(ctx.window.Handle, enabled)
 }
 
 // updateElementState updates the state of an element by calling f.

@@ -28,10 +28,10 @@ var window3Closed bool
 var mainWindowID = goui.ValueID("main window")
 var closeWindow3ButtonID = goui.ValueID("close window3 button")
 
-func ui() {
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+func ui(app *goui.App) {
+	chkerr.MustOK(app.CreateWindow(&goui.Window{
 		ID:        mainWindowID,
-		OnDestroy: func(*goui.Context) { goui.Exit(0) },
+		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "Window 1",
 		Width:     800,
 		Height:    600,
@@ -43,7 +43,7 @@ func ui() {
 					&widgets.Button{
 						Label: "Create New Window2",
 						OnClick: func(ctx *goui.Context) {
-							createWindow2()
+							createWindow2(app)
 						},
 					},
 					&widgets.SizedBox{Width: 20},
@@ -53,7 +53,7 @@ func ui() {
 								Label:    gg.If(window3Closed, "Close Window3 (Already Closed)", "Close Window3"),
 								Disabled: window3Closed,
 								OnClick: func(ctx *goui.Context) {
-									window3 := chkerr.Must(goui.WindowContext(window3ID))
+									window3 := chkerr.Must(ctx.App().WindowContext(window3ID))
 									chkerr.MustOK(window3.CloseWindow())
 								},
 							}
@@ -63,7 +63,7 @@ func ui() {
 			},
 		},
 	}))
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+	chkerr.MustOK(app.CreateWindow(&goui.Window{
 		ID:     window3ID,
 		Title:  "Window 3",
 		Width:  600,
@@ -75,14 +75,14 @@ func ui() {
 			},
 		}},
 		OnDestroy: func(ctx *goui.Context) {
-			mainWindow := chkerr.Must(goui.WindowContext(mainWindowID))
+			mainWindow := chkerr.Must(ctx.App().WindowContext(mainWindowID))
 			chkerr.MustOK(mainWindow.UpdateWindow(func() { window3Closed = true }, closeWindow3ButtonID))
 		},
 	}))
 }
 
-func createWindow2() {
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+func createWindow2(app *goui.App) {
+	chkerr.MustOK(app.CreateWindow(&goui.Window{
 		Title:  "Window 2",
 		Width:  700,
 		Height: 600,

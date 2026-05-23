@@ -20,9 +20,9 @@ func main() {
 	}))
 }
 
-func ui() {
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
-		OnDestroy: func(*goui.Context) { goui.Exit(0) },
+func ui(app *goui.App) {
+	chkerr.MustOK(app.CreateWindow(&goui.Window{
+		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Title:     "goui visibility sample",
 		Width:     800,
 		Height:    600,

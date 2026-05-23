@@ -104,8 +104,8 @@ func nativeParent[
 }
 
 // createMenuElement is a helper function to create a popup or window menu element.
-func createMenuElement(_ *goui.Context, parent goui.Element, popup bool) (element goui.Element, err error) {
-	handle, err := goui.OS().NewMenu(popup)
+func createMenuElement(ctx *goui.Context, parent goui.Element, popup bool) (element goui.Element, err error) {
+	handle, err := ctx.App().OS().NewMenu(popup)
 	if err != nil {
 		return
 	}
@@ -118,7 +118,7 @@ func createMenuElement(_ *goui.Context, parent goui.Element, popup bool) (elemen
 			return
 		}
 		if opener != nil {
-			if err = goui.OS().MenuItem_SetSubmenu(opener, handle); err != nil {
+			if err = ctx.App().OS().MenuItem_SetSubmenu(opener, handle); err != nil {
 				return
 			}
 		}
@@ -173,7 +173,7 @@ func (e *nativeMenuElement) Destroy(ctx *goui.Context) (err error) {
 	if err := e.ElementHelper.Destroy(ctx); err != nil {
 		return err
 	}
-	return goui.OS().Menu_Destroy(e.Handle)
+	return ctx.App().OS().Menu_Destroy(e.Handle)
 }
 
 // Item is a menu item component that can be added to a [Menu].
@@ -220,7 +220,7 @@ func (item *Item) CreateElement(ctx *goui.Context, parent goui.Element) (element
 
 // createItem is a helper function to create a menu item under the given parent element.
 // If separator is true, a separator item is created.
-func createItem(_ *goui.Context, parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
+func createItem(ctx *goui.Context, parent goui.Element, title string, separator bool) (handle native.Handle, err error) {
 	parentMenu, err := nativeMenuParent(parent)
 	if err == nil && parentMenu == nil {
 		// Menu item must have a parent menu
@@ -230,7 +230,7 @@ func createItem(_ *goui.Context, parent goui.Element, title string, separator bo
 		err = errortrace.ErrorfStack("create menu %s failed: %w", gg.If(separator, "separator", "item"), err)
 		return
 	}
-	handle, err = goui.OS().NewMenuItem(parentMenu, title, separator)
+	handle, err = ctx.App().OS().NewMenuItem(parentMenu, title, separator)
 	return
 }
 
@@ -251,7 +251,7 @@ func (e *nativeItemElement) Destroy(ctx *goui.Context) (err error) {
 	if err := e.ElementHelper.Destroy(ctx); err != nil {
 		return err
 	}
-	return goui.OS().MenuItem_Destroy(e.Handle)
+	return ctx.App().OS().MenuItem_Destroy(e.Handle)
 }
 
 // SetWidget implements [goui.Element.SetWidget].
@@ -264,29 +264,29 @@ func (e *nativeItemElement) SetWidget(ctx *goui.Context, w goui.Component) (err 
 
 	if oldItem != nil {
 		if oldItem.Title != newItem.Title {
-			if err = goui.OS().MenuItem_SetTitle(e.Handle, newItem.Title); err != nil {
+			if err = ctx.App().OS().MenuItem_SetTitle(e.Handle, newItem.Title); err != nil {
 				return
 			}
 		}
 		if oldItem.Disabled != newItem.Disabled {
-			if err = goui.OS().MenuItem_SetDisabled(e.Handle, newItem.Disabled); err != nil {
+			if err = ctx.App().OS().MenuItem_SetDisabled(e.Handle, newItem.Disabled); err != nil {
 				return
 			}
 		}
 		return
 	}
 
-	if err = goui.OS().MenuItem_SetTitle(e.Handle, newItem.Title); err != nil {
+	if err = ctx.App().OS().MenuItem_SetTitle(e.Handle, newItem.Title); err != nil {
 		return
 	}
-	if err = goui.OS().MenuItem_SetDisabled(e.Handle, newItem.Disabled); err != nil {
+	if err = ctx.App().OS().MenuItem_SetDisabled(e.Handle, newItem.Disabled); err != nil {
 		return
 	}
 
 	if newItem.OnSelect == nil {
-		goui.OS().MenuItem_SetOnClickListener(e.Handle, nil)
+		ctx.App().OS().MenuItem_SetOnClickListener(e.Handle, nil)
 	} else {
-		goui.OS().MenuItem_SetOnClickListener(e.Handle, func() {
+		ctx.App().OS().MenuItem_SetOnClickListener(e.Handle, func() {
 			newItem.OnSelect(ctx)
 		})
 	}
@@ -332,7 +332,7 @@ func (e *separatorElement) Destroy(ctx *goui.Context) (err error) {
 	if err := e.ElementHelper.Destroy(ctx); err != nil {
 		return err
 	}
-	return goui.OS().MenuItem_Destroy(e.Handle)
+	return ctx.App().OS().MenuItem_Destroy(e.Handle)
 }
 
 // Items is a menu that contains menu items.

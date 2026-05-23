@@ -29,12 +29,12 @@ func main() {
 var popupCount = 0
 var rootWidgetID = goui.UniqueID()
 
-func ui() {
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+func ui(app *goui.App) {
+	chkerr.MustOK(app.CreateWindow(&goui.Window{
 		Title:     "menu demo",
 		Width:     800,
 		Height:    600,
-		OnDestroy: func(ctx *goui.Context) { goui.Exit(0) },
+		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
 		Menu:      rootMenu,
 		Root:      goui.NewStatefulWidget(rootWidgetID, rootWidget),
 	}))

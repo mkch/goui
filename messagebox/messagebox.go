@@ -32,13 +32,21 @@ const (
 )
 
 // MessageBox shows a message box with the given title, message, icon and buttons
-// If ctx is non-nil, the message box is associated with the context's window.
+// The message box is associated with the context's window.
 func Show(ctx *goui.Context, title, message string, icon Icon, button Button) (ret Return, err error) {
 	var parent native.Handle
 	if ctx != nil {
 		parent = ctx.NativeWindow()
 	}
-	id, err := goui.OS().MessageBox(parent, title, message, native.MessageBoxIcon(icon), native.MessageBoxButton(button))
+	id, err := ctx.App().OS().MessageBox(parent, title, message, native.MessageBoxIcon(icon), native.MessageBoxButton(button))
+	ret = Return(id)
+	return
+}
+
+// MessageBox shows a message box with the given title, message, icon and buttons
+// The message box is not associated with any window.
+func ShowApp(app *goui.App, title, message string, icon Icon, button Button) (ret Return, err error) {
+	id, err := app.OS().MessageBox(nil, title, message, native.MessageBoxIcon(icon), native.MessageBoxButton(button))
 	ret = Return(id)
 	return
 }

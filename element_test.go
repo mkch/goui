@@ -33,7 +33,7 @@ func (*mockWidget) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 func TestBuildElementTree_CreateElementError(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		expectedErr := errors.New("create element error")
 		widget := &mockWidget{
@@ -57,7 +57,7 @@ func TestBuildElementTree_CreateElementError(t *testing.T) {
 
 func TestBuildElementTree_SimpleWidget(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		widget := &mockWidget{ID: ValueID("test"), element: &ElementHelper{}}
 
@@ -96,7 +96,7 @@ func (l *mockLayouter) PositionAt(ctx *Context, pt metrics.Point) error {
 
 func TestBuildElementTree_WidgetWithLayouter(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		mockLayouter := &mockLayouter{}
 		mockElement := &ElementHelper{
@@ -127,7 +127,7 @@ func TestBuildElementTree_WidgetWithLayouter(t *testing.T) {
 
 func TestBuildElementTree_StatefulWidget(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		mockLayouter := &mockLayouter{}
 		mockElement := &ElementHelper{
@@ -168,7 +168,7 @@ func TestBuildElementTree_StatefulWidget(t *testing.T) {
 
 func TestBuildElementTree_StatelessWidget(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		mockLayouter := &mockLayouter{}
 		mockElement := &ElementHelper{
@@ -232,7 +232,7 @@ func (*mockContainer) ExclusiveType(marker.TypeWidget) { /*Nop*/ }
 
 func TestBuildElementTree_Container(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		layouter1 := &mockLayouter{}
 		child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{ElementLayouter: layouter1}}
@@ -287,7 +287,7 @@ func TestBuildElementTree_Container(t *testing.T) {
 
 func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		childWidget := &mockWidget{ID: ValueID("child"), element: &ElementHelper{}}
 		container := &mockContainer{
@@ -322,7 +322,7 @@ func TestBuildElementTree_ChildNoLayouter(t *testing.T) {
 
 func TestUpdateElementTree_Reconcile(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
 		child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
@@ -434,7 +434,7 @@ func TestUpdateElementTree_Reconcile(t *testing.T) {
 
 func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
 		child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
@@ -521,7 +521,7 @@ func TestUpdateElementTree_Reconcile_ID(t *testing.T) {
 
 func TestUpdateElementTree_Append(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
 		child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}
@@ -573,7 +573,7 @@ func TestUpdateElementTree_Append(t *testing.T) {
 
 func TestUpdateElementTree_Remove(t *testing.T) {
 	runContextMock(func(ctx *Context) {
-		defer Exit(0)
+		defer ctx.App().Exit(0)
 
 		child1 := &mockWidget{ID: ValueID("child1"), element: &ElementHelper{}}
 		child2 := &mockWidget{ID: ValueID("child2"), element: &ElementHelper{ElementLayouter: &mockLayouter{}}}

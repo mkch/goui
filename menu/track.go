@@ -31,7 +31,7 @@ func Popup(ctx *goui.Context, menu *Menu, spec *PopupSpec) (err error) {
 	// TrackPopupMenu(win32.TrackPopupMenuEx) returns.
 	// If the menu is destroyed before that, the menu commands will not be delivered
 	// to the menu item callback.
-	defer goui.Post(func() {
+	defer ctx.Post(func() {
 		chkerr.MustOK(elem.Destroy(ctx))
 	})
 
@@ -42,5 +42,5 @@ func Popup(ctx *goui.Context, menu *Menu, spec *PopupSpec) (err error) {
 			Y: spec.Pos.Y,
 		}
 	}
-	return goui.OS().Window_TrackPopupMenu(ctx.NativeWindow(), elem.(*nativeMenuElement).Handle, nativeSpec)
+	return ctx.App().OS().Window_TrackPopupMenu(ctx.NativeWindow(), elem.(*nativeMenuElement).Handle, nativeSpec)
 }

@@ -19,7 +19,7 @@ func (txt *TextField) WidgetID() goui.ID {
 }
 
 func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (goui.Element, error) {
-	handle, err := goui.OS().NewTextField(ctx.NativeWindow(), txt.InitialValue, txt.Obscure)
+	handle, err := ctx.App().OS().NewTextField(ctx.NativeWindow(), txt.InitialValue, txt.Obscure)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (txt *TextField) CreateElement(ctx *goui.Context, parent goui.Element) (gou
 				if txt.Controller != nil {
 					txt.Controller.setElement(ctx, nil)
 				}
-				return goui.OS().Control_Destroy(h)
+				return ctx.App().OS().Control_Destroy(h)
 			},
 		},
 	}
@@ -79,5 +79,5 @@ func (l *textFieldLayouter) Layout(ctx *goui.Context, constraints metrics.Constr
 }
 
 func (l *textFieldLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
-	return goui.OS().Control_SetDimensions(l.Element().(*textFieldElement).Handle, metrics.NewRect(pt, l.layoutSize))
+	return ctx.App().OS().Control_SetDimensions(l.Element().(*textFieldElement).Handle, metrics.NewRect(pt, l.layoutSize))
 }

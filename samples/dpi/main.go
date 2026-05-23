@@ -23,11 +23,11 @@ func main() {
 	}))
 }
 
-func ui() {
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+func ui(app *goui.App) {
+	chkerr.MustOK(app.CreateWindow(&goui.Window{
 		Title: "dpi test",
 		Width: 800, Height: 850,
-		OnDestroy: func(*goui.Context) { goui.Exit(0) },
+		OnDestroy: func(*goui.Context) { app.Exit(0) },
 		Root: &widgets.Center{
 			Widget: &widgets.Column{
 				CrossAxisAlignment: axes.Center,

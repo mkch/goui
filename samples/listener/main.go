@@ -23,12 +23,12 @@ func main() {
 	}))
 }
 
-func ui() {
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+func ui(app *goui.App) {
+	chkerr.MustOK(app.CreateWindow(&goui.Window{
 		Title: "Listener Sample Disabled Window",
 		Width: 1200, Height: 400,
 		Disabled:  true,
-		OnDestroy: func(ctx *goui.Context) { goui.Exit(0) },
+		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
 		Root: &widgets.Center{
 			Widget: goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.WidgetState {
 				return &ListenerLabelState{
@@ -38,10 +38,10 @@ func ui() {
 		},
 	}))
 
-	chkerr.MustOK(goui.CreateWindow(&goui.Window{
+	chkerr.MustOK(app.CreateWindow(&goui.Window{
 		Title: "Listener Sample window2",
 		Width: 1200, Height: 400,
-		OnDestroy: func(ctx *goui.Context) { goui.Exit(0) },
+		OnDestroy: func(ctx *goui.Context) { app.Exit(0) },
 		Root: &widgets.Center{
 			Widget: goui.StatefulWidgetFunc(func(ctx *goui.StateContext) goui.WidgetState {
 				return &ListenerLabelState{

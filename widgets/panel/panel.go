@@ -29,7 +29,7 @@ func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (element g
 		err = errortrace.ErrorfStack("Create Panel failed: %w", err)
 		return
 	}
-	handle, err := goui.OS().NewPanel(parentHandle)
+	handle, err := ctx.App().OS().NewPanel(parentHandle)
 	if err != nil {
 		err = errortrace.ErrorfStack("Create Panel failed: %w", err)
 		return
@@ -40,7 +40,7 @@ func (p *Panel) CreateElement(ctx *goui.Context, parent goui.Element) (element g
 				ElementLayouter: &panelLayouter{},
 			},
 			Handle:      handle,
-			DestroyFunc: func(ctx *goui.Context, handle native.Handle) error { return goui.OS().Control_Destroy(handle) },
+			DestroyFunc: func(ctx *goui.Context, handle native.Handle) error { return ctx.App().OS().Control_Destroy(handle) },
 		},
 	}
 	return
@@ -72,13 +72,13 @@ func (elem *panelElement) SetWidget(ctx *goui.Context, widget goui.Component) (e
 	if oldPanel != nil {
 		if oldPanel.BackgroundColor != newPanel.BackgroundColor &&
 			(oldPanel.BackgroundColor == nil || newPanel.BackgroundColor == nil || *oldPanel.BackgroundColor != *newPanel.BackgroundColor) {
-			if err = goui.OS().Panel_SetBackgroundColor(elem.Handle, newPanel.BackgroundColor); err != nil {
+			if err = ctx.App().OS().Panel_SetBackgroundColor(elem.Handle, newPanel.BackgroundColor); err != nil {
 				return
 			}
 		}
 		return
 	}
-	return goui.OS().Panel_SetBackgroundColor(elem.Handle, newPanel.BackgroundColor)
+	return ctx.App().OS().Panel_SetBackgroundColor(elem.Handle, newPanel.BackgroundColor)
 }
 
 type panelLayouter struct {
@@ -99,7 +99,7 @@ func (l *panelLayouter) Layout(ctx *goui.Context, constraints metrics.Constraint
 }
 
 func (l *panelLayouter) PositionAt(ctx *goui.Context, pt metrics.Point) (err error) {
-	if err = goui.OS().Control_SetDimensions(l.Element().(*panelElement).Handle, metrics.NewRect(pt, l.layoutSize)); err != nil {
+	if err = ctx.App().OS().Control_SetDimensions(l.Element().(*panelElement).Handle, metrics.NewRect(pt, l.layoutSize)); err != nil {
 		return
 	}
 	for child := range l.Children() {

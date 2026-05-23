@@ -41,8 +41,8 @@ func NewCounterItem() menu.StatefulItem {
 	)
 }
 func Example_statefulMenuItem() {
-	goui.Run(func() {
-		goui.CreateWindow(&goui.Window{
+	goui.Run(func(app *goui.App) {
+		app.CreateWindow(&goui.Window{
 			Title:  "Stateful Menu Example",
 			Width:  400,
 			Height: 300,

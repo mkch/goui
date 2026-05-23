@@ -15,18 +15,28 @@ import (
 	"github.com/mkch/goui/native/mock"
 )
 
-var appOS native.OS
-var appDebug *Debug
-var appWindows map[ID]*window
+type noCopy struct{}
+
+func (*noCopy) Lock()   {}
+func (*noCopy) Unlock() {}
+
+// App represents a goui application. It is used to create windows and manage the application lifecycle.
+// App can not be copied.
+type App struct {
+	noCopy  noCopy // Make go vet to catch accidental copying of App.
+	os      native.OS
+	debug   *Debug
+	windows map[ID]*window
+}
 
 // OS returns the native OS interface used by the application.
-func OS() native.OS {
-	return appOS
+func (app *App) OS() native.OS {
+	return app.os
 }
 
 // Post posts a function to be executed on the main GUI goroutine.
-func Post(f func()) error {
-	return appOS.App_Post(f)
+func (app *App) Post(f func()) error {
+	return app.os.App_Post(f)
 }
 
 // AppConfig is the configuration for creating a new App.
@@ -100,62 +110,56 @@ func configDebug(config *AppConfig) *Debug {
 		func() *Debug { return config.Debug.clone() })
 }
 
-// Run does the following things sequentially:
+// Run runs an goui application until [App.Exit] is called and returns the exit code passed to [App.Exit].
+// It performs the following steps:
 //   - initializes the application
 //   - calls f
 //   - runs the main event loop
 //
-// It returns the exit code passed to [Exit].
-// No other goui functions should be called before or after Run.
-func Run(f func(), config *AppConfig) int {
+// Parameter f is the initialization function for the application, which can be used to create windows etc.
+// If config is nil, a default configuration is used.
+// Run is the entrypoint and the entire life of a goui application. No goui functions should be called before or after it.
+func Run(f func(app *App), config *AppConfig) int {
 	return runOS(newOS(), f, config)
 }
 
-// RunAndExit calls [os.Exit]([Run](f, config)).
+// RunAndExit calls [os.Exit]([App.Run](f, config)).
 // It is convenience for applications that want to exit with the exit code returned by [Run].
-func RunAndExit(f func(), config *AppConfig) {
+func RunAndExit(f func(app *App), config *AppConfig) {
 	os.Exit(Run(f, config))
 }
 
 // runOS runs the application with the given native OS implementation.
-func runOS(os native.OS, f func(), config *AppConfig) int {
+func runOS(os native.OS, f func(app *App), config *AppConfig) int {
+	var app = App{
+		os:      os,
+		debug:   configDebug(config),
+		windows: make(map[ID]*window),
+	}
 	defer func() {
-		for _, w := range appWindows {
-			if err := appOS.Window_Destroy(w.Handle); err != nil {
+		for _, w := range app.windows {
+			if err := app.os.Window_Destroy(w.Handle); err != nil {
 				errortrace.Panic(err)
 			}
 		}
-		appWindows = nil
-		appOS = nil
-		appDebug = nil
+		app.windows = nil
+		app.os = nil
+		app.debug = nil
 	}()
-	appOS = os
-	appDebug = configDebug(config)
-	appWindows = make(map[ID]*window)
-	return appOS.App_Run(f)
+	return app.os.App_Run(func() { f(&app) })
 }
 
 // runContext runs the application with the given native OS implementation
 // and creates a Context with a new empty window.
 func runContext(os native.OS, f func(ctx *Context), config *AppConfig) int {
-	defer func() {
-		appOS = nil
-		appDebug = nil
-		for _, w := range appWindows {
-			if err := appOS.Window_Destroy(w.Handle); err != nil {
-				errortrace.Panic(err)
-			}
-		}
-		appWindows = nil
-	}()
-	appOS = os
-	appDebug = configDebug(config)
-	appWindows = make(map[ID]*window)
-	return appOS.App_Run(func() {
+	return runOS(os, func(app *App) {
 		id := UniqueID()
-		CreateWindow(&Window{ID: id})
-		f(&Context{appWindows[id]})
-	})
+		app.CreateWindow(&Window{ID: id})
+		f(&Context{
+			app:    app,
+			window: app.windows[id],
+		})
+	}, config)
 }
 
 // runContextMock calls [runContext] with a mock native OS implementation.
@@ -166,12 +170,12 @@ func runContextMock(f func(ctx *Context), config *AppConfig) int {
 
 // Exit quits the main event loop of the application with the given exit code.
 // The exit code will be returned by the [Run] function.
-func Exit(exitCode int) {
-	appOS.App_Quit(exitCode)
+func (app *App) Exit(exitCode int) {
+	app.os.App_Quit(exitCode)
 }
 
 func layoutWindow(ctx *Context) error {
-	rect, err := appOS.Window_ClientRect(ctx.window.Handle)
+	rect, err := ctx.app.os.Window_ClientRect(ctx.window.Handle)
 	if err != nil {
 		return err
 	}
@@ -201,7 +205,7 @@ func performLayoutWindow(ctx *Context, width, height metrics.DP) (err error) {
 // CreateWindow creates a new window with the given configuration.
 // If config is nil, a default configuration is used.
 // If a window with the same ID already exists, it returns an error.
-func CreateWindow(config *Window) (err error) {
+func (app *App) CreateWindow(config *Window) (err error) {
 	if config == nil {
 		config = &Window{
 			Width: 800, Height: 600,
@@ -210,22 +214,22 @@ func CreateWindow(config *Window) (err error) {
 	if config.ID == nil {
 		config.ID = UniqueID() // unique key is required to insert into the map
 	}
-	if appWindows[config.ID] != nil {
+	if app.windows[config.ID] != nil {
 		return fmt.Errorf("window with ID %v already exists", config.ID)
 	}
 
-	handle, err := appOS.NewWindow(config.Title, metrics.Size{Width: config.Width, Height: config.Height})
+	handle, err := app.os.NewWindow(config.Title, metrics.Size{Width: config.Width, Height: config.Height})
 	if err != nil {
 		return
 	}
 	defer func() {
 		if err != nil {
-			appOS.Window_Destroy(handle)
+			app.os.Window_Destroy(handle)
 		}
 	}()
 
 	if config.Disabled {
-		if err = appOS.Window_SetEnabled(handle, false); err != nil {
+		if err = app.os.Window_SetEnabled(handle, false); err != nil {
 			return err
 		}
 	}
@@ -234,27 +238,30 @@ func CreateWindow(config *Window) (err error) {
 		ID:     config.ID,
 		Handle: handle,
 	}
-	ctx := &Context{window}
+	ctx := &Context{
+		app:    app,
+		window: window,
+	}
 	window.ctx = ctx
-	appOS.Window_SetOnSizeChangedListener(handle, func(size metrics.Size) {
+	app.os.Window_SetOnSizeChangedListener(handle, func(size metrics.Size) {
 		if err = performLayoutWindow(ctx, size.Width, size.Height); err != nil {
 			return
 		}
 	})
-	appOS.Window_SetOnCloseListener(handle, func() bool {
+	app.os.Window_SetOnCloseListener(handle, func() bool {
 		if config.OnClose == nil {
 			return true
 		}
 		return config.OnClose(ctx)
 	})
-	appOS.Window_SetOnDestroyListener(handle, func() {
+	app.os.Window_SetOnDestroyListener(handle, func() {
 		if config.OnDestroy != nil {
 			config.OnDestroy(ctx)
 		}
-		delete(appWindows, config.ID)
+		delete(app.windows, config.ID)
 	})
-	if appDebug.layoutOutlineEnabled() {
-		layer, err := appOS.Window_EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
+	if app.debug.layoutOutlineEnabled() {
+		layer, err := app.os.Window_EnableDrawDebugRect(handle, func() iter.Seq[native.DebugRect] {
 			if window.Layouter == nil {
 				return func(yield func(native.DebugRect) bool) {}
 			}
@@ -287,13 +294,13 @@ func CreateWindow(config *Window) (err error) {
 			return
 		}
 		window.Menu = elem
-		err = appOS.Window_SetMenu(window.Handle, menuHandle)
+		err = app.os.Window_SetMenu(window.Handle, menuHandle)
 		if err != nil {
 			return
 		}
 	}
 
-	appWindows[config.ID] = window
+	app.windows[config.ID] = window
 	return nil
 }
 
@@ -338,8 +345,8 @@ var ErrNoSuchWindow = errors.New("no such window exists")
 
 // WindowContext returns the [Context] of the window with the given ID.
 // If no such window exists, it returns [ErrNoSuchWindow].
-func WindowContext(windowID ID) (*Context, error) {
-	win := appWindows[windowID]
+func (app *App) WindowContext(windowID ID) (*Context, error) {
+	win := app.windows[windowID]
 	if win == nil {
 		return nil, ErrNoSuchWindow
 	}
