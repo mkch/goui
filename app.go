@@ -47,14 +47,14 @@ type Debug struct {
 
 // layoutOutlineEnabled returns whether layout outline is enabled in debug mode.
 // If debug is nil, it returns false.
-func (debug *Debug) layoutOutlineEnabled() bool {
-	return debug != nil && debug.LayoutOutline
+func (dbg *Debug) layoutOutlineEnabled() bool {
+	return dbg != nil && dbg.LayoutOutline
 }
 
 // recordNativeHandle records the native handle(if any) of the element in debug mode.
 // If debug is nil, or debug.NativeHandleRecords is nil, it does nothing.
-func (debug *Debug) recordNativeHandle(element Element) {
-	if debug == nil || debug.NativeHandleRecords == nil {
+func (dbg *Debug) recordNativeHandle(element Element) {
+	if dbg == nil || dbg.NativeHandleRecords == nil {
 		return
 	}
 	id := element.Widget().WidgetID()
@@ -62,33 +62,33 @@ func (debug *Debug) recordNativeHandle(element Element) {
 		return
 	}
 	if ctrl, ok := element.(ControlElement); ok {
-		appDebug.NativeHandleRecords[id] = ctrl.NativeControl()
+		dbg.NativeHandleRecords[id] = ctrl.NativeControl()
 	} else if mu, ok := element.(NativeMenuElement); ok {
-		appDebug.NativeHandleRecords[id] = mu.NativeMenu()
+		dbg.NativeHandleRecords[id] = mu.NativeMenu()
 	} else if mi, ok := element.(NativeMenuItemElement); ok {
-		appDebug.NativeHandleRecords[id] = mi.NativeMenuItem()
+		dbg.NativeHandleRecords[id] = mi.NativeMenuItem()
 	}
 }
 
 // deleteNativeHandleRecord deletes the native handle record of the element in debug mode.
 // If debug is nil, or debug.NativeHandleRecords is nil, it does nothing.
-func (debug *Debug) deleteNativeHandleRecord(element Element) {
-	if debug == nil || debug.NativeHandleRecords == nil {
+func (dbg *Debug) deleteNativeHandleRecord(element Element) {
+	if dbg == nil || dbg.NativeHandleRecords == nil {
 		return
 	}
 	id := element.Widget().WidgetID()
 	if id == nil {
 		return
 	}
-	delete(debug.NativeHandleRecords, id)
+	delete(dbg.NativeHandleRecords, id)
 }
 
-func (debug *Debug) clone() (result *Debug) {
-	if debug == nil {
+func (dbg *Debug) clone() (result *Debug) {
+	if dbg == nil {
 		return nil
 	}
 	result = &Debug{}
-	*result = *debug
+	*result = *dbg
 	return
 }
 
