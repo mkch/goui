@@ -4,10 +4,7 @@ import (
 	"errors"
 	"image/color"
 	"iter"
-	"maps"
-	"slices"
 
-	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
 )
@@ -65,25 +62,9 @@ func Run(f func()) int {
 	}
 
 	defer func() {
-		// destroy windows
-		for _, h := range slices.Collect(maps.Keys(windows)) {
-			// Child windows may have been destroyed already by its parent.
-			if win, ok := windows[h]; ok {
-				// Destroy all top-level windows.
-				// Child windows will be destroyed automatically.
-				topLevel, ok := win.(*topLevelWindow)
-				if !ok {
-					continue
-				}
-				if mu := topLevel.Menu(); mu != nil {
-					chkerr.MustOK(DestroyMenu(mu))
-				}
-				chkerr.MustOK(DestroyWindow(h))
-
-			}
-		}
 		windows = nil
 		close(messageQueue)
+		messageQueue = nil
 		messageDispatcher = nil
 	}()
 
@@ -174,7 +155,7 @@ func CloseWindow(win Handle) (err error) {
 	if err != nil {
 		return
 	}
-	if !allow.(bool) {
+	if allow != nil && !allow.(bool) {
 		return
 	}
 	if _, err = SendMessage(win, MsgClosed{}); err != nil {

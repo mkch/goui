@@ -39,9 +39,8 @@ func NewOS() *OS {
 	return &OS{}
 }
 
-func (os *OS) App_Run(initialize, cleanup func()) (ret int) {
-	defer func() { os.app = nil }()
-	os.app = gwapp.New(cleanup)
+func (os *OS) App_Run(initialize func()) (ret int) {
+	os.app = gwapp.New()
 	initialize()
 	return os.app.Run()
 }
@@ -53,6 +52,11 @@ func (os *OS) App_Post(f func()) error {
 func (os *OS) App_Quit(exitCode int) error {
 	os.app.Quit(exitCode)
 	return nil
+}
+
+func (os *OS) App_Destroy() {
+	os.app.Destroy()
+	os.app = nil
 }
 
 func (OS) NewWindow(title string, size metrics.Size) (handle native.Handle, err error) {

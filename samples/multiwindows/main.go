@@ -4,6 +4,7 @@ package main
 //go:generate rsrc -arch 386 -manifest manifest.xml
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -75,7 +76,13 @@ func ui(app *goui.App) {
 			},
 		}},
 		OnDestroy: func(ctx *goui.Context) {
-			mainWindow := chkerr.Must(ctx.App().WindowContext(mainWindowID))
+			mainWindow, err := ctx.App().WindowContext(mainWindowID)
+			if err != nil {
+				if !errors.Is(err, goui.ErrNoSuchWindow) {
+					panic(err)
+				}
+				return
+			}
 			chkerr.MustOK(mainWindow.UpdateWindow(func() { window3Closed = true }, closeWindow3ButtonID))
 		},
 	}))

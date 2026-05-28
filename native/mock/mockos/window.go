@@ -22,6 +22,10 @@ func NewTopLevelWindow(title string, rect *metrics.Rect) *topLevelWindow {
 			if win.onClose != nil {
 				return win.onClose()
 			}
+		case MsgDestroyed:
+			if win.menu != nil {
+				DestroyMenu(win.menu)
+			}
 		}
 		return prev(msg)
 	})

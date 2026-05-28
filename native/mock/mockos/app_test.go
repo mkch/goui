@@ -10,7 +10,6 @@ import (
 
 func Test_Run(t *testing.T) {
 	const exitCode = 123
-	var destroyListenerCalled = false
 	code := Run(func() {
 		w1, err := NewWindow("window1", metrics.Size{})
 		if err != nil {
@@ -19,7 +18,6 @@ func Test_Run(t *testing.T) {
 		if w1 == nil {
 			t.Fatalf("NewWindow returned nil handle")
 		}
-		SetOnDestroyListener(w1, func() { destroyListenerCalled = true })
 
 		if err := PostQuitMessage(exitCode); err != nil {
 			t.Fatalf("PostQuitMessage failed: %v", err)
@@ -29,13 +27,6 @@ func Test_Run(t *testing.T) {
 		t.Fatalf("Run returned %d, want %d", code, exitCode)
 	}
 
-	// Test that windows are destroyed after Run returns.
-	if len(windows) != 0 {
-		t.Fatalf("windows not destroyed after Run returns")
-	}
-	if !destroyListenerCalled {
-		t.Fatalf("destroy listener not called")
-	}
 }
 
 func Test_SetMessageDispatcher(t *testing.T) {
@@ -363,6 +354,8 @@ func Test_WindowMenu(t *testing.T) {
 		} else if menuHandle != mu {
 			t.Fatalf("WindowMenu = %v, want %v", menuHandle, mu)
 		}
+
+		CloseWindow(w1) // Should destroy the menu as well.
 
 		if err := PostQuitMessage(0); err != nil {
 			t.Fatalf("Quit failed: %v", err)

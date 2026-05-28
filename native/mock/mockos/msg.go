@@ -28,6 +28,9 @@ type MsgDestroyed struct{}
 
 func (MsgDestroyed) Message() {}
 
+// MsgClose is sent when a window is requested to close.
+// The window can cancel the close by returning false.
+// A return value of nil or true means the close is allowed.
 type MsgClosing struct{}
 
 func (MsgClosing) Message() {}

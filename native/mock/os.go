@@ -29,10 +29,7 @@ type OS struct {
 func NewOS() *OS {
 	return &OS{}
 }
-func (*OS) App_Run(initialize, cleanup func()) int {
-	if cleanup != nil {
-		defer cleanup()
-	}
+func (*OS) App_Run(initialize func()) int {
 	return mockos.Run(initialize)
 }
 func (*OS) App_Post(f func()) error {
@@ -40,6 +37,9 @@ func (*OS) App_Post(f func()) error {
 }
 func (*OS) App_Quit(exitCode int) error {
 	return mockos.PostQuitMessage(exitCode)
+}
+func (os *OS) App_Destroy() {
+	*os = OS{} // clear all state.
 }
 
 func callMouseEventListeners(win mockos.Handle, x, y metrics.DP,

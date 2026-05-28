@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/mkch/gg"
-	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/internal/util"
 	"github.com/mkch/goui/marker"
 	"github.com/mkch/goui/metrics"
@@ -136,18 +135,13 @@ func runOS(os native.OS, f func(app *App), config *AppConfig) int {
 		debug:   configDebug(config),
 		windows: make(map[ID]*window),
 	}
-	return app.os.App_Run(
-		func() { f(&app) },
-		func() {
-			for _, w := range app.windows {
-				if err := app.os.Window_Destroy(w.Handle); err != nil {
-					errortrace.Panic(err)
-				}
-			}
-			app.windows = nil
-			app.os = nil
-			app.debug = nil
-		})
+	defer func() {
+		app.os.App_Destroy()
+		app.windows = nil
+		app.os = nil
+		app.debug = nil
+	}()
+	return app.os.App_Run(func() { f(&app) })
 }
 
 // runContext runs the application with the given native OS implementation

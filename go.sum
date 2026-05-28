@@ -2,6 +2,10 @@ github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56 h1:aiA/VclybGoNtFMkFPWhtw6
 github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56/go.mod h1:U5RQAS2LPwnWs/CX+LwZOioBmDcK3htt8yZe0PUAk04=
 github.com/mkch/gw v0.0.0-20260528062952-ea333ceb1844 h1:7E6EuCn71oJsomVBVlYifrZ4J8I1AdlKVcjwqqBFZGA=
 github.com/mkch/gw v0.0.0-20260528062952-ea333ceb1844/go.mod h1:SBoAFLuk/bxGf0kWzyJ8fBeO/0R40YZZUpHduQaQhCQ=
+github.com/mkch/gw v0.0.0-20260528103222-711dbd570772 h1:0jvP+kkxcPCW6pUoJlC8Z0ArnLXyTpM67SXLcRYCy0U=
+github.com/mkch/gw v0.0.0-20260528103222-711dbd570772/go.mod h1:SBoAFLuk/bxGf0kWzyJ8fBeO/0R40YZZUpHduQaQhCQ=
+github.com/mkch/gw v0.0.0-20260528132616-1d081b367cc0 h1:ZrPSVo9NTH0Hy+Gz6c+YlLae6sltzOolWSHyS7FK3IA=
+github.com/mkch/gw v0.0.0-20260528132616-1d081b367cc0/go.mod h1:SBoAFLuk/bxGf0kWzyJ8fBeO/0R40YZZUpHduQaQhCQ=
 golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a h1:+3jdDGGB8NGb1Zktc737jlt3/A5f6UlwSzmvqUuufxw=
 golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a/go.mod h1:d2fgXJLVs4dYDHUk5lwMIfzRzSrWCfGZb0ZqeLa/Vcw=
 golang.org/x/sys v0.45.0 h1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=
