@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/mkch/gg v0.0.0-20260316121435-39da716c7d56
-	github.com/mkch/gw v0.0.0-20260523152812-644362a391de
+	github.com/mkch/gw v0.0.0-20260528062952-ea333ceb1844
 )
 
 require (

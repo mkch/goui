@@ -66,7 +66,7 @@ type DebugRect struct {
 }
 
 type OS interface {
-	App_Run(func()) int
+	App_Run(initialize, cleanup func()) int
 	App_Post(f func()) error
 	App_Quit(exitCode int) error
 	// App_AddMouseEventListener adds a mouse event listener to all windows in the application.

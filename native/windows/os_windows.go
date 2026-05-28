@@ -39,10 +39,10 @@ func NewOS() *OS {
 	return &OS{}
 }
 
-func (os *OS) App_Run(f func()) (ret int) {
+func (os *OS) App_Run(initialize, cleanup func()) (ret int) {
 	defer func() { os.app = nil }()
-	os.app = gwapp.New()
-	f()
+	os.app = gwapp.New(cleanup)
+	initialize()
 	return os.app.Run()
 }
 
@@ -475,7 +475,7 @@ func (OS) Panel_SetBackgroundColor(handle native.Handle, color *color.NRGBA) err
 }
 
 type eventListenerRecord struct {
-	listenerKey    window.MessageRetListenerKey
+	listenerKey    gwapp.MessageRetListenerKey
 	eventListeners map[*native.MouseEventListener]native.Handle
 }
 
@@ -525,8 +525,8 @@ func (os *OS) App_AddMouseEventListener(win native.Handle, listener native.Mouse
 	if evtListeners.eventListeners == nil {
 		evtListeners.eventListeners = make(map[*native.MouseEventListener]native.Handle)
 	}
-	if evtListeners.listenerKey == (window.MessageRetListenerKey{}) {
-		evtListeners.listenerKey = window.AddMessageRetListener(func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM, result win32.LRESULT) {
+	if evtListeners.listenerKey == (gwapp.MessageRetListenerKey{}) {
+		evtListeners.listenerKey = os.app.AddMessageRetListener(func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM, result win32.LRESULT) {
 			switch message {
 			case win32.WM_LBUTTONDOWN:
 				pt, err := makeScreenPoint(hwnd, lParam)
@@ -592,8 +592,8 @@ func (os *OS) App_AddMouseEventListener(win native.Handle, listener native.Mouse
 	return func() {
 		delete(evtListeners.eventListeners, &listener)
 		if len(evtListeners.eventListeners) == 0 {
-			window.RemoveMessageRetListener(evtListeners.listenerKey)
-			evtListeners.listenerKey = window.MessageRetListenerKey{}
+			os.app.RemoveMessageRetListener(evtListeners.listenerKey)
+			evtListeners.listenerKey = gwapp.MessageRetListenerKey{}
 		}
 	}
 }

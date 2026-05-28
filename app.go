@@ -136,17 +136,18 @@ func runOS(os native.OS, f func(app *App), config *AppConfig) int {
 		debug:   configDebug(config),
 		windows: make(map[ID]*window),
 	}
-	defer func() {
-		for _, w := range app.windows {
-			if err := app.os.Window_Destroy(w.Handle); err != nil {
-				errortrace.Panic(err)
+	return app.os.App_Run(
+		func() { f(&app) },
+		func() {
+			for _, w := range app.windows {
+				if err := app.os.Window_Destroy(w.Handle); err != nil {
+					errortrace.Panic(err)
+				}
 			}
-		}
-		app.windows = nil
-		app.os = nil
-		app.debug = nil
-	}()
-	return app.os.App_Run(func() { f(&app) })
+			app.windows = nil
+			app.os = nil
+			app.debug = nil
+		})
 }
 
 // runContext runs the application with the given native OS implementation

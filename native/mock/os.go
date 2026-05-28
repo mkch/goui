@@ -29,8 +29,11 @@ type OS struct {
 func NewOS() *OS {
 	return &OS{}
 }
-func (*OS) App_Run(f func()) int {
-	return mockos.Run(f)
+func (*OS) App_Run(initialize, cleanup func()) int {
+	if cleanup != nil {
+		defer cleanup()
+	}
+	return mockos.Run(initialize)
 }
 func (*OS) App_Post(f func()) error {
 	return mockos.Post(f)
