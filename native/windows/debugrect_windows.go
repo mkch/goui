@@ -6,6 +6,8 @@ import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/gg/errortrace/chkerr"
 	"github.com/mkch/goui/native"
+	"github.com/mkch/gw"
+	"github.com/mkch/gw/events"
 	"github.com/mkch/gw/paint"
 	"github.com/mkch/gw/paint/brush"
 	"github.com/mkch/gw/paint/pen"
@@ -52,6 +54,56 @@ var debugRectHighlightBrush = func() func() *brush.Brush {
 	}
 }()
 
+type debugLayer struct {
+	panel.Panel
+	rects func() iter.Seq[native.DebugRect]
+}
+
+func (d *debugLayer) OnPaint(evt *events.PaintEvent) {
+	d.Panel.OnPaint(evt) // Fill background.
+
+	dc := chkerr.Must(evt.Begin())
+
+	pen := debugRectPen()
+	defer chkerr.Must(paint.SelectObject(dc.HDC(), pen.HPEN())).Restore()
+
+	dpi := chkerr.Must(win32.GetDpiForWindow(d.HWND()))
+	for rect := range d.rects() {
+		var restore func()
+		if rect.Highlight {
+			restore = chkerr.Must(paint.SelectObject(dc.HDC(), debugRectHighlightBrush().HBRUSH())).Restore
+		} else {
+			restore = chkerr.Must(paint.SelectObject(dc.HDC(), debugRectHollowBrush().HBRUSH())).Restore
+		}
+		left := rect.Left.Px(uint(dpi))
+		right := rect.Right.Px(uint(dpi))
+		top := rect.Top.Px(uint(dpi))
+		bottom := rect.Bottom.Px(uint(dpi))
+		win32.Rectangle(dc.HDC(),
+			left, top, right, bottom)
+		restore()
+	}
+
+}
+
+func newDebugLayer(parent window.TopLevel, rects func() iter.Seq[native.DebugRect]) (*debugLayer, error) {
+	layer, err := gw.Init(&debugLayer{
+		Panel: panel.Panel{
+			Spec: &panel.Spec{
+				Parent:    parent,
+				ClassName: "github.com/mkch/goui#DebugRectLayer",
+				ExStyle:   win32.WS_EX_LAYERED | win32.WS_EX_TRANSPARENT,
+			},
+		},
+		rects: rects,
+	})
+	if err != nil {
+		return nil, errortrace.WithStack(err)
+	}
+	layer.SetDoubleBuffered(true)
+	return layer, nil
+}
+
 func (OS) Window_EnableDrawDebugRect(winHandle native.Handle, rects func() iter.Seq[native.DebugRect]) (layer native.Handle, err error) {
 	win := winHandle.(*window.Window)
 	client, err := win.GetClientRect()
@@ -59,10 +111,7 @@ func (OS) Window_EnableDrawDebugRect(winHandle native.Handle, rects func() iter.
 		err = errortrace.WithStack(err)
 		return
 	}
-	layeredPanel, err := panel.New(win.HWND(), &panel.Spec{
-		ClassName: "github.com/mkch/goui#DebugRectLayer",
-		ExStyle:   win32.WS_EX_LAYERED | win32.WS_EX_TRANSPARENT,
-	})
+	layeredPanel, _ := newDebugLayer(win, rects)
 	if layeredPanel == nil {
 		// Layered child windows are only supported on Windows 8 or greater.
 		// CreateWindowEx fails silently and returns NULL handle with a 0 last error code if
@@ -94,41 +143,6 @@ For windows 10/11, one can include this compatibility snippet in its app.manifes
 	}
 
 	err = win32.SetLayeredWindowAttributes(layeredPanel.HWND(), layeredPanel.BackgroundColor(), 128, win32.LWA_COLORKEY|win32.LWA_ALPHA)
-	if err != nil {
-		err = errortrace.WithStack(err)
-		return
-	}
-
-	layeredPanel.AddPaintCallback(func(paintData *paint.PaintData, prev func(*paint.PaintData)) {
-		prev(&paint.PaintData{
-			DC:    paintData.DC,
-			Rect:  paintData.Rect,
-			Erase: paintData.Erase,
-		})
-
-		dpi := chkerr.Must(win32.GetDpiForWindow(layeredPanel.HWND()))
-
-		pen := debugRectPen()
-		defer chkerr.Must(paint.SelectObject(paintData.DC, pen.HPEN())).Restore()
-
-		for rect := range rects() {
-			var restore func()
-			if rect.Highlight {
-				restore = chkerr.Must(paint.SelectObject(paintData.DC, debugRectHighlightBrush().HBRUSH())).Restore
-			} else {
-				restore = chkerr.Must(paint.SelectObject(paintData.DC, debugRectHollowBrush().HBRUSH())).Restore
-			}
-			left := rect.Left.Px(uint(dpi))
-			right := rect.Right.Px(uint(dpi))
-			top := rect.Top.Px(uint(dpi))
-			bottom := rect.Bottom.Px(uint(dpi))
-			win32.Rectangle(paintData.DC,
-				left, top, right, bottom)
-			restore()
-		}
-	})
-
-	err = layeredPanel.AddDoubleBufferingPaintCallback()
 	if err != nil {
 		err = errortrace.WithStack(err)
 		return

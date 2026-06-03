@@ -8,9 +8,11 @@ import (
 	"github.com/mkch/gg/errortrace"
 	"github.com/mkch/goui/metrics"
 	"github.com/mkch/goui/native"
-	"github.com/mkch/gw/app/gwapp"
+	"github.com/mkch/gw"
+	"github.com/mkch/gw/app"
 	"github.com/mkch/gw/button"
 	"github.com/mkch/gw/edit"
+	"github.com/mkch/gw/events"
 	"github.com/mkch/gw/menu"
 	"github.com/mkch/gw/panel"
 	"github.com/mkch/gw/static"
@@ -19,20 +21,8 @@ import (
 	"github.com/mkch/gw/window"
 )
 
-type winBase interface {
-	HWND() win32.HWND
-	DPI() (win32.UINT, error)
-	InvalidateRect(rect *win32.RECT, eraseBk bool) error
-	GetClientRect() (*win32.RECT, error)
-	GetWindowRect() (*win32.RECT, error)
-	Value(key any) any
-	SetValue(key, value any)
-	SetWndProc(wndProc window.WndProc)
-	TrackPopupMenu(menu *menu.Menu, spec *window.PopupMenuSpec) error
-}
-
 type OS struct {
-	app *gwapp.GwApp
+	app *app.App
 }
 
 func NewOS() *OS {
@@ -40,7 +30,7 @@ func NewOS() *OS {
 }
 
 func (os *OS) App_Run(initialize func()) (ret int) {
-	os.app = gwapp.New()
+	os.app = app.New()
 	initialize()
 	return os.app.Run()
 }
@@ -64,7 +54,7 @@ func (OS) NewWindow(title string, size metrics.Size) (handle native.Handle, err 
 		ClassName: "github.com/mkch/goui#Window",
 		Text:      title,
 		Style:     win32.WS_OVERLAPPEDWINDOW | win32.WS_VISIBLE,
-		X:         window.CW_USEDEFAULT,
+		X:         gw.CW_USEDEFAULT,
 	})
 	if err != nil {
 		err = errortrace.WithStack(err)
@@ -85,7 +75,7 @@ func (OS) NewWindow(title string, size metrics.Size) (handle native.Handle, err 
 }
 
 func (OS) Window_Close(handle native.Handle) error {
-	_, err := win32.SendMessageW(handle.(*window.Window).HWND(), win32.WM_CLOSE, 0, 0)
+	_, err := win32.SendMessageW(handle.(window.TopLevel).HWND(), win32.WM_CLOSE, 0, 0)
 	return err
 }
 
@@ -99,7 +89,7 @@ func (OS) Window_Invalidate(handle native.Handle, rect *metrics.Rect) (err error
 			Bottom: win32.LONG(rect.Bottom),
 		}
 	}
-	err = handle.(winBase).InvalidateRect(win32Rect, true)
+	err = handle.(gw.BaseWindow).InvalidateRect(win32Rect, true)
 	if err != nil {
 		return errortrace.WithStack(err)
 	}
@@ -107,7 +97,7 @@ func (OS) Window_Invalidate(handle native.Handle, rect *metrics.Rect) (err error
 }
 
 func (OS) Window_Destroy(handle native.Handle) (err error) {
-	if err = win32.DestroyWindow(handle.(winBase).HWND()); err != nil {
+	if err = win32.DestroyWindow(handle.(gw.BaseWindow).HWND()); err != nil {
 		err = errortrace.WithStack(err)
 	}
 	return
@@ -118,19 +108,21 @@ func (os OS) Control_Destroy(handle native.Handle) (err error) {
 }
 
 func (OS) NewButton(parent native.Handle, title string) (handle native.Handle, err error) {
-	handle, err = button.New(parent.(winBase).HWND(), &button.Spec{
-		Style: win32.WS_CHILD | win32.WS_VISIBLE,
-		Text:  title,
+	handle, err = button.New(&button.Spec{
+		Parent: parent.(gw.BaseWindow),
+		Style:  win32.WS_CHILD | win32.WS_VISIBLE,
+		Text:   title,
 	})
 	if err != nil {
 		err = errortrace.WithStack(err)
+		return
 	}
 	return
 }
 
 func (OS) Button_SetOnClickListener(handle native.Handle, onClick func()) error {
 	btn := handle.(*button.Button)
-	btn.OnClick = onClick
+	btn.SetOnClickListener(onClick)
 	return nil
 }
 
@@ -143,13 +135,15 @@ func (OS) Button_SetLabel(handle native.Handle, label string) (err error) {
 }
 
 func (OS) NewLabel(parent native.Handle, title string) (handle native.Handle, err error) {
-	handle, err = static.New(parent.(winBase).HWND(), &static.Spec{
+	handle, err = static.New(&static.Spec{
+		Parent: parent.(gw.BaseWindow),
 		Style: win32.WS_CHILD | win32.WS_VISIBLE |
 			static.SS_NOPREFIX | static.SS_CENTER | static.SS_CENTERIMAGE, // SS_CENTERIMAGE vertically centers the single line of text.
 		Text: title,
 	})
 	if err != nil {
 		err = errortrace.WithStack(err)
+		return
 	}
 	return
 }
@@ -229,12 +223,14 @@ func (OS) NewTextField(parent native.Handle, initialValue string, password bool)
 		style &^= edit.ES_MULTILINE
 		style |= edit.ES_PASSWORD
 	}
-	handle, err = edit.New(parent.(winBase).HWND(), &edit.Spec{
-		Text:  initialValue,
-		Style: style,
+	handle, err = edit.New(&edit.Spec{
+		Parent: parent.(gw.BaseWindow),
+		Text:   initialValue,
+		Style:  style,
 	})
 	if err != nil {
 		err = errortrace.WithStack(err)
+		return
 	}
 	return
 }
@@ -256,7 +252,7 @@ func (OS) TextField_SetText(handle native.Handle, text string) error {
 }
 
 func (OS) Control_SetDimensions(handle native.Handle, rect metrics.Rect) error {
-	win := handle.(winBase)
+	win := handle.(gw.BaseWindow)
 
 	parent, err := win32.GetParent(win.HWND())
 	if err != nil {
@@ -289,7 +285,7 @@ func (OS) Control_SetDimensions(handle native.Handle, rect metrics.Rect) error {
 		return nil
 	}
 
-	err = win32.SetWindowPos(handle.(winBase).HWND(), win32.HWND(0),
+	err = win32.SetWindowPos(handle.(gw.BaseWindow).HWND(), win32.HWND(0),
 		win32.INT(clientAfter.Left), win32.INT(clientAfter.Top),
 		win32.INT(clientAfter.Width()), win32.INT(clientAfter.Height()),
 		win32.SWP_NOZORDER|win32.SWP_NOACTIVATE)
@@ -312,43 +308,46 @@ func (OS) Control_SetDimensions(handle native.Handle, rect metrics.Rect) error {
 }
 
 func (OS) Control_SetEnabled(handle native.Handle, enabled bool) (err error) {
-	win32.EnableWindow(handle.(winBase).HWND(), enabled)
+	win32.EnableWindow(handle.(gw.BaseWindow).HWND(), enabled)
 	return
 }
 
 func (OS) Control_Enabled(handle native.Handle) (bool, error) {
-	return win32.IsWindowEnabled(handle.(winBase).HWND()), nil
+	return win32.IsWindowEnabled(handle.(gw.BaseWindow).HWND()), nil
 }
 
 func (os OS) Window_SetOnSizeChangedListener(handle native.Handle, onSizeChanged func(size metrics.Size)) error {
-	win := handle.(*window.Window)
-	win.AddMsgListener(win32.WM_SIZE, func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM) {
-		rect, err := os.Window_ClientRect(handle)
-		if err != nil {
-			panic(err)
-		}
-		onSizeChanged(rect.Size())
+	win := handle.(window.TopLevel)
+	dpi, err := win.DPI()
+	if err != nil {
+		return errortrace.WithStack(err)
+	}
+	win.SetOnSizeListener(func(event events.SizeEvent) {
+		onSizeChanged(metrics.Size{
+			Width:  metrics.Px(int(event.Size.Width()), uint(dpi)),
+			Height: metrics.Px(int(event.Size.Height()), uint(dpi)),
+		})
 	})
 	return nil
 }
 
 func (OS) Window_SetOnDestroyListener(handle native.Handle, listener func()) error {
-	handle.(*window.Window).OnDestroy = listener
+	handle.(window.TopLevel).SetOnDestroyListener(listener)
 	return nil
 }
 
 func (OS) Control_SetOnDestroyListener(handle native.Handle, listener func()) error {
-	handle.(*window.Window).OnDestroy = listener
+	handle.(gw.BaseWindow).SetOnDestroyListener(listener)
 	return nil
 }
 
 func (OS) Window_SetOnCloseListener(handle native.Handle, listener func() bool) error {
-	handle.(*window.Window).OnClose = listener
+	handle.(window.TopLevel).SetOnCloseListener(listener)
 	return nil
 }
 
 func (OS) Window_ClientRect(handle native.Handle) (ret metrics.Rect, err error) {
-	win := handle.(*window.Window)
+	win := handle.(window.TopLevel)
 	var rect win32.RECT
 	err = win32.GetClientRect(win.HWND(), &rect)
 	if err != nil {
@@ -390,7 +389,7 @@ var getSystemMetricsYEdge = func() func() int {
 }()
 
 func (OS) Control_TextDrawingSize(control native.Handle, text string, multiline bool, maxWidth metrics.DP) (size metrics.Size, err error) {
-	win := control.(winBase)
+	win := control.(gw.BaseWindow)
 	hdc, err := win32.GetDC(win.HWND())
 	if err != nil {
 		err = errortrace.WithStack(err)
@@ -468,9 +467,14 @@ func (os OS) Button_MinimumSize(handle native.Handle, label string) (size metric
 }
 
 func (OS) NewPanel(parent native.Handle) (handle native.Handle, err error) {
-	handle, err = panel.New(parent.(winBase).HWND(), &panel.Spec{
+	handle, err = panel.New(&panel.Spec{
+		Parent:    parent.(gw.BaseWindow),
 		ClassName: "github.com/mkch/goui#Panel",
 	})
+	if err != nil {
+		err = errortrace.WithStack(err)
+		return
+	}
 	return
 }
 
@@ -479,7 +483,7 @@ func (OS) Panel_SetBackgroundColor(handle native.Handle, color *color.NRGBA) err
 }
 
 type eventListenerRecord struct {
-	listenerKey    gwapp.MessageRetListenerKey
+	listenerKey    app.MessageRetListenerKey
 	eventListeners map[*native.MouseEventListener]native.Handle
 }
 
@@ -489,7 +493,7 @@ var evtListeners eventListenerRecord
 // screenPt is the mouse position in screen coordinates.
 func callMouseEventListeners(srcHwnd win32.HWND, screenPt win32.POINT, method func(listener native.MouseEventListener, parent native.Handle, x metrics.DP, y metrics.DP)) {
 	for listener, win := range evtListeners.eventListeners {
-		target := win.(winBase)
+		target := win.(gw.BaseWindow)
 		// ignore error of GetAncestor because mouse events are posted to the message queue
 		// and the window may have been destroyed when the event is processed.
 		if root, err := win32.GetAncestor(srcHwnd, win32.GA_ROOT); err != nil {
@@ -529,7 +533,7 @@ func (os *OS) App_AddMouseEventListener(win native.Handle, listener native.Mouse
 	if evtListeners.eventListeners == nil {
 		evtListeners.eventListeners = make(map[*native.MouseEventListener]native.Handle)
 	}
-	if evtListeners.listenerKey == (gwapp.MessageRetListenerKey{}) {
+	if evtListeners.listenerKey == (app.MessageRetListenerKey{}) {
 		evtListeners.listenerKey = os.app.AddMessageRetListener(func(hwnd win32.HWND, message win32.UINT, wParam win32.WPARAM, lParam win32.LPARAM, result win32.LRESULT) {
 			switch message {
 			case win32.WM_LBUTTONDOWN:
@@ -597,14 +601,14 @@ func (os *OS) App_AddMouseEventListener(win native.Handle, listener native.Mouse
 		delete(evtListeners.eventListeners, &listener)
 		if len(evtListeners.eventListeners) == 0 {
 			os.app.RemoveMessageRetListener(evtListeners.listenerKey)
-			evtListeners.listenerKey = gwapp.MessageRetListenerKey{}
+			evtListeners.listenerKey = app.MessageRetListenerKey{}
 		}
 	}
 }
 
 func (OS) Util_ClientCoordinatesConv(from, to native.Handle, x, y metrics.DP) (newX, newY metrics.DP, err error) {
-	fromWin := from.(winBase).HWND()
-	toWin := to.(winBase).HWND()
+	fromWin := from.(gw.BaseWindow).HWND()
+	toWin := to.(gw.BaseWindow).HWND()
 	fromDpi, err := win32.GetDpiForWindow(fromWin)
 	if err != nil {
 		err = errortrace.WithStack(err)
@@ -632,7 +636,7 @@ func (OS) Util_ClientCoordinatesConv(from, to native.Handle, x, y metrics.DP) (n
 }
 
 func (OS) Util_ClientToScreen(win native.Handle, x, y metrics.DP) (screenX, screenY metrics.DP, err error) {
-	w := win.(winBase)
+	w := win.(gw.BaseWindow)
 	dpi, err := w.DPI()
 	if err != nil {
 		err = errortrace.WithStack(err)
@@ -650,12 +654,12 @@ func (OS) Util_ClientToScreen(win native.Handle, x, y metrics.DP) (screenX, scre
 }
 
 func (OS) Window_Menu(win native.Handle) (native.Handle, error) {
-	return win32.GetMenu(win.(winBase).HWND())
+	return win32.GetMenu(win.(gw.BaseWindow).HWND())
 }
 
 func (OS) Window_SetMenu(win native.Handle, m native.Handle) (err error) {
 	//nativeMenu.SetPopup(false) // Window menu should not be popup
-	err = win.(*window.Window).SetMenu(m.(*menu.Menu))
+	err = win.(window.TopLevel).SetMenu(m.(*menu.Menu))
 	if err != nil {
 		err = errortrace.WithStack(err)
 	}
@@ -663,7 +667,7 @@ func (OS) Window_SetMenu(win native.Handle, m native.Handle) (err error) {
 }
 
 func (OS) Window_RefreshMenu(win native.Handle) (err error) {
-	err = win32.DrawMenuBar(win.(*window.Window).HWND())
+	err = win32.DrawMenuBar(win.(window.TopLevel).HWND())
 	if err != nil {
 		err = errortrace.WithStack(err)
 	}
@@ -671,11 +675,11 @@ func (OS) Window_RefreshMenu(win native.Handle) (err error) {
 }
 
 func (OS) Window_Enabled(win native.Handle) (bool, error) {
-	return win32.IsWindowEnabled(win.(winBase).HWND()), nil
+	return win32.IsWindowEnabled(win.(window.TopLevel).HWND()), nil
 }
 
 func (OS) Window_SetEnabled(win native.Handle, enabled bool) error {
-	win32.EnableWindow(win.(winBase).HWND(), enabled)
+	win32.EnableWindow(win.(window.TopLevel).HWND(), enabled)
 	return nil
 }
 
@@ -740,15 +744,15 @@ func (OS) MenuItem_SetOnClickListener(item native.Handle, listener func()) {
 }
 
 func (OS) Window_TrackPopupMenu(win native.Handle, menuToTrack native.Handle, spec *native.TrackPopupSpec) (err error) {
-	nativeWin := win.(winBase)
+	nativeWin := win.(window.TopLevel)
 	dpi, err := nativeWin.DPI()
 	if err != nil {
 		err = errortrace.WithStack(err)
 		return
 	}
-	var nativeSpec *window.PopupMenuSpec
+	var nativeSpec *gw.PopupMenuSpec
 	if spec != nil {
-		nativeSpec = &window.PopupMenuSpec{
+		nativeSpec = &gw.PopupMenuSpec{
 			X: win32.LONG(spec.X.Px(uint(dpi))),
 			Y: win32.LONG(spec.Y.Px(uint(dpi))),
 		}
@@ -760,7 +764,7 @@ func (OS) Window_TrackPopupMenu(win native.Handle, menuToTrack native.Handle, sp
 func (OS) MessageBox(parent native.Handle, title, message string, icon native.MessageBoxIcon, button native.MessageBoxButton) (ret native.MessageBoxReturn, err error) {
 	var nativeParent win32.HWND
 	if parent != nil {
-		nativeParent = parent.(winBase).HWND()
+		nativeParent = parent.(gw.BaseWindow).HWND()
 	}
 	var nativeType win32.MESSAGE_BOX_TYPE
 	switch button {
