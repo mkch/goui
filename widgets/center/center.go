@@ -18,12 +18,12 @@ type Center struct {
 	// Width scaling factor. If not 0, the desired with of Center is calculated as
 	// child's width multiplied by WidthFactor.
 	// A 0 WidthFactor means to take all available width from parent.
-	// A non-zero WidthFactor must be greater than 100, or it panics.
+	// A non-zero WidthFactor must be greater than 1, or it panics.
 	WidthFactor float64
 	// Height scaling factor. If not 0, the desired height of Center is calculated as
 	// child's height multiplied by HeightFactor.
 	// A 0 HeightFactor means to take all available height from parent.
-	// A non-zero HeightFactor must be greater than 100, or it panics.
+	// A non-zero HeightFactor must be greater than 1, or it panics.
 	HeightFactor float64
 }
 
@@ -59,11 +59,11 @@ type centerElement struct {
 
 func (e *centerElement) SetWidget(ctx *goui.Context, widget goui.Component) (err error) {
 	center := widget.(*Center)
-	if center.WidthFactor < 0 {
-		return errors.New("Center.WidthFactor must be greater than or equal to 0")
+	if center.WidthFactor < 1 && center.WidthFactor != 0 {
+		return errors.New("Center.WidthFactor must be greater than 1 or equal to 0")
 	}
-	if center.HeightFactor < 0 {
-		return errors.New("Center.HeightFactor must be greater than or equal to 0")
+	if center.HeightFactor < 1 && center.HeightFactor != 0 {
+		return errors.New("Center.HeightFactor must be greater than 1 or equal to 0")
 	}
 	return e.ElementHelper.SetWidget(ctx, widget)
 }
