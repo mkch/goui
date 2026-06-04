@@ -69,11 +69,12 @@ func (l *Layouter) Layout(ctx *goui.Context, constraints metrics.Constraints) (s
 	if len(expandedChildren) > 0 {
 		availableSpace := *l.MaxMain(&constraints) - notExpandableChildrenMain
 		var sizes []metrics.Size
-		sizes, err = expanded.Layout(ctx, availableSpace, expandedChildren, func(c *metrics.Constraints, mainAxis metrics.DP) {
-			*l.MinMain(c) = mainAxis
-			*l.MaxMain(c) = mainAxis
-			*l.MinCross(c) = 0
-			*l.MaxCross(c) = *l.MaxCross(&constraints)
+		sizes, err = expanded.Layout(ctx, availableSpace, expandedChildren, func(mainAxis metrics.DP) (c metrics.Constraints) {
+			*l.MinMain(&c) = mainAxis
+			*l.MaxMain(&c) = mainAxis
+			*l.MinCross(&c) = 0
+			*l.MaxCross(&c) = *l.MaxCross(&constraints)
+			return
 		})
 		if err != nil {
 			return
